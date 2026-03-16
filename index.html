@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asistencia INS Viajero</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Ocultar barra de desplazamiento en el menú móvil */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20 md:pb-0">
+
+    <!-- Header -->
+    <header class="bg-blue-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Logo INS -->
+                <img 
+                    src="INS BLANCO.png" 
+                    alt="Logo INS" 
+                    class="h-6 sm:h-8 w-auto object-contain"
+                    onerror="this.style.display='none'; document.getElementById('logo-divider').style.display='none';"
+                />
+                <div id="logo-divider" class="h-6 sm:h-8 border-l border-blue-700 mx-1"></div>
+                <h1 class="text-lg sm:text-xl font-bold tracking-tight">Asistencia Viajero</h1>
+            </div>
+            <a href="https://wa.link/jmusji" target="_blank" rel="noopener noreferrer" class="hidden md:flex bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full font-medium items-center gap-2 transition-colors">
+                <i data-lucide="message-circle" class="w-5 h-5"></i>
+                Wi-Fi Call (WhatsApp)
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col md:flex-row gap-4 sm:gap-6">
+        
+        <!-- Sidebar Navigation -->
+        <nav class="w-full md:w-64 flex flex-row md:flex-col overflow-x-auto md:overflow-visible gap-2 md:gap-1 pb-2 md:pb-0 flex-shrink-0 snap-x no-scrollbar">
+            <button onclick="switchTab('home')" id="btn-home" class="nav-btn bg-blue-100 text-blue-800 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base border border-transparent">
+                <i data-lucide="home" class="nav-icon w-5 h-5 text-blue-600"></i> Inicio
+            </button>
+            <button onclick="switchTab('contacts')" id="btn-contacts" class="nav-btn text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-white md:bg-transparent border md:border-transparent border-slate-200 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base">
+                <i data-lucide="phone-call" class="nav-icon w-5 h-5 text-slate-400"></i> Contactos de Emergencia
+            </button>
+            <button onclick="switchTab('claims')" id="btn-claims" class="nav-btn text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-white md:bg-transparent border md:border-transparent border-slate-200 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base">
+                <i data-lucide="file-text" class="nav-icon w-5 h-5 text-slate-400"></i> Reclamos y Reembolsos
+            </button>
+            <button onclick="switchTab('wificall')" id="btn-wificall" class="nav-btn text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-white md:bg-transparent border md:border-transparent border-slate-200 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base">
+                <i data-lucide="wifi" class="nav-icon w-5 h-5 text-slate-400"></i> Guía Wi-Fi Call
+            </button>
+            <button onclick="switchTab('coverage')" id="btn-coverage" class="nav-btn text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-white md:bg-transparent border md:border-transparent border-slate-200 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base">
+                <i data-lucide="info" class="nav-icon w-5 h-5 text-slate-400"></i> Coberturas y Exclusiones
+            </button>
+        </nav>
+
+        <!-- Content Area -->
+        <main class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 min-h-[80vh]">
+            
+            <!-- HOME VIEW -->
+            <div id="home" class="tab-content active space-y-6 sm:space-y-8">
+                <div class="bg-blue-50 border-l-4 border-blue-600 p-4 sm:p-6 rounded-r-lg">
+                    <h2 class="text-xl sm:text-2xl font-bold text-blue-900 mb-2">Portal de Asistencia en Viaje</h2>
+                    <p class="text-sm sm:text-base text-blue-800">Esta herramienta está diseñada para brindar orientación rápida y precisa sobre cómo proceder en caso de una emergencia en el extranjero utilizando el Seguro INS Viajero con Asistencia Autoexpedible.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="switchTab('contacts')" class="p-4 sm:p-6 border-2 border-slate-100 rounded-xl hover:border-red-400 hover:shadow-md transition-all text-left group">
+                        <div class="bg-red-100 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="alert-triangle" class="text-red-600 w-5 h-5 sm:w-6 sm:h-6"></i>
+                        </div>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-900">Tengo una Emergencia</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 mt-1">Ver números de teléfono gratuitos y directos para contactar a la Unidad de Asistencia inmediatamente.</p>
+                    </button>
+
+                    <a href="https://wa.link/jmusji" target="_blank" rel="noopener noreferrer" class="p-4 sm:p-6 border-2 border-slate-100 rounded-xl hover:border-green-400 hover:shadow-md transition-all text-left group block">
+                        <div class="bg-green-100 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="message-circle" class="text-green-600 w-5 h-5 sm:w-6 sm:h-6"></i>
+                        </div>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-900">Contactar por WhatsApp</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 mt-1">Iniciar un chat con el bot de Universal Assistance mediante Wi-Fi Call.</p>
+                    </a>
+
+                    <button onclick="switchTab('claims')" class="p-4 sm:p-6 border-2 border-slate-100 rounded-xl hover:border-blue-400 hover:shadow-md transition-all text-left group">
+                        <div class="bg-blue-100 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="file-text" class="text-blue-600 w-5 h-5 sm:w-6 sm:h-6"></i>
+                        </div>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-900">Requisitos para Reembolsos</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 mt-1">Qué documentos presentar si no utilicé la Unidad de Asistencia y pagué por mi cuenta.</p>
+                    </button>
+
+                    <button onclick="switchTab('coverage')" class="p-4 sm:p-6 border-2 border-slate-100 rounded-xl hover:border-purple-400 hover:shadow-md transition-all text-left group">
+                        <div class="bg-purple-100 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="shield-alert" class="text-purple-600 w-5 h-5 sm:w-6 sm:h-6"></i>
+                        </div>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-900">¿Qué cubre el seguro?</h3>
+                        <p class="text-xs sm:text-sm text-slate-600 mt-1">Resumen de coberturas principales y exclusiones importantes del contrato.</p>
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTACTS VIEW -->
+            <div id="contacts" class="tab-content space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="phone-call" class="text-blue-600"></i> Contactos de Emergencia
+                    </h2>
+                    <p class="text-slate-600 mt-2">Siempre solicitar el servicio a la unidad de asistencia del INS a través de los siguientes medios de forma inmediata (o máximo 48 hrs después del evento).</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- WhatsApp -->
+                    <div class="bg-green-50 rounded-xl p-6 border border-green-200 shadow-sm md:col-span-2">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div>
+                                <h3 class="text-lg font-bold text-green-900 flex items-center gap-2">
+                                    <i data-lucide="message-circle" class="w-5 h-5"></i> WhatsApp / Wi-Fi Call
+                                </h3>
+                                <p class="text-green-800 text-sm mt-1">La forma más rápida si tienes conexión a internet.</p>
+                                <p class="text-green-900 font-mono font-bold mt-2">+54 9 11 6750 2557</p>
+                            </div>
+                            <a href="https://wa.link/jmusji" target="_blank" rel="noopener noreferrer" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors w-full sm:w-auto text-center">
+                                Iniciar Chat
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Gratuito -->
+                    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                        <h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">Números Gratuitos*</h3>
+                        <ul class="space-y-4">
+                            <li class="flex justify-between items-center">
+                                <span class="text-slate-600 font-medium">USA</span>
+                                <span class="font-mono font-bold text-blue-700">1 844 865 0804</span>
+                            </li>
+                            <li class="flex justify-between items-center">
+                                <span class="text-slate-600 font-medium">España</span>
+                                <span class="font-mono font-bold text-blue-700">900 995 484</span>
+                            </li>
+                        </ul>
+                        <p class="text-xs text-slate-500 mt-4">*Llamar de un móvil u otro sitio puede generar cobro en facturación telefónica.</p>
+                    </div>
+
+                    <!-- Directos -->
+                    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                        <h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">Números Directos</h3>
+                        <ul class="space-y-4">
+                            <li class="flex flex-col">
+                                <span class="text-slate-600 font-medium text-sm">USA / Canadá / Caribe / Américas**</span>
+                                <span class="font-mono font-bold text-blue-700">+1 (407) 264-7118</span>
+                            </li>
+                            <li class="flex flex-col">
+                                <span class="text-slate-600 font-medium text-sm">España / Europa / Resto del Mundo**</span>
+                                <span class="font-mono font-bold text-blue-700">+34 (91) 189-5152</span>
+                            </li>
+                        </ul>
+                        <p class="text-xs text-slate-500 mt-4">**Llamar para cobrar vía operadora internacional si está disponible.</p>
+                    </div>
+
+                    <!-- Emails -->
+                    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm md:col-span-2">
+                        <h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4 flex items-center gap-2">
+                            <i data-lucide="mail" class="text-blue-600 w-5 h-5"></i> Correos Electrónicos
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium">Asistencia Internacional</p>
+                                <a href="mailto:insinternacional@grupoins.com" class="text-blue-600 hover:underline font-medium break-all">insinternacional@grupoins.com</a>
+                            </div>
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium">Universal Assistance</p>
+                                <a href="mailto:INS_Asistencias@universal-assistance.com" class="text-blue-600 hover:underline font-medium break-all">INS_Asistencias@universal-assistance.com</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLAIMS VIEW -->
+            <div id="claims" class="tab-content space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="file-text" class="text-blue-600"></i> Paso a Paso para Reclamos
+                    </h2>
+                </div>
+
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg">
+                    <h3 class="font-bold text-amber-900 flex items-center gap-2">
+                        <i data-lucide="alert-triangle" class="w-5 h-5"></i> PASO 1: AVISO INMEDIATO (Obligatorio)
+                    </h3>
+                    <p class="text-amber-800 mt-2 text-sm">El Asegurado deberá dar aviso a la Unidad de Asistencia en el extranjero de <strong>forma inmediata</strong>. Si no es posible, contará con <strong>48 horas</strong> después del evento. El retraso implica que el pago se realizará por reembolso.</p>
+                </div>
+
+                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <h3 class="font-bold text-slate-900 text-lg mb-2">PASO 2: Trámite por Reembolso</h3>
+                    <p class="text-slate-600 text-sm mb-6">Si pagó por su cuenta, presente los requisitos en sucursales o de forma digital a:<br/>• Asegurados: <a href="mailto:clientescgsp@grupoins.com" class="text-blue-600 font-medium">clientescgsp@grupoins.com</a><br/>• Intermediarios: <a href="mailto:intermediarioscgsp@grupoins.com" class="text-blue-600 font-medium">intermediarioscgsp@grupoins.com</a></p>
+
+                    <div class="space-y-4">
+                        <!-- Accordion Item 1 -->
+                        <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="heart-pulse" class="text-red-500 w-5 h-5"></i>
+                                    <span class="font-bold text-slate-800">Asistencia para Gastos Médicos</span>
+                                </div>
+                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300 transform"></i>
+                            </button>
+                            <div class="accordion-content hidden p-4 border-t border-slate-200 bg-white">
+                                <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700">
+                                    <li><strong>Solicitud de Beneficios</strong> (formularios otorgados por el INS).</li>
+                                    <li>Facturas canceladas de los gastos efectuados con el detalle y costo.</li>
+                                    <li>Recetas y prescripciones médicas.</li>
+                                    <li>Reportes e <strong>informe médico completo</strong> que incluya diagnóstico, evolución y tratamiento.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Accordion Item 2 -->
+                        <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="clock" class="text-orange-500 w-5 h-5"></i>
+                                    <span class="font-bold text-slate-800">Retraso de Vuelo</span>
+                                </div>
+                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300 transform"></i>
+                            </button>
+                            <div class="accordion-content hidden p-4 border-t border-slate-200 bg-white">
+                                <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700">
+                                    <li>Fotocopia del boleto.</li>
+                                    <li>Documento de la línea aérea en el que conste el <strong>motivo</strong> y la <strong>cantidad de tiempo (horas)</strong> del retraso.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Accordion Item 3 -->
+                        <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="briefcase" class="text-yellow-600 w-5 h-5"></i>
+                                    <span class="font-bold text-slate-800">Pérdida de Equipaje</span>
+                                </div>
+                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300 transform"></i>
+                            </button>
+                            <div class="accordion-content hidden p-4 border-t border-slate-200 bg-white space-y-4 text-sm text-slate-700">
+                                <div>
+                                    <h4 class="font-bold text-slate-900">Pérdida Temporal:</h4>
+                                    <ul class="list-disc pl-5 mt-1"><li>Denuncia al Aeropuerto, línea aérea o naval.</li><li>Fotocopia del pasaje.</li></ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-900">Pérdida Definitiva:</h4>
+                                    <ul class="list-disc pl-5 mt-1"><li>Denuncia al Aeropuerto, línea aérea o naval.</li><li>Fotocopia del pasaje.</li><li><strong>Fotocopia de la indemnización</strong> que le dio la aerolínea.</li></ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Accordion Item 4 -->
+                        <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="file-text" class="text-blue-500 w-5 h-5"></i>
+                                    <span class="font-bold text-slate-800">Pérdida de Pasaporte</span>
+                                </div>
+                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300 transform"></i>
+                            </button>
+                            <div class="accordion-content hidden p-4 border-t border-slate-200 bg-white">
+                                <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700">
+                                    <li>Salvoconducto gestionado ante la embajada o reporte policial.</li>
+                                    <li>Solicitud de reembolso por gastos de alojamiento y transporte.</li>
+                                    <li>Facturas de los gastos efectuados por este concepto.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Accordion Item 5 -->
+                        <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
+                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="plane" class="text-purple-500 w-5 h-5"></i>
+                                    <span class="font-bold text-slate-800">Cancelación o Acortamiento</span>
+                                </div>
+                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300 transform"></i>
+                            </button>
+                            <div class="accordion-content hidden p-4 border-t border-slate-200 bg-white">
+                                <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700">
+                                    <li>Factura de boletos aéreos y reservaciones de hotel.</li>
+                                    <li>Documento de anulación de reserva.</li>
+                                    <li>Facturas de los gastos incurridos por dicha anulación.</li>
+                                    <li>Documentos que comprueben el <strong>monto reintegrado</strong> por aerolínea.</li>
+                                    <li>Informe médico con diagnóstico o Certificado de defunción.</li>
+                                    <li>Constancia de relación de parentesco (Si aplica).</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WIFICALL VIEW -->
+            <div id="wificall" class="tab-content space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                            <i data-lucide="wifi" class="text-blue-600"></i> Guía de Usuario: Wi-Fi Call
+                        </h2>
+                        <p class="text-slate-600 mt-1">Cómo solicitar asistencia mediante el bot de WhatsApp.</p>
+                    </div>
+                    <a href="https://wa.link/jmusji" target="_blank" rel="noopener noreferrer" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium inline-flex items-center gap-2">
+                        <i data-lucide="message-circle" class="w-5 h-5"></i> Abrir WhatsApp
+                    </a>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+                    <div class="p-5 rounded-xl border border-slate-200 bg-white shadow-sm relative pt-8">
+                        <div class="absolute -top-5 left-4 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md bg-blue-600">1</div>
+                        <h3 class="font-bold text-lg text-slate-900 mb-2">Registre el Número</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">Inicie un chat con el número +54 9 11 6750-2557 (Cuenta verificada de Universal Assistance).</p>
+                    </div>
+                    
+                    <div class="p-5 rounded-xl border border-slate-200 bg-white shadow-sm relative pt-8">
+                        <div class="absolute -top-5 left-4 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md bg-blue-600">2</div>
+                        <h3 class="font-bold text-lg text-slate-900 mb-2">Mensaje de Bienvenida</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">El bot responderá: 'Gracias por comunicarse con Universal Assistance, la asistencia al viajero del INS.'</p>
+                    </div>
+
+                    <div class="p-5 rounded-xl border border-slate-200 bg-white shadow-sm relative pt-8">
+                        <div class="absolute -top-5 left-4 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md bg-blue-600">3</div>
+                        <h3 class="font-bold text-lg text-slate-900 mb-2">Seleccione Opción</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">
+                            1. Asistencia médica.<br/>2. Consultar por un rembolso.<br/>3. Vuelo demorado.<br/>4. Pérdida equipaje.<br/>5. Otras consultas.
+                        </p>
+                    </div>
+
+                    <div class="p-5 rounded-xl border border-slate-200 bg-white shadow-sm relative pt-8">
+                        <div class="absolute -top-5 left-4 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md bg-blue-600">4</div>
+                        <h3 class="font-bold text-lg text-slate-900 mb-2">Para Opciones 1, 3, 4, 5</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">El bot le enviará un enlace: 'Por favor ingrese en este enlace para comunicarse con nosotros...'</p>
+                    </div>
+
+                    <div class="p-5 rounded-xl border border-green-400 bg-green-50 shadow-md relative pt-8">
+                        <div class="absolute -top-5 left-4 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md bg-green-600">5</div>
+                        <h3 class="font-bold text-lg text-slate-900 mb-2">Haga clic en WI-FI CALL</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">Al abrir el enlace, presione el botón que dice 'WI-FI CALL'. Será atendido por un ejecutivo.</p>
+                    </div>
+
+                    <div class="p-5 rounded-xl border border-slate-200 bg-white shadow-sm relative pt-8">
+                        <div class="absolute -top-5 left-4 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md bg-blue-600">6</div>
+                        <h3 class="font-bold text-lg text-slate-900 mb-2">Para Opción 2</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">Si digita la opción 2, el bot le brindará el correo electrónico para consultar el estado de su reembolso.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COVERAGE VIEW -->
+            <div id="coverage" class="tab-content space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="info" class="text-blue-600"></i> Resumen de Coberturas y Exclusiones
+                    </h2>
+                    <p class="text-slate-600 mt-1">Información estandarizada basada en el DERSA y Condiciones Generales.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- SÍ cubre -->
+                    <div class="bg-white border border-green-200 rounded-xl overflow-hidden shadow-sm">
+                        <div class="bg-green-600 text-white font-bold p-4 flex items-center gap-2">
+                            <i data-lucide="heart-pulse" class="w-5 h-5"></i> Lo que SÍ cubre
+                        </div>
+                        <ul class="p-4 space-y-3 text-sm text-slate-700 divide-y divide-slate-100">
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Gastos médicos por accidente o enfermedad aguda (incluye pandémicas).</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Emergencias dentales (alivio del dolor).</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Indemnización por muerte, pérdida de extremidades o incapacidad por accidente.</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Renta diaria por hospitalización (hasta 10 días).</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Pérdida de equipaje y pasaporte.</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Cancelación, acortamiento de viaje o retraso.</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Lesiones por deportes extremos de manera <strong>no profesional</strong>.</li>
+                        </ul>
+                    </div>
+
+                    <!-- NO cubre -->
+                    <div class="bg-white border border-red-200 rounded-xl overflow-hidden shadow-sm">
+                        <div class="bg-red-600 text-white font-bold p-4 flex items-center gap-2">
+                            <i data-lucide="shield-alert" class="w-5 h-5"></i> Lo que NO cubre (Exclusiones)
+                        </div>
+                        <ul class="p-4 space-y-3 text-sm text-slate-700 divide-y divide-slate-100">
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4"></i> Enfermedades <strong>preexistentes</strong> y embarazos (solo cubre atención básica en urgencias).</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4"></i> Consumo voluntario de alcohol o drogas no recetadas.</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4"></i> Práctica <strong>profesional</strong> de deportes o automovilismo.</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4"></i> Guerra, terrorismo y actos delictivos.</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4"></i> Tratamientos preventivos, vacunas o enfermedades venéreas.</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4"></i> Tratamientos realizados por familiares directos.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Mobile Floating Action Button -->
+    <a href="https://wa.link/jmusji" target="_blank" rel="noopener noreferrer" class="md:hidden fixed bottom-6 right-4 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-105 active:scale-95 border-2 border-white">
+        <i data-lucide="message-circle" class="w-8 h-8"></i>
+    </a>
+
+    <!-- Scripts -->
+    <script>
+        // Inicializar iconos
+        lucide.createIcons();
+
+        // Lógica de pestañas (Navegación)
+        function switchTab(tabId) {
+            // Ocultar todos los contenidos
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // Mostrar el objetivo
+            document.getElementById(tabId).classList.add('active');
+
+            // Resetear estilos de todos los botones
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.className = "nav-btn text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-white md:bg-transparent border md:border-transparent border-slate-200 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base";
+                const icon = btn.querySelector('.nav-icon');
+                if(icon) icon.classList.replace('text-blue-600', 'text-slate-400');
+            });
+
+            // Aplicar estilo activo al botón seleccionado
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.className = "nav-btn bg-blue-100 text-blue-800 border border-transparent snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base";
+            const activeIcon = activeBtn.querySelector('.nav-icon');
+            if(activeIcon) activeIcon.classList.replace('text-slate-400', 'text-blue-600');
+        }
+
+        // Lógica de acordeón
+        function toggleAccordion(btn) {
+            const content = btn.nextElementSibling;
+            const icon = btn.querySelector('.accordion-icon');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.classList.add('rotate-90');
+            } else {
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-90');
+            }
+        }
+    </script>
+</body>
+</html>
