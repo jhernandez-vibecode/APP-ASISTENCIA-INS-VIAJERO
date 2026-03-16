@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asistencia INS Viajero</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .tab-content { display: none; }
@@ -19,31 +17,26 @@
 </head>
 <body class="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20 md:pb-0">
 
-    <!-- Header -->
     <header class="bg-blue-900 text-white shadow-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
             <div class="flex items-center gap-2 sm:gap-3">
-                <!-- Logo INS -->
                 <img 
                     src="INS BLANCO.png" 
                     alt="Logo INS" 
-                    class="h-6 sm:h-8 w-auto object-contain"
-                    onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMzAiIGZpbGw9IndoaXRlIj48dGV4dCB4PSIwIiB5PSIyNCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIyNiI+SU5TPC90ZXh0Pjwvc3ZnPg==';"
+                    class="h-6 sm:h-10 w-auto object-contain"
                 />
-                <div id="logo-divider" class="h-6 sm:h-8 border-l border-blue-700 mx-1"></div>
+                <div id="logo-divider" class="h-6 sm:h-8 border-l border-blue-700 mx-1 sm:mx-2"></div>
                 <h1 class="text-lg sm:text-xl font-bold tracking-tight">Asistencia Viajero</h1>
             </div>
-            <a href="https://wa.me/5491167502557" target="_top" rel="noopener noreferrer" class="btn-ins hidden md:flex bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full font-medium items-center gap-2 transition-colors">
+            <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="btn-ins hidden md:flex bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full font-medium items-center gap-2 transition-colors">
                 <i data-lucide="message-circle" class="w-5 h-5"></i>
                 Wi-Fi Call (WhatsApp)
             </a>
         </div>
     </header>
 
-    <!-- Main Layout -->
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col md:flex-row gap-4 sm:gap-6">
         
-        <!-- Sidebar Navigation -->
         <nav class="w-full md:w-64 flex flex-row md:flex-col overflow-x-auto md:overflow-visible gap-2 md:gap-1 pb-2 md:pb-0 flex-shrink-0 snap-x no-scrollbar">
             <button onclick="switchTab('home')" id="btn-home" class="nav-btn bg-blue-100 text-blue-800 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base border border-transparent">
                 <i data-lucide="home" class="nav-icon w-5 h-5 text-blue-600"></i> Inicio
@@ -62,10 +55,8 @@
             </button>
         </nav>
 
-        <!-- Content Area -->
         <main class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 min-h-[80vh]">
             
-            <!-- HOME VIEW -->
             <div id="home" class="tab-content active space-y-6 sm:space-y-8">
                 <div class="bg-blue-50 border-l-4 border-blue-600 p-4 sm:p-6 rounded-r-lg">
                     <h2 class="text-xl sm:text-2xl font-bold text-blue-900 mb-2">Portal de Asistencia en Viaje</h2>
@@ -81,7 +72,7 @@
                         <p class="text-xs sm:text-sm text-slate-600 mt-1">Ver números de teléfono gratuitos y directos para contactar a la Unidad de Asistencia inmediatamente.</p>
                     </button>
 
-                    <a href="https://wa.me/5491167502557" target="_top" rel="noopener noreferrer" class="btn-ins p-4 sm:p-6 border-2 border-slate-100 rounded-xl hover:border-green-400 hover:shadow-md transition-all text-left group block">
+                    <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="btn-ins p-4 sm:p-6 border-2 border-slate-100 rounded-xl hover:border-green-400 hover:shadow-md transition-all text-left group block">
                         <div class="bg-green-100 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
                             <i data-lucide="message-circle" class="text-green-600 w-5 h-5 sm:w-6 sm:h-6"></i>
                         </div>
@@ -107,7 +98,6 @@
                 </div>
             </div>
 
-            <!-- CONTACTS VIEW -->
             <div id="contacts" class="tab-content space-y-6">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -117,7 +107,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- WhatsApp -->
                     <div class="bg-green-50 rounded-xl p-6 border border-green-200 shadow-sm md:col-span-2">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div>
@@ -127,13 +116,12 @@
                                 <p class="text-green-800 text-sm mt-1">La forma más rápida si tienes conexión a internet.</p>
                                 <p class="text-green-900 font-mono font-bold mt-2">+54 9 11 6750 2557</p>
                             </div>
-                            <a href="https://wa.me/5491167502557" target="_top" rel="noopener noreferrer" class="btn-ins bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors w-full sm:w-auto text-center">
+                            <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="btn-ins bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors w-full sm:w-auto text-center">
                                 Iniciar Chat
                             </a>
                         </div>
                     </div>
 
-                    <!-- Gratuito -->
                     <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                         <h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">Números Gratuitos*</h3>
                         <ul class="space-y-4">
@@ -149,7 +137,6 @@
                         <p class="text-xs text-slate-500 mt-4">*Llamar de un móvil u otro sitio puede generar cobro en facturación telefónica.</p>
                     </div>
 
-                    <!-- Directos -->
                     <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                         <h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">Números Directos</h3>
                         <ul class="space-y-4">
@@ -165,7 +152,6 @@
                         <p class="text-xs text-slate-500 mt-4">**Llamar para cobrar vía operadora internacional si está disponible.</p>
                     </div>
 
-                    <!-- Emails -->
                     <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm md:col-span-2">
                         <h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4 flex items-center gap-2">
                             <i data-lucide="mail" class="text-blue-600 w-5 h-5"></i> Correos Electrónicos
@@ -184,7 +170,6 @@
                 </div>
             </div>
 
-            <!-- CLAIMS VIEW -->
             <div id="claims" class="tab-content space-y-6">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -204,7 +189,6 @@
                     <p class="text-slate-600 text-sm mb-6">Si pagó por su cuenta, presente los requisitos en sucursales o de forma digital a:<br/>• Asegurados: <a href="mailto:clientescgsp@grupoins.com" class="text-blue-600 font-medium">clientescgsp@grupoins.com</a><br/>• Intermediarios: <a href="mailto:intermediarioscgsp@grupoins.com" class="text-blue-600 font-medium">intermediarioscgsp@grupoins.com</a></p>
 
                     <div class="space-y-4">
-                        <!-- Accordion Item 1 -->
                         <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
                             <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
                                 <div class="flex items-center gap-3">
@@ -223,7 +207,6 @@
                             </div>
                         </div>
 
-                        <!-- Accordion Item 2 -->
                         <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
                             <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
                                 <div class="flex items-center gap-3">
@@ -240,7 +223,6 @@
                             </div>
                         </div>
 
-                        <!-- Accordion Item 3 -->
                         <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
                             <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
                                 <div class="flex items-center gap-3">
@@ -261,7 +243,6 @@
                             </div>
                         </div>
 
-                        <!-- Accordion Item 4 -->
                         <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
                             <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
                                 <div class="flex items-center gap-3">
@@ -279,7 +260,6 @@
                             </div>
                         </div>
 
-                        <!-- Accordion Item 5 -->
                         <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
                             <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
                                 <div class="flex items-center gap-3">
@@ -303,7 +283,6 @@
                 </div>
             </div>
 
-            <!-- WIFICALL VIEW -->
             <div id="wificall" class="tab-content space-y-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
                     <div>
@@ -312,7 +291,7 @@
                         </h2>
                         <p class="text-slate-600 mt-1">Cómo solicitar asistencia mediante el bot de WhatsApp.</p>
                     </div>
-                    <a href="https://wa.me/5491167502557" target="_top" rel="noopener noreferrer" class="btn-ins bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium inline-flex items-center gap-2">
+                    <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="btn-ins bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium inline-flex items-center gap-2">
                         <i data-lucide="message-circle" class="w-5 h-5"></i> Abrir WhatsApp
                     </a>
                 </div>
@@ -358,7 +337,6 @@
                 </div>
             </div>
 
-            <!-- COVERAGE VIEW -->
             <div id="coverage" class="tab-content space-y-6">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -368,7 +346,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- SÍ cubre -->
                     <div class="bg-white border border-green-200 rounded-xl overflow-hidden shadow-sm">
                         <div class="bg-green-600 text-white font-bold p-4 flex items-center gap-2">
                             <i data-lucide="heart-pulse" class="w-5 h-5"></i> Lo que SÍ cubre
@@ -384,7 +361,6 @@
                         </ul>
                     </div>
 
-                    <!-- NO cubre -->
                     <div class="bg-white border border-red-200 rounded-xl overflow-hidden shadow-sm">
                         <div class="bg-red-600 text-white font-bold p-4 flex items-center gap-2">
                             <i data-lucide="shield-alert" class="w-5 h-5"></i> Lo que NO cubre (Exclusiones)
@@ -404,18 +380,15 @@
         </main>
     </div>
 
-    <!-- Footer de Seguros Digitales SDI -->
     <footer class="max-w-7xl mx-auto px-4 py-6 mt-4 text-center border-t border-slate-200 text-slate-500 text-sm">
         <p>Esta aplicación pertenece a <span class="font-semibold text-slate-700">Seguros Digitales SDI</span>.</p>
         <p>Visítenos en <a href="https://www.segurosdelins.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-medium">www.segurosdelins.com</a></p>
     </footer>
 
-    <!-- Mobile Floating Action Button -->
-    <a href="https://wa.me/5491167502557" target="_top" rel="noopener noreferrer" class="btn-ins md:hidden fixed bottom-6 right-4 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-105 active:scale-95 border-2 border-white">
+    <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="btn-ins md:hidden fixed bottom-6 right-4 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-105 active:scale-95 border-2 border-white">
         <i data-lucide="message-circle" class="w-8 h-8"></i>
     </a>
 
-    <!-- Scripts -->
     <script>
         // Inicializar iconos
         lucide.createIcons();
