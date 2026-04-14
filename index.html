@@ -10,36 +10,42 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        /* Ocultar barra de desplazamiento en el menú móvil */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 font-sans text-slate-800 pb-20 md:pb-0">
 
+    <!-- Header -->
     <header class="bg-blue-900 text-white shadow-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
             <div class="flex items-center gap-2 sm:gap-3">
-                <img 
-                    src="INS BLANCO.png" 
-                    alt="Logo INS" 
-                    class="h-6 sm:h-10 w-auto object-contain"
-                />
-                <div id="logo-divider" class="h-6 sm:h-8 border-l border-blue-700 mx-1 sm:mx-2"></div>
+                <img src="INS BLANCO.png" alt="Logo INS" class="h-6 sm:h-10 w-auto object-contain" />
+                <div class="h-6 sm:h-8 border-l border-blue-700 mx-1 sm:mx-2"></div>
                 <div class="flex flex-col justify-center">
                     <h1 class="text-base sm:text-xl font-bold tracking-tight leading-tight">Asistencia Viajero</h1>
-                    <span class="text-[9px] sm:text-xs text-blue-300 leading-tight mt-0.5">Agente Juan Carlos Hernández Vargas licencia 08-1318</span>
+                    <span class="text-[9px] sm:text-xs text-blue-300 leading-tight mt-0.5">Agente Juan Carlos Hernández Vargas · Licencia 08-1318</span>
                 </div>
             </div>
-            <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="btn-ins hidden md:flex bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full font-medium items-center gap-2 transition-colors">
-                <i data-lucide="message-circle" class="w-5 h-5"></i>
-                Wi-Fi Call (WhatsApp)
+            <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="hidden md:flex bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full font-medium items-center gap-2 transition-colors text-sm">
+                <i data-lucide="message-circle" class="w-4 h-4"></i> Wi-Fi Call (WhatsApp)
             </a>
         </div>
     </header>
 
+    <!-- Banner exclusividad -->
+    <div class="bg-gradient-to-r from-yellow-400 to-amber-400 py-2.5 px-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-center gap-2 text-center">
+            <i data-lucide="star" class="w-4 h-4 text-amber-900 flex-shrink-0 fill-amber-900"></i>
+            <p class="text-xs sm:text-sm font-bold text-amber-900">
+                Esta aplicación es un beneficio exclusivo de la asesoría de la oficina del Agente Juan Carlos Hernández Vargas — no es un recurso estándar del INS.
+            </p>
+        </div>
+    </div>
+
     <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col md:flex-row gap-4 sm:gap-6">
-        
+
+        <!-- Nav -->
         <nav class="w-full md:w-64 flex flex-row md:flex-col overflow-x-auto md:overflow-visible gap-2 md:gap-1 pb-2 md:pb-0 flex-shrink-0 snap-x no-scrollbar">
             <button onclick="switchTab('home')" id="btn-home" class="nav-btn bg-blue-100 text-blue-800 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base border border-transparent">
                 <i data-lucide="home" class="nav-icon w-5 h-5 text-blue-600"></i> Inicio
@@ -56,14 +62,25 @@
             <button onclick="switchTab('coverage')" id="btn-coverage" class="nav-btn text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-white md:bg-transparent border md:border-transparent border-slate-200 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base">
                 <i data-lucide="info" class="nav-icon w-5 h-5 text-slate-400"></i> Coberturas y Exclusiones
             </button>
+            <button onclick="switchTab('validity')" id="btn-validity" class="nav-btn text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-white md:bg-transparent border md:border-transparent border-slate-200 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base">
+                <i data-lucide="calendar" class="nav-icon w-5 h-5 text-slate-400"></i> Vigencia y Prórroga
+            </button>
         </nav>
 
+        <!-- Main content -->
         <main class="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 min-h-[80vh]">
-            
+
+            <!-- HOME -->
             <div id="home" class="tab-content active space-y-6 sm:space-y-8">
                 <div class="bg-blue-50 border-l-4 border-blue-600 p-4 sm:p-6 rounded-r-lg">
                     <h2 class="text-xl sm:text-2xl font-bold text-blue-900 mb-2">Portal de Asistencia en Viaje</h2>
-                    <p class="text-sm sm:text-base text-blue-800">Esta herramienta está diseñada para brindar orientación rápida y precisa sobre cómo proceder en caso de una emergencia en el extranjero utilizando el Seguro INS Viajero con Asistencia Autoexpedible.</p>
+                    <p class="text-sm sm:text-base text-blue-800">Esta herramienta está diseñada para brindar orientación rápida y precisa sobre cómo proceder en caso de una emergencia en el extranjero con el Seguro INS Viajero con Asistencia Autoexpedible.</p>
+                </div>
+
+                <!-- Aviso clave -->
+                <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 flex items-start gap-3">
+                    <i data-lucide="alert-triangle" class="text-amber-600 w-5 h-5 flex-shrink-0 mt-0.5"></i>
+                    <p class="text-sm text-amber-900"><strong>Regla de oro:</strong> Siempre contactar a la Unidad de Asistencia del INS de forma <strong>inmediata</strong> o dentro de las primeras <strong>48 horas</strong> del evento. Si no lo hace, el pago será exclusivamente por reembolso.</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -72,15 +89,15 @@
                             <i data-lucide="alert-triangle" class="text-red-600 w-5 h-5 sm:w-6 sm:h-6"></i>
                         </div>
                         <h3 class="text-base sm:text-lg font-bold text-slate-900">Tengo una Emergencia</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 mt-1">Ver números de teléfono gratuitos y directos para contactar a la Unidad de Asistencia inmediatamente.</p>
+                        <p class="text-xs sm:text-sm text-slate-600 mt-1">Números de teléfono gratuitos, directos y alternativos para contactar a la Unidad de Asistencia.</p>
                     </button>
 
-                    <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="btn-ins p-4 sm:p-6 border-2 border-slate-100 rounded-xl hover:border-green-400 hover:shadow-md transition-all text-left group block">
+                    <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="p-4 sm:p-6 border-2 border-slate-100 rounded-xl hover:border-green-400 hover:shadow-md transition-all text-left group block">
                         <div class="bg-green-100 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform">
                             <i data-lucide="message-circle" class="text-green-600 w-5 h-5 sm:w-6 sm:h-6"></i>
                         </div>
                         <h3 class="text-base sm:text-lg font-bold text-slate-900">Contactar por WhatsApp</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 mt-1">Iniciar un chat con el bot de Universal Assistance mediante Wi-Fi Call.</p>
+                        <p class="text-xs sm:text-sm text-slate-600 mt-1">Iniciar chat con Universal Assistance mediante Wi-Fi Call desde cualquier parte del mundo.</p>
                     </a>
 
                     <button onclick="switchTab('claims')" class="p-4 sm:p-6 border-2 border-slate-100 rounded-xl hover:border-blue-400 hover:shadow-md transition-all text-left group">
@@ -88,7 +105,7 @@
                             <i data-lucide="file-text" class="text-blue-600 w-5 h-5 sm:w-6 sm:h-6"></i>
                         </div>
                         <h3 class="text-base sm:text-lg font-bold text-slate-900">Requisitos para Reembolsos</h3>
-                        <p class="text-xs sm:text-sm text-slate-600 mt-1">Qué documentos presentar si no utilicé la Unidad de Asistencia y pagué por mi cuenta.</p>
+                        <p class="text-xs sm:text-sm text-slate-600 mt-1">Qué documentos presentar si pagó por su cuenta sin usar la Unidad de Asistencia.</p>
                     </button>
 
                     <button onclick="switchTab('coverage')" class="p-4 sm:p-6 border-2 border-slate-100 rounded-xl hover:border-purple-400 hover:shadow-md transition-all text-left group">
@@ -101,78 +118,101 @@
                 </div>
             </div>
 
+            <!-- CONTACTOS -->
             <div id="contacts" class="tab-content space-y-6">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <i data-lucide="phone-call" class="text-blue-600"></i> Contactos de Emergencia
                     </h2>
-                    <p class="text-slate-600 mt-2">Siempre solicitar el servicio a la unidad de asistencia del INS a través de los siguientes medios de forma inmediata (o máximo 48 hrs después del evento).</p>
+                    <p class="text-slate-600 mt-2">Contactar a la Unidad de Asistencia del INS de forma inmediata (o máximo 48 horas después del evento).</p>
+                </div>
+
+                <!-- WhatsApp -->
+                <div class="bg-green-50 rounded-xl p-6 border border-green-200 shadow-sm">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-green-900 flex items-center gap-2">
+                                <i data-lucide="message-circle" class="w-5 h-5"></i> WhatsApp / Wi-Fi Call
+                            </h3>
+                            <p class="text-green-800 text-sm mt-1">La forma más rápida si tiene conexión a internet. Funciona desde cualquier país.</p>
+                            <p class="text-green-900 font-mono font-bold mt-2 text-lg">+54 9 11 6750 2557</p>
+                        </div>
+                        <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors w-full sm:w-auto text-center">
+                            Iniciar Chat
+                        </a>
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-green-50 rounded-xl p-6 border border-green-200 shadow-sm md:col-span-2">
-                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                            <div>
-                                <h3 class="text-lg font-bold text-green-900 flex items-center gap-2">
-                                    <i data-lucide="message-circle" class="w-5 h-5"></i> WhatsApp / Wi-Fi Call
-                                </h3>
-                                <p class="text-green-800 text-sm mt-1">La forma más rápida si tienes conexión a internet.</p>
-                                <p class="text-green-900 font-mono font-bold mt-2">+54 9 11 6750 2557</p>
-                            </div>
-                            <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="btn-ins bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors w-full sm:w-auto text-center">
-                                Iniciar Chat
-                            </a>
-                        </div>
-                    </div>
-
+                    <!-- Gratuitos -->
                     <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
                         <h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">Números Gratuitos*</h3>
                         <ul class="space-y-4">
                             <li class="flex justify-between items-center">
-                                <span class="text-slate-600 font-medium">USA</span>
+                                <span class="text-slate-600 font-medium">🇺🇸 USA</span>
                                 <span class="font-mono font-bold text-blue-700">1 844 865 0804</span>
                             </li>
                             <li class="flex justify-between items-center">
-                                <span class="text-slate-600 font-medium">España</span>
+                                <span class="text-slate-600 font-medium">🇪🇸 España</span>
                                 <span class="font-mono font-bold text-blue-700">900 995 484</span>
                             </li>
                         </ul>
-                        <p class="text-xs text-slate-500 mt-4">*Llamar de un móvil u otro sitio puede generar cobro en facturación telefónica.</p>
+                        <p class="text-xs text-slate-500 mt-4">*Llamar desde móvil puede generar cobro en factura telefónica.</p>
                     </div>
 
+                    <!-- Directos -->
                     <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-                        <h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">Números Directos</h3>
-                        <ul class="space-y-4">
+                        <h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4">Números Directos**</h3>
+                        <ul class="space-y-3 text-sm">
                             <li class="flex flex-col">
-                                <span class="text-slate-600 font-medium text-sm">USA / Canadá / Caribe / Américas**</span>
-                                <span class="font-mono font-bold text-blue-700">+1 (407) 264-7118</span>
+                                <span class="text-slate-500 font-medium">🇺🇸 USA / 🇨🇦 Canadá / Caribe / Américas</span>
+                                <span class="font-mono font-bold text-blue-700 text-base">+1 (407) 264-7118</span>
                             </li>
                             <li class="flex flex-col">
-                                <span class="text-slate-600 font-medium text-sm">España / Europa / Resto del Mundo**</span>
-                                <span class="font-mono font-bold text-blue-700">+34 (91) 189-5152</span>
+                                <span class="text-slate-500 font-medium">🇪🇸 España / Europa / Resto del Mundo</span>
+                                <span class="font-mono font-bold text-blue-700 text-base">+34 (91) 189-5152</span>
                             </li>
                         </ul>
                         <p class="text-xs text-slate-500 mt-4">**Llamar para cobrar vía operadora internacional si está disponible.</p>
                     </div>
+                </div>
 
-                    <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm md:col-span-2">
-                        <h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4 flex items-center gap-2">
-                            <i data-lucide="mail" class="text-blue-600 w-5 h-5"></i> Correos Electrónicos
-                        </h3>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-sm text-slate-500 font-medium">Asistencia Internacional</p>
-                                <a href="mailto:insinternacional@grupoins.com" class="text-blue-600 hover:underline font-medium break-all">insinternacional@grupoins.com</a>
-                            </div>
-                            <div>
-                                <p class="text-sm text-slate-500 font-medium">Universal Assistance</p>
-                                <a href="mailto:INS_Asistencias@universal-assistance.com" class="text-blue-600 hover:underline font-medium break-all">INS_Asistencias@universal-assistance.com</a>
-                            </div>
+                <!-- Alternativos -->
+                <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2 mb-3">
+                        <i data-lucide="phone-forwarded" class="text-slate-500 w-4 h-4"></i> Líneas Alternativas (si no logra contacto)
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div class="bg-white rounded-lg p-3 border border-slate-200">
+                            <span class="text-slate-500 block text-xs mb-1">Alternativa USA</span>
+                            <span class="font-mono font-bold text-slate-700">+1 (305) 590-8016</span>
+                        </div>
+                        <div class="bg-white rounded-lg p-3 border border-slate-200">
+                            <span class="text-slate-500 block text-xs mb-1">Alternativa España / Europa</span>
+                            <span class="font-mono font-bold text-slate-700">+34 (91) 593-4227</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emails -->
+                <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                    <h3 class="text-lg font-bold text-slate-900 border-b pb-2 mb-4 flex items-center gap-2">
+                        <i data-lucide="mail" class="text-blue-600 w-5 h-5"></i> Correos Electrónicos
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">Asistencia Internacional (INS)</p>
+                            <a href="mailto:insinternacional@grupoins.com" class="text-blue-600 hover:underline font-medium break-all text-sm">insinternacional@grupoins.com</a>
+                        </div>
+                        <div>
+                            <p class="text-sm text-slate-500 font-medium">Universal Assistance</p>
+                            <a href="mailto:INS_Asistencias@universal-assistance.com" class="text-blue-600 hover:underline font-medium break-all text-sm">INS_Asistencias@universal-assistance.com</a>
                         </div>
                     </div>
                 </div>
             </div>
 
+            <!-- RECLAMOS -->
             <div id="claims" class="tab-content space-y-6">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
@@ -184,117 +224,159 @@
                     <h3 class="font-bold text-amber-900 flex items-center gap-2">
                         <i data-lucide="alert-triangle" class="w-5 h-5"></i> PASO 1: AVISO INMEDIATO (Obligatorio)
                     </h3>
-                    <p class="text-amber-800 mt-2 text-sm">El Asegurado deberá dar aviso a la Unidad de Asistencia en el extranjero de <strong>forma inmediata</strong>. Si no es posible, contará con <strong>48 horas</strong> después del evento. El retraso implica que el pago se realizará por reembolso.</p>
+                    <p class="text-amber-800 mt-2 text-sm">El Asegurado deberá dar aviso a la Unidad de Asistencia del INS de <strong>forma inmediata</strong>. Si no es posible, cuenta con <strong>48 horas</strong> después del evento. El retraso implica que el pago se realizará únicamente por reembolso.</p>
                 </div>
 
                 <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
-                    <h3 class="font-bold text-slate-900 text-lg mb-2">PASO 2: Trámite por Reembolso</h3>
-                    <p class="text-slate-600 text-sm mb-6">Si pagó por su cuenta, presente los requisitos en sucursales o de forma digital a:<br/>• Asegurados: <a href="mailto:clientescgsp@grupoins.com" class="text-blue-600 font-medium">clientescgsp@grupoins.com</a><br/>• Intermediarios: <a href="mailto:intermediarioscgsp@grupoins.com" class="text-blue-600 font-medium">intermediarioscgsp@grupoins.com</a></p>
+                    <h3 class="font-bold text-slate-900 text-lg mb-1">PASO 2: Trámite por Reembolso</h3>
+                    <p class="text-slate-600 text-sm mb-5">Si pagó por su cuenta, presente los requisitos en sucursales o de forma digital:</p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                            <p class="text-blue-700 font-semibold text-xs uppercase tracking-wide mb-1">Asegurados</p>
+                            <a href="mailto:clientescgsp@grupoins.com" class="text-blue-700 font-medium break-all hover:underline">clientescgsp@grupoins.com</a>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+                            <p class="text-blue-700 font-semibold text-xs uppercase tracking-wide mb-1">Intermediarios / Agentes</p>
+                            <a href="mailto:intermediarioscgsp@grupoins.com" class="text-blue-700 font-medium break-all hover:underline">intermediarioscgsp@grupoins.com</a>
+                        </div>
+                        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm sm:col-span-2">
+                            <p class="text-amber-800 font-semibold text-xs uppercase tracking-wide mb-1">⚠️ Cancelación de viaje (sin haber salido de Costa Rica)</p>
+                            <a href="mailto:cgspsecretaria@grupoins.com" class="text-amber-800 font-medium break-all hover:underline">cgspsecretaria@grupoins.com</a>
+                        </div>
+                    </div>
 
                     <div class="space-y-4">
+                        <!-- Gastos Médicos -->
                         <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none">
                                 <div class="flex items-center gap-3">
                                     <i data-lucide="heart-pulse" class="text-red-500 w-5 h-5"></i>
                                     <span class="font-bold text-slate-800">Asistencia para Gastos Médicos</span>
                                 </div>
-                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300 transform"></i>
+                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300"></i>
                             </button>
                             <div class="accordion-content hidden p-4 border-t border-slate-200 bg-white">
                                 <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700">
-                                    <li><strong>Solicitud de Beneficios</strong> (formularios otorgados por el INS).</li>
-                                    <li>Facturas canceladas de los gastos efectuados con el detalle y costo.</li>
+                                    <li><strong>Solicitud de Beneficios</strong> (formularios del INS).</li>
+                                    <li>Facturas canceladas de los gastos con detalle y costo.</li>
                                     <li>Recetas y prescripciones médicas.</li>
-                                    <li>Reportes e <strong>informe médico completo</strong> que incluya diagnóstico, evolución y tratamiento.</li>
+                                    <li>Informe médico completo: diagnóstico, evolución y tratamiento.</li>
                                 </ul>
+                                <div class="mt-3 bg-blue-50 rounded-lg p-3 text-xs text-blue-800 border border-blue-200">
+                                    <strong>Nota:</strong> Si usó la Unidad de Asistencia del INS, ellos coordinan todo directamente y no necesita presentar documentación.
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Retraso de vuelo -->
                         <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none">
                                 <div class="flex items-center gap-3">
                                     <i data-lucide="clock" class="text-orange-500 w-5 h-5"></i>
                                     <span class="font-bold text-slate-800">Retraso de Vuelo</span>
                                 </div>
-                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300 transform"></i>
+                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300"></i>
                             </button>
                             <div class="accordion-content hidden p-4 border-t border-slate-200 bg-white">
                                 <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700">
                                     <li>Fotocopia del boleto.</li>
-                                    <li>Documento de la línea aérea en el que conste el <strong>motivo</strong> y la <strong>cantidad de tiempo (horas)</strong> del retraso.</li>
+                                    <li>Documento de la línea aérea que indique el <strong>motivo</strong> y las <strong>horas de retraso</strong>.</li>
                                 </ul>
+                                <p class="text-xs text-orange-700 mt-3 bg-orange-50 rounded p-2 border border-orange-200"><strong>Aplica solo si el retraso es de 12 horas o más</strong> y no en vuelos con origen en Costa Rica.</p>
                             </div>
                         </div>
 
+                        <!-- Pérdida de equipaje -->
                         <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none">
                                 <div class="flex items-center gap-3">
                                     <i data-lucide="briefcase" class="text-yellow-600 w-5 h-5"></i>
                                     <span class="font-bold text-slate-800">Pérdida de Equipaje</span>
                                 </div>
-                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300 transform"></i>
+                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300"></i>
                             </button>
                             <div class="accordion-content hidden p-4 border-t border-slate-200 bg-white space-y-4 text-sm text-slate-700">
                                 <div>
-                                    <h4 class="font-bold text-slate-900">Pérdida Temporal:</h4>
-                                    <ul class="list-disc pl-5 mt-1"><li>Denuncia al Aeropuerto, línea aérea o naval.</li><li>Fotocopia del pasaje.</li></ul>
+                                    <h4 class="font-bold text-slate-900">Pérdida Temporal (más de 12 horas):</h4>
+                                    <ul class="list-disc pl-5 mt-1 space-y-1">
+                                        <li>Denuncia al aeropuerto, línea aérea o naviera.</li>
+                                        <li>Fotocopia del pasaje.</li>
+                                    </ul>
                                 </div>
                                 <div>
                                     <h4 class="font-bold text-slate-900">Pérdida Definitiva:</h4>
-                                    <ul class="list-disc pl-5 mt-1"><li>Denuncia al Aeropuerto, línea aérea o naval.</li><li>Fotocopia del pasaje.</li><li><strong>Fotocopia de la indemnización</strong> que le dio la aerolínea.</li></ul>
+                                    <ul class="list-disc pl-5 mt-1 space-y-1">
+                                        <li>Denuncia al aeropuerto, línea aérea o naviera.</li>
+                                        <li>Fotocopia del pasaje.</li>
+                                        <li><strong>Fotocopia de la indemnización</strong> que otorgó la aerolínea.</li>
+                                    </ul>
                                 </div>
+                                <p class="text-xs text-red-700 bg-red-50 rounded p-2 border border-red-200"><strong>No se cubre</strong> pérdida de equipaje transportado por vía terrestre ni pérdida en el viaje de regreso a Costa Rica.</p>
                             </div>
                         </div>
 
+                        <!-- Pasaporte -->
                         <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none">
                                 <div class="flex items-center gap-3">
                                     <i data-lucide="file-text" class="text-blue-500 w-5 h-5"></i>
                                     <span class="font-bold text-slate-800">Pérdida de Pasaporte</span>
                                 </div>
-                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300 transform"></i>
+                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300"></i>
                             </button>
                             <div class="accordion-content hidden p-4 border-t border-slate-200 bg-white">
                                 <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700">
                                     <li>Salvoconducto gestionado ante la embajada o reporte policial.</li>
                                     <li>Solicitud de reembolso por gastos de alojamiento y transporte.</li>
-                                    <li>Facturas de los gastos efectuados por este concepto.</li>
+                                    <li>Facturas de los gastos efectuados.</li>
                                 </ul>
                             </div>
                         </div>
 
+                        <!-- Cancelación -->
                         <div class="border border-slate-200 rounded-lg overflow-hidden bg-white">
-                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset">
+                            <button onclick="toggleAccordion(this)" class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors text-left focus:outline-none">
                                 <div class="flex items-center gap-3">
                                     <i data-lucide="plane" class="text-purple-500 w-5 h-5"></i>
-                                    <span class="font-bold text-slate-800">Cancelación o Acortamiento</span>
+                                    <span class="font-bold text-slate-800">Cancelación o Acortamiento de Viaje</span>
                                 </div>
-                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300 transform"></i>
+                                <i data-lucide="chevron-right" class="accordion-icon text-slate-400 w-5 h-5 transition-transform duration-300"></i>
                             </button>
-                            <div class="accordion-content hidden p-4 border-t border-slate-200 bg-white">
-                                <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700">
+                            <div class="accordion-content hidden p-4 border-t border-slate-200 bg-white space-y-3 text-sm text-slate-700">
+                                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-800">
+                                    <strong>Si cancela antes de salir del país:</strong> enviar correo a <a href="mailto:cgspsecretaria@grupoins.com" class="underline font-medium">cgspsecretaria@grupoins.com</a>
+                                </div>
+                                <p class="font-semibold text-slate-800">Documentos requeridos:</p>
+                                <ul class="list-disc pl-5 space-y-1">
                                     <li>Factura de boletos aéreos y reservaciones de hotel.</li>
                                     <li>Documento de anulación de reserva.</li>
-                                    <li>Facturas de los gastos incurridos por dicha anulación.</li>
+                                    <li>Facturas de gastos incurridos por la anulación.</li>
                                     <li>Documentos que comprueben el <strong>monto reintegrado</strong> por aerolínea.</li>
                                     <li>Informe médico con diagnóstico o Certificado de defunción.</li>
-                                    <li>Constancia de relación de parentesco (Si aplica).</li>
+                                    <li>Constancia de relación de parentesco (si aplica).</li>
                                 </ul>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800 flex items-start gap-3">
+                    <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                    <p>El INS tiene <strong>10 días hábiles</strong> para responder desde que recibe la reclamación completa, y el mismo plazo para realizar el pago una vez aprobado el reclamo.</p>
+                </div>
             </div>
 
+            <!-- WI-FI CALL -->
             <div id="wificall" class="tab-content space-y-6">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
                     <div>
                         <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
                             <i data-lucide="wifi" class="text-blue-600"></i> Guía de Usuario: Wi-Fi Call
                         </h2>
-                        <p class="text-slate-600 mt-1">Cómo solicitar asistencia mediante el bot de WhatsApp.</p>
+                        <p class="text-slate-600 mt-1">Cómo solicitar asistencia mediante el bot de WhatsApp desde el exterior.</p>
                     </div>
-                    <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="btn-ins bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium inline-flex items-center gap-2">
+                    <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium inline-flex items-center gap-2 text-sm">
                         <i data-lucide="message-circle" class="w-5 h-5"></i> Abrir WhatsApp
                     </a>
                 </div>
@@ -303,79 +385,150 @@
                     <div class="p-5 rounded-xl border border-slate-200 bg-white shadow-sm relative pt-8">
                         <div class="absolute -top-5 left-4 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md bg-blue-600">1</div>
                         <h3 class="font-bold text-lg text-slate-900 mb-2">Registre el Número</h3>
-                        <p class="text-sm text-slate-600 leading-relaxed">Inicie un chat con el número +54 9 11 6750-2557 (Cuenta verificada de Universal Assistance).</p>
+                        <p class="text-sm text-slate-600 leading-relaxed">Inicie un chat en WhatsApp con el número <strong>+54 9 11 6750-2557</strong> (cuenta verificada de Universal Assistance).</p>
                     </div>
-                    
+
                     <div class="p-5 rounded-xl border border-slate-200 bg-white shadow-sm relative pt-8">
                         <div class="absolute -top-5 left-4 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md bg-blue-600">2</div>
                         <h3 class="font-bold text-lg text-slate-900 mb-2">Mensaje de Bienvenida</h3>
-                        <p class="text-sm text-slate-600 leading-relaxed">El bot responderá: 'Gracias por comunicarse con Universal Assistance, la asistencia al viajero del INS.'</p>
+                        <p class="text-sm text-slate-600 leading-relaxed">El bot responderá: <em>"Gracias por comunicarse con Universal Assistance, la asistencia al viajero del INS."</em></p>
                     </div>
 
                     <div class="p-5 rounded-xl border border-slate-200 bg-white shadow-sm relative pt-8">
                         <div class="absolute -top-5 left-4 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md bg-blue-600">3</div>
                         <h3 class="font-bold text-lg text-slate-900 mb-2">Seleccione Opción</h3>
                         <p class="text-sm text-slate-600 leading-relaxed">
-                            1. Asistencia médica.<br/>2. Consultar por un rembolso.<br/>3. Vuelo demorado.<br/>4. Pérdida equipaje.<br/>5. Otras consultas.
+                            1. Asistencia médica.<br/>
+                            2. Consultar un reembolso.<br/>
+                            3. Vuelo demorado.<br/>
+                            4. Pérdida de equipaje.<br/>
+                            5. Otras consultas.
                         </p>
                     </div>
 
                     <div class="p-5 rounded-xl border border-slate-200 bg-white shadow-sm relative pt-8">
                         <div class="absolute -top-5 left-4 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md bg-blue-600">4</div>
-                        <h3 class="font-bold text-lg text-slate-900 mb-2">Para Opciones 1, 3, 4, 5</h3>
-                        <p class="text-sm text-slate-600 leading-relaxed">El bot le enviará un enlace: 'Por favor ingrese en este enlace para comunicarse con nosotros...'</p>
+                        <h3 class="font-bold text-lg text-slate-900 mb-2">Opciones 1, 3, 4 ó 5</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">El bot enviará un enlace: <em>"Por favor ingrese en este enlace para comunicarse con nosotros..."</em></p>
                     </div>
 
                     <div class="p-5 rounded-xl border border-green-400 bg-green-50 shadow-md relative pt-8">
                         <div class="absolute -top-5 left-4 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md bg-green-600">5</div>
-                        <h3 class="font-bold text-lg text-slate-900 mb-2">Haga clic en WI-FI CALL</h3>
-                        <p class="text-sm text-slate-600 leading-relaxed">Al abrir el enlace, presione el botón que dice 'WI-FI CALL'. Será atendido por un ejecutivo.</p>
+                        <h3 class="font-bold text-lg text-slate-900 mb-2">Presione WI-FI CALL</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">Al abrir el enlace, presione el botón <strong>"WI-FI CALL"</strong>. Un ejecutivo lo atenderá en tiempo real.</p>
                     </div>
 
                     <div class="p-5 rounded-xl border border-slate-200 bg-white shadow-sm relative pt-8">
                         <div class="absolute -top-5 left-4 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white shadow-md bg-blue-600">6</div>
-                        <h3 class="font-bold text-lg text-slate-900 mb-2">Para Opción 2</h3>
-                        <p class="text-sm text-slate-600 leading-relaxed">Si digita la opción 2, el bot le brindará el correo electrónico para consultar el estado de su reembolso.</p>
+                        <h3 class="font-bold text-lg text-slate-900 mb-2">Opción 2 (Reembolso)</h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">Si digita la opción 2, el bot le enviará el correo electrónico para consultar el estado de su reembolso.</p>
                     </div>
                 </div>
             </div>
 
+            <!-- COBERTURAS -->
             <div id="coverage" class="tab-content space-y-6">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
                         <i data-lucide="info" class="text-blue-600"></i> Resumen de Coberturas y Exclusiones
                     </h2>
-                    <p class="text-slate-600 mt-1">Información estandarizada basada en el DERSA y Condiciones Generales.</p>
+                    <p class="text-slate-600 mt-1">Basado en el DERSA y Condiciones Generales del Seguro INS Viajero (Registro SUGESE P19-57-A01-972 V5).</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Lo que cubre -->
                     <div class="bg-white border border-green-200 rounded-xl overflow-hidden shadow-sm">
                         <div class="bg-green-600 text-white font-bold p-4 flex items-center gap-2">
                             <i data-lucide="heart-pulse" class="w-5 h-5"></i> Lo que SÍ cubre
                         </div>
                         <ul class="p-4 space-y-3 text-sm text-slate-700 divide-y divide-slate-100">
-                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Gastos médicos por accidente o enfermedad aguda (incluye pandémicas).</li>
-                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Emergencias dentales (alivio del dolor).</li>
-                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Indemnización por muerte, pérdida de extremidades o incapacidad por accidente.</li>
-                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Renta diaria por hospitalización (hasta 10 días).</li>
-                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Pérdida de equipaje y pasaporte.</li>
-                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Cancelación, acortamiento de viaje o retraso.</li>
-                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4"></i> Lesiones por deportes extremos de manera <strong>no profesional</strong>.</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Gastos médicos por accidente o enfermedad aguda (incluye epidémicas y pandémicas).</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Emergencias dentales para alivio del dolor.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Indemnización por muerte, pérdida de extremidades o incapacidad total por accidente.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Renta diaria por hospitalización (hasta 10 días), adicional a gastos médicos.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Repatriación sanitaria y de restos mortales a Costa Rica.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Pérdida de equipaje (temporal y definitiva) y pasaporte.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Cancelación o acortamiento de viaje, y retraso de vuelo (12+ horas).</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Lesiones por deportes extremos de manera <strong>no profesional</strong>.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="chevron-right" class="text-green-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Retorno de menores en caso de incapacidad del asegurado.</span></li>
                         </ul>
                     </div>
 
+                    <!-- Lo que NO cubre -->
                     <div class="bg-white border border-red-200 rounded-xl overflow-hidden shadow-sm">
                         <div class="bg-red-600 text-white font-bold p-4 flex items-center gap-2">
                             <i data-lucide="shield-alert" class="w-5 h-5"></i> Lo que NO cubre (Exclusiones)
                         </div>
                         <ul class="p-4 space-y-3 text-sm text-slate-700 divide-y divide-slate-100">
-                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4"></i> Enfermedades <strong>preexistentes</strong> y embarazos (solo cubre atención básica en urgencias).</li>
-                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4"></i> Consumo voluntario de alcohol o drogas no recetadas.</li>
-                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4"></i> Práctica <strong>profesional</strong> de deportes o automovilismo.</li>
-                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4"></i> Guerra, terrorismo y actos delictivos.</li>
-                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4"></i> Tratamientos preventivos, vacunas o enfermedades venéreas.</li>
-                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4"></i> Tratamientos realizados por familiares directos.</li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4 mt-0.5"></i><span><strong>Enfermedades preexistentes</strong> (solo cubre atención de emergencia si hay riesgo de vida).</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4 mt-0.5"></i><span><strong>Embarazo</strong> y sus complicaciones.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Consumo voluntario de alcohol, drogas o sustancias no prescritas.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Práctica <strong>profesional</strong> de deportes o automovilismo de competencia.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Guerra, terrorismo y actos delictivos.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Tratamientos preventivos, vacunas o enfermedades venéreas.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Tratamientos realizados por familiares directos del asegurado.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Autolesiones, intento de suicidio o trastornos mentales.</span></li>
+                            <li class="pt-2 flex gap-2"><i data-lucide="alert-triangle" class="text-red-500 shrink-0 w-4 h-4 mt-0.5"></i><span>Equipaje transportado por vía terrestre.</span></li>
                         </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIGENCIA -->
+            <div id="validity" class="tab-content space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="calendar" class="text-blue-600"></i> Vigencia y Prórroga del Seguro
+                    </h2>
+                    <p class="text-slate-600 mt-1">Información importante sobre cuándo inicia, cuándo termina y cómo extender su póliza.</p>
+                </div>
+
+                <!-- Cards de vigencia -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-center">
+                        <i data-lucide="plane-takeoff" class="w-8 h-8 text-blue-600 mx-auto mb-2"></i>
+                        <h3 class="font-bold text-blue-900 mb-1">Inicio</h3>
+                        <p class="text-sm text-blue-800">Al momento de salir de Costa Rica (aprobación de Migración).</p>
+                    </div>
+                    <div class="bg-green-50 border border-green-200 rounded-xl p-5 text-center">
+                        <i data-lucide="clock" class="w-8 h-8 text-green-600 mx-auto mb-2"></i>
+                        <h3 class="font-bold text-green-900 mb-1">Máximo</h3>
+                        <p class="text-sm text-green-800"><strong>180 días</strong> naturales continuos por viaje.</p>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 text-center">
+                        <i data-lucide="plane-landing" class="w-8 h-8 text-slate-600 mx-auto mb-2"></i>
+                        <h3 class="font-bold text-slate-900 mb-1">Fin</h3>
+                        <p class="text-sm text-slate-700">Al registrar ingreso en Migración de Costa Rica o al vencer la vigencia.</p>
+                    </div>
+                </div>
+
+                <!-- Cancelación especial -->
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
+                    <div class="flex items-start gap-3">
+                        <i data-lucide="info" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                        <div>
+                            <h4 class="font-bold text-amber-900 mb-1">Cobertura de Cancelación: vigencia especial</h4>
+                            <p class="text-sm text-amber-800">Para la cobertura de <strong>Cancelación y Acortamiento de Viaje</strong>, la vigencia inicia desde la fecha en que se reserva y paga el viaje, aunque aún no haya salido del país.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prórroga -->
+                <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-slate-700 text-white font-bold p-4 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-5 h-5"></i> ¿Puede extender la póliza?
+                    </div>
+                    <div class="p-5 space-y-3 text-sm text-slate-700">
+                        <p>Sí, es posible prorrogar la vigencia si cumple <strong>todas</strong> estas condiciones:</p>
+                        <ul class="space-y-2">
+                            <li class="flex items-start gap-2"><i data-lucide="check-circle" class="text-green-500 w-4 h-4 flex-shrink-0 mt-0.5"></i> Solicitarlo al INS con mínimo <strong>2 días hábiles</strong> antes de que venza la póliza.</li>
+                            <li class="flex items-start gap-2"><i data-lucide="check-circle" class="text-green-500 w-4 h-4 flex-shrink-0 mt-0.5"></i> Coordinar el pago de la prima adicional desde Costa Rica.</li>
+                            <li class="flex items-start gap-2"><i data-lucide="check-circle" class="text-green-500 w-4 h-4 flex-shrink-0 mt-0.5"></i> No tener ninguna solicitud de servicios médicos activa al momento de pedir la extensión.</li>
+                            <li class="flex items-start gap-2"><i data-lucide="check-circle" class="text-green-500 w-4 h-4 flex-shrink-0 mt-0.5"></i> El total acumulado no puede superar <strong>180 días continuos</strong>.</li>
+                        </ul>
+                        <div class="bg-blue-50 rounded-lg p-3 border border-blue-200 mt-2">
+                            <p class="text-blue-800"><strong>Derecho de retracto:</strong> Si cancela la póliza dentro de los primeros <strong>5 días hábiles</strong> de emitida y sin haber presentado ningún reclamo, el INS le devuelve el 100% de la prima.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -383,50 +536,43 @@
         </main>
     </div>
 
+    <!-- Footer -->
     <footer class="max-w-7xl mx-auto px-4 py-6 mt-4 text-center border-t border-slate-200 text-slate-500 text-sm">
         <p>Esta aplicación pertenece a <span class="font-semibold text-slate-700">Seguros Digitales SDI</span>.</p>
         <p>Visítenos en <a href="https://www.segurosdelins.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-medium">www.segurosdelins.com</a></p>
-        
         <div class="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-400 max-w-4xl mx-auto leading-relaxed">
             <p>© 2026 Propiedad Intelectual de Juan Carlos Hernández Vargas. Todos los derechos reservados.</p>
             <p class="mt-1">Esta plataforma es una herramienta de uso exclusivo para los clientes vinculados a la Licencia Sugese 08-1318. Queda prohibida su reproducción o uso por terceros sin autorización expresa del titular.</p>
         </div>
     </footer>
 
-    <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="btn-ins md:hidden fixed bottom-6 right-4 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-105 active:scale-95 border-2 border-white">
+    <!-- FAB WhatsApp móvil -->
+    <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="md:hidden fixed bottom-6 right-4 z-50 bg-green-500 hover:bg-green-600 text-white p-4 rounded-full shadow-xl flex items-center justify-center transition-transform hover:scale-105 active:scale-95 border-2 border-white">
         <i data-lucide="message-circle" class="w-8 h-8"></i>
     </a>
 
     <script>
-        // Inicializar iconos
         lucide.createIcons();
 
-        // Lógica de pestañas (Navegación)
         function switchTab(tabId) {
-            // Ocultar todos los contenidos
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            // Mostrar el objetivo
             document.getElementById(tabId).classList.add('active');
 
-            // Resetear estilos de todos los botones
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.className = "nav-btn text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-white md:bg-transparent border md:border-transparent border-slate-200 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base";
                 const icon = btn.querySelector('.nav-icon');
-                if(icon) icon.classList.replace('text-blue-600', 'text-slate-400');
+                if (icon) icon.className = icon.className.replace('text-blue-600', 'text-slate-400');
             });
 
-            // Aplicar estilo activo al botón seleccionado
             const activeBtn = document.getElementById('btn-' + tabId);
             activeBtn.className = "nav-btn bg-blue-100 text-blue-800 border border-transparent snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base";
             const activeIcon = activeBtn.querySelector('.nav-icon');
-            if(activeIcon) activeIcon.classList.replace('text-slate-400', 'text-blue-600');
+            if (activeIcon) activeIcon.className = activeIcon.className.replace('text-slate-400', 'text-blue-600');
         }
 
-        // Lógica de acordeón
         function toggleAccordion(btn) {
             const content = btn.nextElementSibling;
             const icon = btn.querySelector('.accordion-icon');
-            
             if (content.classList.contains('hidden')) {
                 content.classList.remove('hidden');
                 icon.classList.add('rotate-90');
