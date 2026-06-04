@@ -65,6 +65,9 @@
             <button onclick="switchTab('validity')" id="btn-validity" class="nav-btn text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-white md:bg-transparent border md:border-transparent border-slate-200 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base">
                 <i data-lucide="calendar" class="nav-icon w-5 h-5 text-slate-400"></i> Vigencia y Prórroga
             </button>
+            <button onclick="switchTab('crosssell')" id="btn-crosssell" data-accent="amber" class="nav-btn text-slate-600 hover:bg-amber-50 hover:text-slate-900 bg-white md:bg-transparent border border-amber-200 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base">
+                <i data-lucide="sparkles" class="nav-icon w-5 h-5 text-amber-500"></i> Comprá / Recomendá
+            </button>
         </nav>
 
         <!-- Main content -->
@@ -533,6 +536,91 @@
                 </div>
             </div>
 
+            <!-- COMPRÁ / RECOMENDÁ (venta cruzada) -->
+            <div id="crosssell" class="tab-content space-y-6 sm:space-y-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                        <i data-lucide="sparkles" class="text-amber-500"></i> Tu próximo viaje
+                    </h2>
+                    <p class="text-slate-600 mt-1">El Seguro INS Viajero es <strong>por viaje y no renovable</strong>: cada nuevo viaje necesita su propia póliza. Cotizá de nuevo en segundos o recomendános a un amigo que viaje pronto.</p>
+                </div>
+
+                <!-- Comprar de nuevo -->
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white p-6 sm:p-8 shadow-lg">
+                    <i data-lucide="plane" class="absolute -right-8 -top-8 w-40 h-40 text-white/10 rotate-12"></i>
+                    <div class="relative">
+                        <span class="inline-flex items-center gap-1.5 bg-amber-400 text-amber-950 text-xs font-bold px-3 py-1 rounded-full mb-3">
+                            <i data-lucide="zap" class="w-3.5 h-3.5"></i> Cotizá en menos de 1 minuto
+                        </span>
+                        <h3 class="text-2xl sm:text-3xl font-extrabold leading-tight mb-2">¿Ya estás planeando otro viaje?</h3>
+                        <p class="text-blue-100 text-sm sm:text-base max-w-xl mb-6">Volvé a viajar tranquilo con gastos médicos, equipaje, cancelación de viaje y asistencia 24/7 en el exterior. Como esta póliza es por viaje, comprá una nueva para tu próxima salida del país.</p>
+                        <a href="https://www.segurosdelins.com/seguros-de-viaje" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold px-6 py-3.5 rounded-xl transition-colors shadow-md">
+                            <i data-lucide="shopping-cart" class="w-5 h-5"></i> Cotizar mi próximo viaje
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recomendar a un amigo -->
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center gap-2 mb-1">
+                        <i data-lucide="heart-handshake" class="text-green-600 w-5 h-5"></i> Recomendá a un amigo
+                    </h3>
+                    <p class="text-slate-600 text-sm mb-4">¿Conocés a alguien que viaja pronto? Compartile el seguro o esta misma app de asistencia. Elegí qué querés enviar:</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Compartir la página de ventas -->
+                        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
+                            <div class="bg-blue-100 w-11 h-11 rounded-full flex items-center justify-center mb-3">
+                                <i data-lucide="globe" class="text-blue-600 w-5 h-5"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-900">Compartí el seguro</h4>
+                            <p class="text-sm text-slate-600 mt-1 mb-4 flex-1">Mandale el link para que tu amigo cotice y compre su propio Seguro INS Viajero.</p>
+                            <div class="space-y-2">
+                                <button onclick="shareWhatsApp('sales')" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm">
+                                    <i data-lucide="message-circle" class="w-4 h-4"></i> Compartir por WhatsApp
+                                </button>
+                                <div class="flex gap-2">
+                                    <button onclick="shareNative('sales')" class="js-native-share flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-sm">
+                                        <i data-lucide="share-2" class="w-4 h-4"></i> Compartir
+                                    </button>
+                                    <button onclick="copyLink('sales')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-sm">
+                                        <i data-lucide="copy" class="w-4 h-4"></i> Copiar link
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Compartir esta app -->
+                        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
+                            <div class="bg-purple-100 w-11 h-11 rounded-full flex items-center justify-center mb-3">
+                                <i data-lucide="smartphone" class="text-purple-600 w-5 h-5"></i>
+                            </div>
+                            <h4 class="font-bold text-slate-900">Compartí esta app</h4>
+                            <p class="text-sm text-slate-600 mt-1 mb-4 flex-1">Mandale esta app de asistencia: contactos de emergencia, guía de reclamos y coberturas siempre a mano.</p>
+                            <div class="space-y-2">
+                                <button onclick="shareWhatsApp('app')" class="w-full bg-green-500 hover:bg-green-600 text-white font-semibold px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 transition-colors text-sm">
+                                    <i data-lucide="message-circle" class="w-4 h-4"></i> Compartir por WhatsApp
+                                </button>
+                                <div class="flex gap-2">
+                                    <button onclick="shareNative('app')" class="js-native-share flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-sm">
+                                        <i data-lucide="share-2" class="w-4 h-4"></i> Compartir
+                                    </button>
+                                    <button onclick="copyLink('app')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-colors text-sm">
+                                        <i data-lucide="copy" class="w-4 h-4"></i> Copiar link
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nota de cierre -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800 flex items-start gap-3">
+                    <i data-lucide="info" class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5"></i>
+                    <p>Gracias por confiar en nosotros para tus viajes. Recomendar esta protección a quienes querés es la mejor forma de que ellos también viajen tranquilos.</p>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -555,19 +643,31 @@
         lucide.createIcons();
 
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(function (el) { el.classList.remove('active'); });
+            var pane = document.getElementById(tabId);
+            if (pane) pane.classList.add('active');
 
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.className = "nav-btn text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-white md:bg-transparent border md:border-transparent border-slate-200 snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base";
-                const icon = btn.querySelector('.nav-icon');
-                if (icon) icon.className = icon.className.replace('text-blue-600', 'text-slate-400');
+            // classList funciona en <svg> (Lucide); className.replace NO (svg.className es objeto, no texto).
+            var base = "nav-btn snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base border";
+            document.querySelectorAll('.nav-btn').forEach(function (btn) {
+                var isActive = btn.id === 'btn-' + tabId;
+                var isSpecial = btn.dataset.accent === 'amber';
+                if (isActive) {
+                    btn.className = base + (isSpecial ? " bg-amber-100 text-amber-900 border-amber-300" : " bg-blue-100 text-blue-800 border-transparent");
+                } else {
+                    btn.className = base + (isSpecial ? " text-slate-600 hover:bg-amber-50 hover:text-slate-900 bg-white md:bg-transparent border-amber-200" : " text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-white md:bg-transparent md:border-transparent border-slate-200");
+                }
+                var icon = btn.querySelector('.nav-icon');
+                if (icon) {
+                    if (isSpecial) {
+                        icon.classList.remove('text-slate-400', 'text-blue-600');
+                        icon.classList.add('text-amber-500');
+                    } else {
+                        icon.classList.toggle('text-blue-600', isActive);
+                        icon.classList.toggle('text-slate-400', !isActive);
+                    }
+                }
             });
-
-            const activeBtn = document.getElementById('btn-' + tabId);
-            activeBtn.className = "nav-btn bg-blue-100 text-blue-800 border border-transparent snap-start whitespace-nowrap flex-shrink-0 flex items-center gap-2 sm:gap-3 px-3 py-2 sm:px-4 sm:py-3 rounded-lg text-left font-medium transition-colors text-sm sm:text-base";
-            const activeIcon = activeBtn.querySelector('.nav-icon');
-            if (activeIcon) activeIcon.className = activeIcon.className.replace('text-slate-400', 'text-blue-600');
         }
 
         function toggleAccordion(btn) {
@@ -580,6 +680,87 @@
                 content.classList.add('hidden');
                 icon.classList.remove('rotate-90');
             }
+        }
+
+        /* ===== Venta cruzada: comprar de nuevo / recomendar ===== */
+        var SDI_SALES_URL = 'https://www.segurosdelins.com/seguros-de-viaje';
+
+        function appUrl() {
+            // URL real donde está publicada esta app (sin parámetros ni #).
+            return window.location.origin + window.location.pathname;
+        }
+
+        function shareData(kind) {
+            if (kind === 'sales') {
+                return {
+                    title: 'Seguro INS Viajero',
+                    text: 'Te recomiendo el Seguro INS Viajero del INS: cubre gastos médicos, equipaje, cancelación de viaje y asistencia 24/7 en el exterior. Cotizá en segundos aquí:',
+                    url: SDI_SALES_URL
+                };
+            }
+            return {
+                title: 'Asistencia INS Viajero',
+                text: 'Te comparto la app de Asistencia del Seguro INS Viajero: contactos de emergencia, guía de reclamos y coberturas siempre a mano cuando viajás:',
+                url: appUrl()
+            };
+        }
+
+        function shareWhatsApp(kind) {
+            var d = shareData(kind);
+            var msg = d.text + ' ' + d.url;
+            window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+        }
+
+        function shareNative(kind) {
+            var d = shareData(kind);
+            if (navigator.share) {
+                navigator.share({ title: d.title, text: d.text, url: d.url }).catch(function () {});
+            } else {
+                copyLink(kind);
+            }
+        }
+
+        function copyLink(kind) {
+            var url = shareData(kind).url;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(url).then(function () { showToast('Link copiado al portapapeles'); })
+                    .catch(function () { fallbackCopy(url); });
+            } else {
+                fallbackCopy(url);
+            }
+        }
+
+        function fallbackCopy(text) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try { document.execCommand('copy'); showToast('Link copiado al portapapeles'); }
+            catch (e) { showToast('Copiá el link manualmente'); }
+            document.body.removeChild(ta);
+        }
+
+        var _toastTimer;
+        function showToast(msg) {
+            var t = document.getElementById('sdi-toast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'sdi-toast';
+                t.className = 'fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-slate-900 text-white text-sm font-medium px-4 py-2.5 rounded-full shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none';
+                document.body.appendChild(t);
+            }
+            t.textContent = '✓  ' + msg;
+            t.classList.remove('opacity-0');
+            clearTimeout(_toastTimer);
+            _toastTimer = setTimeout(function () { t.classList.add('opacity-0'); }, 2200);
+        }
+
+        // El botón "Compartir" nativo solo tiene sentido si el dispositivo lo soporta (móviles).
+        if (!navigator.share) {
+            document.querySelectorAll('.js-native-share').forEach(function (el) { el.style.display = 'none'; });
         }
     </script>
 </body>
