@@ -73,7 +73,7 @@ window.VApp = (function () {
     el('console').innerHTML = `
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-bold">Envío de pólizas</h2>
-        <button onclick="VApp.addViajero()" class="bg-blue-700 text-white text-sm px-3 py-1.5 rounded-lg">➕ Agregar viajero</button>
+        <button onclick="VApp.addViajero()" class="text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm" style="background:linear-gradient(135deg,#16a34a 0%,#15803d 100%)"><span style="font-weight:700;font-size:15px">+</span> Agregar viajero</button>
       </div>
       ${stepper()}
       ${state.viajeros.map(viajeroCard).join('') || '<p class="text-slate-500 text-sm mb-3">Agregá un viajero para empezar.</p>'}
