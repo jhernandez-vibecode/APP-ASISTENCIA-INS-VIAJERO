@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Selftest VParse</title></head>
+<body style="font-family:monospace;padding:20px">
+<h3>Selftest VParse</h3><pre id="out"></pre>
+<script src="config.js"></script>
+<script src="parse.js"></script>
+<script>
+const SAMPLE = `INSTITUTO NACIONAL DE SEGUROS Oferta- Constancia de Seguro Seguro INS Viajero con Asistencia Autoexpedible
+N° Póliza: 0201VIA023182200 Lugar: Sucursal Central Fecha: 23/06/2026
+Nombre o Razón Social: CANGIANO ALMEYDA JOSE ANGEL Tipo de Identificación: Número de Identificación: 6184000178709
+Nombre: CANGIANO ALMEYDA JOSE ANGEL N° Identificación: 184000178709 Monto Asegurado: $200 000 Prima: $ 164.79
+GASTOS MÉDICOS Y ADICIONALES INCURRIDOS POR ACCIDENTE Gastos Médicos y Adicionales: $1 000 000
+Destino (s) del Viaje: ESTADOS UNIDOS- ITALIA Motivo (s) del viaje:
+Vigencia: Desde: 24/07/2026 Hasta: 07/08/2026
+Correo Principal: jose.cangiano@gmail.com,jhernandez@segurosdelins.com`;
+const r = VParse.extractAll(SAMPLE);
+const checks = [
+  ['poliza', r.poliza, '0201VIA023182200'],
+  ['cliente', r.cliente, 'CANGIANO ALMEYDA JOSE ANGEL'],
+  ['cedula', r.cedula, '6184000178709'],
+  ['destino', r.destino, 'ESTADOS UNIDOS- ITALIA'],
+  ['gastosMedicos', r.gastosMedicos, 'US$1.000.000'],
+  ['vigenciaDesde', r.vigenciaDesde, '24/07/2026'],
+  ['vigenciaHasta', r.vigenciaHasta, '07/08/2026'],
+  ['correo', r.correo, 'jose.cangiano@gmail.com'],
+  ['nombrePila', r.nombrePila, 'Jose Angel'],
+  ['classify poliza', VParse.classifyFile('0201VIA023182200_054_540_Seguro_Viajero.pdf',''), 'poliza'],
+  ['classify tarjeta', VParse.classifyFile('0201VIA0_Tarjeta_Seguro_Viajero.pdf',''), 'tarjeta'],
+  ['classify comprobante', VParse.classifyFile('Comprobante De Pago.pdf',''), 'comprobante'],
+];
+let pass=0; const lines=checks.map(([n,got,exp])=>{const ok=got===exp;if(ok)pass++;return `${ok?'PASS':'FAIL'}  ${n}: ${JSON.stringify(got)}${ok?'':' != '+JSON.stringify(exp)}`;});
+document.getElementById('out').textContent = lines.join('\n')+`\n\n${pass}/${checks.length} OK`;
+</script></body></html>

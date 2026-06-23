@@ -1,0 +1,137 @@
+// agente/app.js — UI de la consola: login, lista de viajeros, canales, envío.
+window.VApp = (function () {
+  const state = { viajeros: [], destinatarios: [], saludo: '', canal: 'correo' };
+  let nextId = 1;
+
+  function el(id) { return document.getElementById(id); }
+  function showConsole() { el('gate').classList.add('hidden'); el('console').classList.remove('hidden'); render(); }
+
+  async function login() {
+    el('gate-err').classList.add('hidden');
+    try { const { email } = await VAuth.signIn(); el('who').textContent = email; showConsole(); }
+    catch (e) { el('gate-err').textContent = e.message; el('gate-err').classList.remove('hidden'); }
+  }
+
+  function addViajero() { state.viajeros.push({ id: nextId++, cliente: '', nombrePila: '', poliza: '', cedula: '', destino: '', gastosMedicos: '', vigenciaDesde: '', vigenciaHasta: '', correo: '', files: [] }); syncEnvio(); render(); }
+  function removeViajero(id) { state.viajeros = state.viajeros.filter(v => v.id !== id); syncEnvio(); render(); }
+
+  function syncEnvio() {
+    const first = state.viajeros[0];
+    if (first && !state.saludo) state.saludo = first.nombrePila || '';
+    const mails = state.viajeros.map(v => v.correo).filter(Boolean);
+    if (mails.length && !state.destinatarios.length) state.destinatarios = [mails[0]];
+  }
+
+  async function onFiles(viajeroId, fileList) {
+    const v = state.viajeros.find(x => x.id === viajeroId); if (!v) return;
+    for (const f of fileList) {
+      v.files.push(f);
+      const text = await VParse.readPdfText(f).catch(() => '');
+      const kind = VParse.classifyFile(f.name, text);
+      if (kind === 'poliza') { Object.assign(v, VParse.extractAll(text)); }
+    }
+    syncEnvio(); render();
+  }
+
+  function field(v, key, label, mono) {
+    return `<label style="display:block"><span style="font-size:11px;color:#94a3b8">${label}</span>
+      <input data-vid="${v.id}" data-key="${key}" value="${(v[key]||'').replace(/"/g,'&quot;')}" class="w-full text-sm border rounded px-2 py-1 ${mono?'font-mono':''}"/></label>`;
+  }
+
+  function viajeroCard(v, idx) {
+    return `<div class="border rounded-xl p-4 mb-3 bg-white">
+      <div class="flex items-center justify-between mb-3"><b class="text-sm">Viajero ${idx + 1}</b>
+        <button onclick="VApp.removeViajero(${v.id})" class="text-red-500 text-xs">Quitar</button></div>
+      <div class="dropzone border-2 border-dashed rounded-lg p-4 text-center text-sm text-slate-500 mb-3 cursor-pointer hover:bg-blue-50 transition-colors" data-vid="${v.id}">
+        Arrastrá los PDF aquí <span class="text-blue-700 font-medium underline">o hacé clic para cargarlos</span>
+        <input type="file" class="hidden" multiple accept="application/pdf,.pdf">
+      </div>
+      <div class="text-xs text-slate-400 mb-2">${v.files.map(f => VParse.classifyFile(f.name, '') + ': ' + f.name).join(' · ') || 'sin archivos'}</div>
+      <div class="grid grid-cols-2 gap-2">
+        ${field(v, 'cliente', 'Cliente')}${field(v, 'nombrePila', 'Saludo (nombre)')}
+        ${field(v, 'poliza', 'N° Póliza', true)}${field(v, 'correo', 'Correo')}
+        ${field(v, 'destino', 'Destino')}${field(v, 'gastosMedicos', 'Gastos médicos contratados')}
+        ${field(v, 'vigenciaDesde', 'Desde')}${field(v, 'vigenciaHasta', 'Hasta')}
+      </div></div>`;
+  }
+
+  function render() {
+    el('console').innerHTML = `
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold">Envío de pólizas</h2>
+        <button onclick="VApp.addViajero()" class="bg-blue-700 text-white text-sm px-3 py-1.5 rounded-lg">➕ Agregar viajero</button>
+      </div>
+      ${state.viajeros.map(viajeroCard).join('') || '<p class="text-slate-500 text-sm mb-3">Agregá un viajero para empezar.</p>'}
+      <div class="border rounded-xl p-4 bg-white mb-3">
+        <label class="block mb-2"><span class="text-xs text-slate-400">Destinatarios (separados por coma)</span>
+          <input id="dest" value="${state.destinatarios.join(', ')}" class="w-full text-sm border rounded px-2 py-1"/></label>
+        <label class="block"><span class="text-xs text-slate-400">Saludo</span>
+          <input id="saludo" value="${state.saludo.replace(/"/g,'&quot;')}" class="w-full text-sm border rounded px-2 py-1"/></label>
+      </div>
+      <div class="flex gap-2 mb-3">
+        ${['correo','emitida','directa'].map(c => `<button onclick="VApp.setCanal('${c}')" class="flex-1 border rounded-lg py-2 text-sm ${state.canal===c?'border-blue-600 border-2 text-blue-700':''}">${c==='correo'?'Correo':c==='emitida'?'WhatsApp emitida':'WhatsApp directa'}</button>`).join('')}
+      </div>
+      <div id="canalbox"></div>
+      <div class="flex gap-2 mt-3">
+        <button onclick="VApp.preview()" class="border rounded-lg px-4 py-2 text-sm">Vista previa</button>
+        <button onclick="VApp.enviar()" class="bg-blue-800 text-white rounded-lg px-4 py-2 text-sm flex-1" id="btn-enviar">Enviar</button>
+      </div>
+      <p id="status" class="text-sm mt-3"></p>`;
+    wire(); renderCanal();
+  }
+
+  function wire() {
+    el('console').querySelectorAll('input[data-vid]').forEach(inp => inp.addEventListener('input', e => {
+      const v = state.viajeros.find(x => x.id == e.target.dataset.vid); if (v) v[e.target.dataset.key] = e.target.value;
+    }));
+    el('dest') && el('dest').addEventListener('input', e => state.destinatarios = e.target.value.split(',').map(s => s.trim()).filter(Boolean));
+    el('saludo') && el('saludo').addEventListener('input', e => state.saludo = e.target.value);
+    el('console').querySelectorAll('.dropzone').forEach(dz => {
+      const fi = dz.querySelector('input[type=file]');
+      dz.addEventListener('click', e => { if (e.target !== fi) fi.click(); });
+      fi.addEventListener('change', e => { if (e.target.files.length) onFiles(+dz.dataset.vid, e.target.files); fi.value = ''; });
+      dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('bg-blue-50'); });
+      dz.addEventListener('dragleave', () => dz.classList.remove('bg-blue-50'));
+      dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('bg-blue-50'); onFiles(+dz.dataset.vid, e.dataTransfer.files); });
+    });
+  }
+
+  function setCanal(c) { state.canal = c; render(); }
+  function renderCanal() {
+    if (state.canal === 'correo') { el('canalbox').innerHTML = `<p class="text-xs text-slate-500">Se enviará el correo con los adjuntos de cada viajero + Condiciones y Manual.</p>`; return; }
+    const tipo = state.canal, txt = VWa.getTemplate(tipo);
+    el('canalbox').innerHTML = `<div class="border rounded-xl p-3 bg-white">
+      <label class="block mb-2"><span class="text-xs text-slate-400">Teléfono del cliente</span><input id="watel" placeholder="506 8888 8888" class="w-full text-sm border rounded px-2 py-1"/></label>
+      <textarea id="watxt" rows="6" class="w-full text-sm border rounded px-2 py-1">${txt.replace(/</g,'&lt;')}</textarea>
+      <div class="flex gap-2 mt-2"><button onclick="VApp.waSave()" class="text-xs border rounded px-2 py-1">Guardar como predeterminado</button>
+      <button onclick="VApp.waReset()" class="text-xs border rounded px-2 py-1">Restaurar</button></div></div>`;
+  }
+  function waSave() { VWa.saveTemplate(state.canal, el('watxt').value); el('status').textContent = 'Plantilla guardada.'; }
+  function waReset() { el('watxt').value = VWa.resetTemplate(state.canal); }
+
+  function preview() {
+    if (state.canal === 'correo') { const w = window.open('', '_blank'); w.document.write(VEmail.buildHtml(state)); }
+    else { window.open(VWa.buildLink(el('watel').value, el('watxt').value, state.saludo), '_blank'); }
+  }
+
+  async function enviar() {
+    const st = el('status'); st.textContent = '';
+    if (state.canal !== 'correo') { return preview(); }
+    if (!state.viajeros.length) { st.textContent = 'Agregá al menos un viajero.'; return; }
+    if (!state.destinatarios.length) { st.textContent = 'Indicá al menos un destinatario.'; return; }
+    el('btn-enviar').disabled = true; st.textContent = 'Preparando adjuntos…';
+    try {
+      const att = [];
+      for (const v of state.viajeros) for (const f of v.files) att.push({ name: f.name, b64: await VEmail.fileToB64(f) });
+      for (const d of VCfg.STANDARD_DOCS) att.push({ name: d.name, b64: await VEmail.pathToB64(d.path) });
+      st.textContent = 'Enviando correo…';
+      await VEmail.buildAndSend(state, att, VAuth.getToken());
+      st.textContent = '✅ Correo enviado a ' + state.destinatarios.join(', ');
+    } catch (e) { st.textContent = '❌ ' + e.message; }
+    finally { el('btn-enviar').disabled = false; }
+  }
+
+  function boot() { try { VAuth.init(); } catch (e) {} el('btn-login').addEventListener('click', login); }
+  return { boot, login, addViajero, removeViajero, setCanal, waSave, waReset, preview, enviar };
+})();
+document.addEventListener('DOMContentLoaded', () => VApp.boot());

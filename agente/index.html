@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consola de Envíos · Viajero</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://accounts.google.com/gsi/client" async></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800">
+  <header class="bg-blue-900 text-white">
+    <div class="max-w-5xl mx-auto px-4 h-14 flex items-center gap-3">
+      <i data-lucide="plane" class="w-5 h-5"></i>
+      <div class="font-bold">Consola de envíos · Viajero</div>
+      <span class="ml-auto text-xs text-blue-200" id="who">uso interno</span>
+    </div>
+  </header>
+  <main class="max-w-5xl mx-auto px-4 py-6">
+    <div id="gate" class="text-center py-20">
+      <p class="text-slate-600 mb-4">Iniciá sesión con tu cuenta autorizada para continuar.</p>
+      <button id="btn-login" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg font-medium">Iniciar sesión con Google</button>
+      <p id="gate-err" class="text-red-600 text-sm mt-4 hidden"></p>
+    </div>
+    <div id="console" class="hidden"></div>
+  </main>
+  <script src="config.js"></script>
+  <script src="parse.js"></script>
+  <script src="auth.js"></script>
+  <script src="email.js"></script>
+  <script src="wa.js"></script>
+  <script src="app.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>
