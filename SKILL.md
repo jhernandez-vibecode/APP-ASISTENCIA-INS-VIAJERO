@@ -67,7 +67,7 @@ Módulos como globales `window.*` cargados en orden por `agente/index.html`. Con
 VParse.extractAll(text) -> { cliente, nombrePila, poliza, cedula, destino, gastosMedicos, vigenciaDesde, vigenciaHasta, correo }
 VParse.classifyFile(filename, text) -> 'poliza' | 'tarjeta' | 'comprobante' | 'otro'
 VParse.readPdfText(file) -> Promise<string>     // import dinámico de pdf.js 4.4.168
-VAuth.init() ; VAuth.signIn() -> Promise<{email, token}> ; VAuth.getToken()
+VAuth.init() ; VAuth.signIn() -> Promise<{email, token}> ; VAuth.ensureToken() ; VAuth.getToken()
 VEmail.buildHtml(envio) ; VEmail.buildAndSend(envio, attachments, token) ; VEmail.fileToB64 ; VEmail.pathToB64
 VWa.getTemplate(tipo) ; VWa.saveTemplate(tipo, txt) ; VWa.resetTemplate(tipo) ; VWa.buildLink(tel, txt, nombre)
 VApp.state = { viajeros:[Viajero], destinatarios:[string], saludo, canal }
@@ -90,7 +90,9 @@ Encabezado navy `linear-gradient(135deg,#0b2545,#13477e,#1c6fb8)` "Seguro INS Vi
 `emitida` (póliza que emití yo) y `directa` (compra externa). Editables en la consola; "guardar como predeterminado" → `localStorage` clave `viajero_wa_<tipo>` (carga lo guardado, no el `WA_DEF`). Link SIEMPRE `https://web.whatsapp.com/send/?phone=...&text=...` — **NUNCA `wa.me`** (corrompe emojis). `{Nombre}` se sustituye al generar el link. El teléfono lo escribe JC (no viene en la póliza).
 
 ### app.js — UI
-Login gate → lista de viajeros con "➕ Agregar viajero". Cada viajero: **drop zone que sirve para arrastrar O hacer clic** (input file oculto `multiple accept=pdf`) → clasifica y autocompleta. Datos del envío: destinatarios (default = correo del 1er viajero) + saludo (default = nombrePila del 1er viajero), editables. Canales: Correo / WhatsApp emitida / WhatsApp directa. Vista previa + Enviar.
+Login gate → **stepper "1 Cargar el PDF · 2 Revisión · 3 Enviar"** (se recalcula en cada `render()`; paso 1 ✓ al haber datos, paso 3 activo al haber destinatario, los 3 ✓ tras enviar) → lista de viajeros con "➕ Agregar viajero". Cada viajero: **drop zone que sirve para arrastrar O hacer clic** (input file oculto `multiple accept=pdf`) → clasifica y autocompleta. Datos del envío: destinatarios (default = correo del 1er viajero) + saludo (default = nombrePila del 1er viajero), editables. Canales: Correo / WhatsApp emitida / WhatsApp directa. Vista previa + Enviar.
+
+**Hardening de sesión:** al enviar, `VAuth.ensureToken()` renueva el token si tiene >50 min; si Gmail responde 401 (sesión vencida), reconecta en silencio (`signIn()`) y reintenta el envío una vez. El encabezado de la consola usa degradado navy `linear-gradient(135deg,#0b2545,#13477e,#1c6fb8)` (igual al del correo).
 
 ## Multi-viajero
 Un solo correo lista a TODOS los viajeros y adjunta los documentos de cada uno + condiciones/manual una sola vez. Cada viajero puede tener distinta opción → distinto monto de gastos médicos (se muestra por viajero).

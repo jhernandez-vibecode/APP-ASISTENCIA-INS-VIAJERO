@@ -1,6 +1,6 @@
 // agente/app.js — UI de la consola: login, lista de viajeros, canales, envío.
 window.VApp = (function () {
-  const state = { viajeros: [], destinatarios: [], saludo: '', canal: 'correo' };
+  const state = { viajeros: [], destinatarios: [], saludo: '', canal: 'correo', sent: false };
   let nextId = 1;
 
   function el(id) { return document.getElementById(id); }
@@ -12,7 +12,7 @@ window.VApp = (function () {
     catch (e) { el('gate-err').textContent = e.message; el('gate-err').classList.remove('hidden'); }
   }
 
-  function addViajero() { state.viajeros.push({ id: nextId++, cliente: '', nombrePila: '', poliza: '', cedula: '', destino: '', gastosMedicos: '', vigenciaDesde: '', vigenciaHasta: '', correo: '', files: [] }); syncEnvio(); render(); }
+  function addViajero() { state.sent = false; state.viajeros.push({ id: nextId++, cliente: '', nombrePila: '', poliza: '', cedula: '', destino: '', gastosMedicos: '', vigenciaDesde: '', vigenciaHasta: '', correo: '', files: [] }); syncEnvio(); render(); }
   function removeViajero(id) { state.viajeros = state.viajeros.filter(v => v.id !== id); syncEnvio(); render(); }
 
   function syncEnvio() {
@@ -24,6 +24,7 @@ window.VApp = (function () {
 
   async function onFiles(viajeroId, fileList) {
     const v = state.viajeros.find(x => x.id === viajeroId); if (!v) return;
+    state.sent = false;
     for (const f of fileList) {
       v.files.push(f);
       const text = await VParse.readPdfText(f).catch(() => '');
@@ -55,12 +56,26 @@ window.VApp = (function () {
       </div></div>`;
   }
 
+  function stepper() {
+    const hasData = state.viajeros.some(v => v.poliza || v.files.length);
+    const ready = hasData && state.destinatarios.length;
+    const st = [hasData ? 'done' : 'active', state.sent ? 'done' : (hasData ? 'active' : 'pending'), state.sent ? 'done' : (ready ? 'active' : 'pending')];
+    const labels = ['Cargar el PDF', 'Revisión', 'Enviar'];
+    const dot = i => {
+      const s = st[i];
+      const cls = s === 'done' ? 'bg-green-600 text-white' : s === 'active' ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-400';
+      const txt = s === 'pending' ? 'text-slate-400' : 'text-slate-700 font-medium';
+      return `<div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${cls}">${s === 'done' ? '✓' : (i + 1)}</div><span class="text-sm ${txt}">${labels[i]}</span></div>`;
+    };
+    return `<div class="flex items-center justify-center gap-3 sm:gap-4 mb-6 flex-wrap">${dot(0)}<div class="w-6 sm:w-10 h-px bg-slate-300"></div>${dot(1)}<div class="w-6 sm:w-10 h-px bg-slate-300"></div>${dot(2)}</div>`;
+  }
   function render() {
     el('console').innerHTML = `
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-bold">Envío de pólizas</h2>
         <button onclick="VApp.addViajero()" class="bg-blue-700 text-white text-sm px-3 py-1.5 rounded-lg">➕ Agregar viajero</button>
       </div>
+      ${stepper()}
       ${state.viajeros.map(viajeroCard).join('') || '<p class="text-slate-500 text-sm mb-3">Agregá un viajero para empezar.</p>'}
       <div class="border rounded-xl p-4 bg-white mb-3">
         <label class="block mb-2"><span class="text-xs text-slate-400">Destinatarios (separados por coma)</span>
@@ -125,10 +140,20 @@ window.VApp = (function () {
       for (const v of state.viajeros) for (const f of v.files) att.push({ name: f.name, b64: await VEmail.fileToB64(f) });
       for (const d of VCfg.STANDARD_DOCS) att.push({ name: d.name, b64: await VEmail.pathToB64(d.path) });
       st.textContent = 'Enviando correo…';
-      await VEmail.buildAndSend(state, att, VAuth.getToken());
-      st.textContent = '✅ Correo enviado a ' + state.destinatarios.join(', ');
+      let token = await VAuth.ensureToken();
+      try {
+        await VEmail.buildAndSend(state, att, token);
+      } catch (e) {
+        if (/\b401\b|UNAUTHENTICATED|invalid|expired/i.test(e.message)) {
+          st.textContent = 'Sesión vencida, reconectando…';
+          token = (await VAuth.signIn()).token;
+          await VEmail.buildAndSend(state, att, token);
+        } else { throw e; }
+      }
+      state.sent = true; render();
+      el('status').textContent = '✅ Correo enviado a ' + state.destinatarios.join(', ');
     } catch (e) { st.textContent = '❌ ' + e.message; }
-    finally { el('btn-enviar').disabled = false; }
+    finally { const b = el('btn-enviar'); if (b) b.disabled = false; }
   }
 
   function boot() { try { VAuth.init(); } catch (e) {} el('btn-login').addEventListener('click', login); }

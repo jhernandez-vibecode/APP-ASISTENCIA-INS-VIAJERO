@@ -1,6 +1,6 @@
 // agente/auth.js — login Google (GIS) + whitelist + token Gmail.
 window.VAuth = (function () {
-  let tokenClient = null, accessToken = '', userEmail = '';
+  let tokenClient = null, accessToken = '', userEmail = '', tokenAt = 0;
   function init() {
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: VCfg.GOOGLE_CLIENT_ID, scope: VCfg.GMAIL_SCOPE,
@@ -12,7 +12,7 @@ window.VAuth = (function () {
       if (!tokenClient) { try { init(); } catch (e) { return reject(new Error('Google aún no cargó, intentá de nuevo.')); } }
       tokenClient.callback = async (resp) => {
         if (resp.error) return reject(new Error(resp.error));
-        accessToken = resp.access_token;
+        accessToken = resp.access_token; tokenAt = Date.now();
         try {
           const r = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + accessToken } });
           const info = await r.json();
@@ -26,5 +26,9 @@ window.VAuth = (function () {
       tokenClient.requestAccessToken({ prompt: '' });
     });
   }
-  return { init, signIn, getToken: () => accessToken, getEmail: () => userEmail };
+  function ensureToken() {
+    if (accessToken && (Date.now() - tokenAt) < 50 * 60 * 1000) return Promise.resolve(accessToken);
+    return signIn().then(r => r.token);
+  }
+  return { init, signIn, ensureToken, getToken: () => accessToken, getEmail: () => userEmail };
 })();
