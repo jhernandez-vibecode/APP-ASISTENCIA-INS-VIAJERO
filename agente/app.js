@@ -84,7 +84,14 @@ window.VApp = (function () {
           <input id="saludo" value="${state.saludo.replace(/"/g,'&quot;')}" class="w-full text-sm border rounded px-2 py-1"/></label>
       </div>
       <div class="flex gap-2 mb-3">
-        ${['correo','emitida','directa'].map(c => `<button onclick="VApp.setCanal('${c}')" class="flex-1 border rounded-lg py-2 text-sm ${state.canal===c?'border-blue-600 border-2 text-blue-700':''}">${c==='correo'?'Correo':c==='emitida'?'WhatsApp emitida':'WhatsApp directa'}</button>`).join('')}
+        ${['correo','emitida','directa'].map(c => {
+          const isWA = c !== 'correo';
+          const active = state.canal === c;
+          const base = isWA ? 'border-green-500 text-green-700' : 'border-slate-300 text-slate-700';
+          const act = active ? (isWA ? 'border-green-600 border-2 bg-green-50' : 'border-blue-600 border-2 text-blue-700') : '';
+          const label = c === 'correo' ? 'Correo' : c === 'emitida' ? 'WhatsApp emitida' : 'WhatsApp directa';
+          return `<button onclick="VApp.setCanal('${c}')" class="flex-1 border rounded-lg py-2 text-sm ${base} ${act}">${label}</button>`;
+        }).join('')}
       </div>
       <div id="canalbox"></div>
       <div class="flex gap-2 mt-3">
