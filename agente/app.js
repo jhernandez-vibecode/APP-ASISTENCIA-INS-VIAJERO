@@ -96,7 +96,7 @@ window.VApp = (function () {
       <div id="canalbox"></div>
       <div class="flex gap-2 mt-3">
         <button onclick="VApp.preview()" class="border rounded-lg px-4 py-2 text-sm">Vista previa</button>
-        <button onclick="VApp.enviar()" class="bg-blue-800 text-white rounded-lg px-4 py-2 text-sm flex-1" id="btn-enviar">Enviar</button>
+        <button onclick="VApp.enviar()" id="btn-enviar" class="flex-1 text-white text-sm font-medium rounded-lg px-4 py-2.5 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Enviar</button>
       </div>
       <p id="status" class="text-sm mt-3"></p>`;
     wire(); renderCanal();
