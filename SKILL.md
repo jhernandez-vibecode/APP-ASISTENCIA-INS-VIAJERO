@@ -81,7 +81,7 @@ Viajero = { cliente, nombrePila, poliza, cedula, destino, gastosMedicos, vigenci
 
 ### config.js (window.VCfg)
 - `GOOGLE_CLIENT_ID`: `255791314248-apgnrs0tiii72ogau5dpsjm2eie6d2hu.apps.googleusercontent.com` (mismo de los cotizadores, público por diseño).
-- `GMAIL_SCOPE`: `gmail.send openid email profile`. `WHITELIST` (3 correos, comparación case-insensitive): `jhernandez@segurosdelins.com`, `tramites@segurosdelins.com`, `chernandez@seguros-ins.com` (ojo: dominio `seguros-ins.com`, distinto al de JC).
+- `GMAIL_SCOPE`: `gmail.send openid email profile`. `WHITELIST` (3 correos, comparación case-insensitive): `jhernandez@segurosdelins.com`, `tramites@segurosdelins.com`, `chernandez@seguros-ins.com` (dominio `seguros-ins.com` CORRECTO — confirmado por JC 1 jul: ese agente tiene su propio dominio, NO es typo).
 - `APP_LINK`: la pública. `COTIZA_LINK`: `https://cotiza.ins-cr.com/frmDatosIncluir.aspx?P=99&A=1101130` (form INS, código intermediario 1101130).
 - `STANDARD_DOCS`: condiciones.pdf + manual.pdf (auto-adjuntos). `EMERGENCIA`: contactos oficiales (`insinternacional@grupoins.com`, NO `ins-cr.com`).
 - `AGENT_DEFAULT`: perfil del agente por defecto (JC) con campos discretos `{ id, nombre, rol, licencia, codigo, tel, whatsapp, correo, web, cotizaLink }`. Reemplaza al viejo `FIRMA`. `AGENTES`: registro de agentes precargados por `id` para el link público `?a=<id>` (por ahora solo `jc`). `cotizaLink` = form INS con el código de intermediario del agente (CTA "Comprar de nuevo" del correo; fallback `COTIZA_LINK` de JC).
