@@ -22,7 +22,7 @@ La consola enlaza a la página pública para reclamos/contactos → "economía d
 - **Repo:** [jhernandez-vibecode/APP-ASISTENCIA-INS-VIAJERO](https://github.com/jhernandez-vibecode/APP-ASISTENCIA-INS-VIAJERO). Local: `C:/Users/segur/APP-ASISTENCIA-INS-VIAJERO`.
 - **Consola `/agente/` (23 jun 2026, commits `2bc66bc` + `61a38b9`):** PDF→correo Gmail multi-viajero + 2 WhatsApp editables. Verificada (parser self-test 12/12).
 - **Cross-sell público "Comprá/Recomendá":** live desde 3 jun 2026.
-- **Personalización multi-agente COMPLETA (1 jul 2026):** el link de la app dentro del correo (botón "Abrir mi guía de emergencias") y de las plantillas WhatsApp (comodín `{Link}`) ahora usa `VAgent.publicLink()` → el cliente abre la pública con la identidad de SU agente. Además: campo `cotizaLink` en el perfil (CTA "Comprar de nuevo" con el código de intermediario de CADA agente, fallback al de JC) y cross-sell público personalizado (`salesUrl()`: `sales` precargado > web del agente `?aw=` > SDI). Verificado en preview (JC default, agente autoservicio y plantilla legacy). Para dar acceso a la consola a otro agente solo falta agregar su Gmail a `WHITELIST` en `config.js`. Icono "Regla de oro" = estrella dorada (antes alert-triangle).
+- **Personalización multi-agente COMPLETA (1 jul 2026):** el link de la app dentro del correo (botón "Abrir mi guía de emergencias") y de las plantillas WhatsApp (comodín `{Link}`) ahora usa `VAgent.publicLink()` → el cliente abre la pública con la identidad de SU agente. Además: campo `cotizaLink` en el perfil (CTA "Comprar de nuevo" con el código de intermediario de CADA agente, fallback al de JC) y cross-sell público personalizado (`salesUrl()`: `sales` precargado > web del agente `?aw=` > SDI). Verificado en preview (JC default, agente autoservicio y plantilla legacy). Para dar acceso a la consola a otro agente solo falta agregar su Gmail a `WHITELIST` en `config.js`. Icono "Regla de oro" = estrella dorada (antes alert-triangle). Banner ámbar de exclusividad SIN la coletilla "no es un recurso estándar del INS" (quitada 1 jul por decisión de JC: lo importante es que sepan que es del agente).
 
 ## Stack técnico
 
@@ -81,7 +81,7 @@ Viajero = { cliente, nombrePila, poliza, cedula, destino, gastosMedicos, vigenci
 
 ### config.js (window.VCfg)
 - `GOOGLE_CLIENT_ID`: `255791314248-apgnrs0tiii72ogau5dpsjm2eie6d2hu.apps.googleusercontent.com` (mismo de los cotizadores, público por diseño).
-- `GMAIL_SCOPE`: `gmail.send openid email profile`. `WHITELIST`: `['jhernandez@segurosdelins.com']`.
+- `GMAIL_SCOPE`: `gmail.send openid email profile`. `WHITELIST` (3 correos, comparación case-insensitive): `jhernandez@segurosdelins.com`, `tramites@segurosdelins.com`, `chernandez@seguros-ins.com` (ojo: dominio `seguros-ins.com`, distinto al de JC).
 - `APP_LINK`: la pública. `COTIZA_LINK`: `https://cotiza.ins-cr.com/frmDatosIncluir.aspx?P=99&A=1101130` (form INS, código intermediario 1101130).
 - `STANDARD_DOCS`: condiciones.pdf + manual.pdf (auto-adjuntos). `EMERGENCIA`: contactos oficiales (`insinternacional@grupoins.com`, NO `ins-cr.com`).
 - `AGENT_DEFAULT`: perfil del agente por defecto (JC) con campos discretos `{ id, nombre, rol, licencia, codigo, tel, whatsapp, correo, web, cotizaLink }`. Reemplaza al viejo `FIRMA`. `AGENTES`: registro de agentes precargados por `id` para el link público `?a=<id>` (por ahora solo `jc`). `cotizaLink` = form INS con el código de intermediario del agente (CTA "Comprar de nuevo" del correo; fallback `COTIZA_LINK` de JC).

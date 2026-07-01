@@ -5,7 +5,11 @@
 window.VCfg = {
   GOOGLE_CLIENT_ID: '255791314248-apgnrs0tiii72ogau5dpsjm2eie6d2hu.apps.googleusercontent.com',
   GMAIL_SCOPE: 'https://www.googleapis.com/auth/gmail.send openid email profile',
-  WHITELIST: ['jhernandez@segurosdelins.com'],
+  WHITELIST: [
+    'jhernandez@segurosdelins.com',
+    'tramites@segurosdelins.com',
+    'chernandez@seguros-ins.com'
+  ],
   APP_LINK: 'https://appasistenciainsviajero.netlify.app/',
   COTIZA_LINK: 'https://cotiza.ins-cr.com/frmDatosIncluir.aspx?P=99&A=1101130',
   STANDARD_DOCS: [
