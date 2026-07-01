@@ -25,7 +25,7 @@
                 <div class="h-6 sm:h-8 border-l border-blue-700 mx-1 sm:mx-2"></div>
                 <div class="flex flex-col justify-center">
                     <h1 class="text-base sm:text-xl font-bold tracking-tight leading-tight">Asistencia Viajero</h1>
-                    <span class="text-[9px] sm:text-xs text-blue-300 leading-tight mt-0.5">Agente Juan Carlos Hernández Vargas · Licencia 08-1318</span>
+                    <span class="text-[9px] sm:text-xs text-blue-300 leading-tight mt-0.5">Agente <span data-ag="nombre">Juan Carlos Hernández Vargas</span> · Licencia <span data-ag="licencia">08-1318</span></span>
                 </div>
             </div>
             <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="hidden md:flex bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full font-medium items-center gap-2 transition-colors text-sm">
@@ -39,7 +39,7 @@
         <div class="max-w-7xl mx-auto flex items-center justify-center gap-2 text-center">
             <i data-lucide="star" class="w-4 h-4 text-amber-900 flex-shrink-0 fill-amber-900"></i>
             <p class="text-xs sm:text-sm font-bold text-amber-900">
-                Esta aplicación es un beneficio exclusivo de la asesoría de la oficina del Agente Juan Carlos Hernández Vargas — no es un recurso estándar del INS.
+                Esta aplicación es un beneficio exclusivo de la asesoría de la oficina del Agente <span data-ag="nombre">Juan Carlos Hernández Vargas</span> — no es un recurso estándar del INS.
             </p>
         </div>
     </div>
@@ -83,7 +83,7 @@
 
                 <!-- Aviso clave -->
                 <div class="bg-amber-50 border border-amber-300 rounded-xl p-4 flex items-start gap-3">
-                    <i data-lucide="alert-triangle" class="text-amber-600 w-5 h-5 flex-shrink-0 mt-0.5"></i>
+                    <i data-lucide="star" class="text-amber-500 fill-amber-500 w-5 h-5 flex-shrink-0 mt-0.5"></i>
                     <p class="text-sm text-amber-900"><strong>Regla de oro:</strong> Siempre contactar a la Unidad de Asistencia del INS de forma <strong>inmediata</strong> o dentro de las primeras <strong>48 horas</strong> del evento. Si no lo hace, el pago será exclusivamente por reembolso.</p>
                 </div>
 
@@ -576,7 +576,7 @@
                         </span>
                         <h3 class="text-2xl sm:text-3xl font-extrabold leading-tight mb-2">¿Ya estás planeando otro viaje?</h3>
                         <p class="text-blue-100 text-sm sm:text-base max-w-xl mb-6">Volvé a viajar tranquilo con gastos médicos, equipaje, cancelación de viaje y asistencia 24/7 en el exterior. Como esta póliza es por viaje, comprá una nueva para tu próxima salida del país.</p>
-                        <a href="https://www.segurosdelins.com/seguros-de-viaje" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold px-6 py-3.5 rounded-xl transition-colors shadow-md">
+                        <a data-ag="sales-link" href="https://www.segurosdelins.com/seguros-de-viaje" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-amber-950 font-bold px-6 py-3.5 rounded-xl transition-colors shadow-md">
                             <i data-lucide="shopping-cart" class="w-5 h-5"></i> Cotizar mi próximo viaje
                         </a>
                     </div>
@@ -649,10 +649,10 @@
     <!-- Footer -->
     <footer class="max-w-7xl mx-auto px-4 py-6 mt-4 text-center border-t border-slate-200 text-slate-500 text-sm">
         <p>Esta aplicación pertenece a <span class="font-semibold text-slate-700">Seguros Digitales SDI</span>.</p>
-        <p>Visítenos en <a href="https://www.segurosdelins.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-medium">www.segurosdelins.com</a></p>
+        <p>Visítenos en <a data-ag="web-link" href="https://www.segurosdelins.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-medium">www.segurosdelins.com</a></p>
         <div class="mt-4 pt-4 border-t border-slate-100 text-xs text-slate-400 max-w-4xl mx-auto leading-relaxed">
-            <p>© 2026 Propiedad Intelectual de Juan Carlos Hernández Vargas. Todos los derechos reservados.</p>
-            <p class="mt-1">Esta plataforma es una herramienta de uso exclusivo para los clientes vinculados a la Licencia Sugese 08-1318. Queda prohibida su reproducción o uso por terceros sin autorización expresa del titular.</p>
+            <p>© 2026 Propiedad Intelectual de <span data-ag="nombre">Juan Carlos Hernández Vargas</span>. Todos los derechos reservados.</p>
+            <p class="mt-1">Esta plataforma es una herramienta de uso exclusivo para los clientes vinculados a la Licencia Sugese <span data-ag="licencia">08-1318</span>. Queda prohibida su reproducción o uso por terceros sin autorización expresa del titular.</p>
         </div>
     </footer>
 
@@ -731,6 +731,58 @@
     <script>
         lucide.createIcons();
 
+        /* ===== Agente personalizable (link por agente ?a=<id> o autoservicio) ===== */
+        // Por ahora solo Juan Carlos viene precargado. Otros agentes no necesitan
+        // editar este archivo: su información viaja en el link que genera la consola.
+        var AGENTES = {
+            jc: {
+                id: 'jc', nombre: 'Juan Carlos Hernández Vargas',
+                rol: 'Agente de Seguros Exclusivo · INS', licencia: '08-1318',
+                web: 'www.segurosdelins.com',
+                sales: 'https://www.segurosdelins.com/seguros-de-viaje'
+            }
+        };
+        var DEFAULT_AGENT_ID = 'jc';
+
+        function getAgent() {
+            try {
+                var q = new URLSearchParams(window.location.search);
+                var id = (q.get('a') || DEFAULT_AGENT_ID).toLowerCase();
+                var base = AGENTES[id] || AGENTES[DEFAULT_AGENT_ID];
+                var a = Object.assign({}, base);
+                // Autoservicio: si el link trae la info del agente, se respeta.
+                if (q.get('an')) a.nombre = q.get('an');
+                if (q.get('ar')) a.rol = q.get('ar');
+                if (q.get('al')) a.licencia = q.get('al');
+                if (q.get('aw')) a.web = q.get('aw');
+                // Identidad de autoservicio = NO es el agente base: no heredar su
+                // página de ventas (salesUrl usará el sitio web del propio agente).
+                if (q.get('an') || q.get('ar') || q.get('al') || q.get('aw')) delete a.sales;
+                a.id = id;
+                return a;
+            } catch (e) { return Object.assign({}, AGENTES[DEFAULT_AGENT_ID]); }
+        }
+
+        var ACTIVE_AGENT = getAgent();
+
+        function applyAgent() {
+            var a = ACTIVE_AGENT;
+            document.querySelectorAll('[data-ag="nombre"]').forEach(function (el) { el.textContent = a.nombre; });
+            document.querySelectorAll('[data-ag="licencia"]').forEach(function (el) { el.textContent = a.licencia; });
+            document.querySelectorAll('[data-ag="web-link"]').forEach(function (el) {
+                if (!a.web) return;
+                el.textContent = a.web;
+                el.href = a.web.indexOf('http') === 0 ? a.web : 'https://' + a.web;
+            });
+            document.querySelectorAll('[data-ag="sales-link"]').forEach(function (el) {
+                el.href = salesUrl();
+            });
+            try {
+                if (a.nombre) document.title = 'Asistencia INS Viajero · ' + a.nombre;
+            } catch (e) {}
+        }
+        applyAgent();
+
         function switchTab(tabId) {
             closeMoreSheet();
             document.querySelectorAll('.tab-content').forEach(function (el) { el.classList.remove('active'); });
@@ -774,11 +826,25 @@
         }
 
         /* ===== Venta cruzada: comprar de nuevo / recomendar ===== */
-        var SDI_SALES_URL = 'https://www.segurosdelins.com/seguros-de-viaje';
+        // Página de ventas del agente activo: la precargada (sales), o su sitio
+        // web si vino en el link (?aw=), o la de SDI como último recurso.
+        // Literal (no var) porque applyAgent() la llama antes de esta sección.
+        function salesUrl() {
+            var a = ACTIVE_AGENT || {};
+            if (a.sales) return a.sales;
+            if (a.web) return a.web.indexOf('http') === 0 ? a.web : 'https://' + a.web;
+            return 'https://www.segurosdelins.com/seguros-de-viaje';
+        }
 
         function appUrl() {
-            // URL real donde está publicada esta app (sin parámetros ni #).
-            return window.location.origin + window.location.pathname;
+            // URL real de la app, preservando los parámetros de identidad del agente
+            // tal como llegaron, para que el link recomendado siga personalizado.
+            var base = window.location.origin + window.location.pathname;
+            var cur = new URLSearchParams(window.location.search), q = new URLSearchParams();
+            ['a', 'an', 'ar', 'al', 'aw'].forEach(function (k) { if (cur.get(k)) q.set(k, cur.get(k)); });
+            if (![...q].length && ACTIVE_AGENT.id) q.set('a', ACTIVE_AGENT.id);
+            var qs = q.toString();
+            return qs ? base + '?' + qs : base;
         }
 
         function shareData(kind) {
@@ -786,12 +852,13 @@
                 return {
                     title: 'Seguro INS Viajero',
                     text: 'Te recomiendo el Seguro INS Viajero del INS: cubre gastos médicos, equipaje, cancelación de viaje y asistencia 24/7 en el exterior. Cotizá en segundos aquí:',
-                    url: SDI_SALES_URL
+                    url: salesUrl()
                 };
             }
+            var agNombre = (ACTIVE_AGENT && ACTIVE_AGENT.nombre) ? ACTIVE_AGENT.nombre : 'su agente del INS';
             return {
                 title: 'Asistencia INS Viajero',
-                text: 'Te comparto la app de Asistencia del Seguro INS Viajero, hecha por la oficina del agente Juan Carlos Hernández: es muy útil porque tiene contactos de emergencia, guía de reclamos y coberturas siempre a mano cuando viajás.',
+                text: 'Te comparto la app de Asistencia del Seguro INS Viajero, hecha por la oficina del agente ' + agNombre + ': es muy útil porque tiene contactos de emergencia, guía de reclamos y coberturas siempre a mano cuando viajás.',
                 url: appUrl()
             };
         }

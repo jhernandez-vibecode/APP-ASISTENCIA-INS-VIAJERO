@@ -2,9 +2,53 @@
 window.VApp = (function () {
   const state = { viajeros: [], destinatarios: [], saludo: '', canal: 'correo', sent: false };
   let nextId = 1;
+  let agentOpen = false;
 
   function el(id) { return document.getElementById(id); }
   function showConsole() { el('gate').classList.add('hidden'); el('console').classList.remove('hidden'); render(); }
+
+  // ----- Panel "Mi información de agente" -----
+  const AG_LABELS = {
+    nombre: 'Nombre completo', rol: 'Rol / cargo', licencia: 'Licencia Sugese (n.º)',
+    codigo: 'Código', tel: 'Teléfono', whatsapp: 'WhatsApp (solo dígitos, ej. 50688221348)',
+    correo: 'Correo', web: 'Sitio web', id: 'Identificador para el link (ej. jc)',
+    cotizaLink: 'Link de cotización INS (con tu código de intermediario)'
+  };
+  function agentField(a, key) {
+    const order = key;
+    return `<label style="display:block"><span style="font-size:11px;color:#94a3b8">${AG_LABELS[key]}</span>
+      <input data-ag="${order}" value="${(a[key] || '').replace(/"/g, '&quot;')}" class="w-full text-sm border rounded px-2 py-1"/></label>`;
+  }
+  function agentePanel() {
+    const a = VAgent.get();
+    const link = VAgent.publicLink(a);
+    const body = agentOpen ? `
+      <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+        ${agentField(a, 'nombre')}${agentField(a, 'rol')}
+        ${agentField(a, 'licencia')}${agentField(a, 'codigo')}
+        ${agentField(a, 'tel')}${agentField(a, 'correo')}
+        ${agentField(a, 'whatsapp')}${agentField(a, 'web')}
+        ${agentField(a, 'cotizaLink')}${agentField(a, 'id')}
+      </div>
+      <div class="flex flex-wrap gap-2 mt-3">
+        <button onclick="VApp.agentSave()" class="text-white text-xs font-medium rounded-lg px-3 py-1.5" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Guardar mi información</button>
+        <button onclick="VApp.agentReset()" class="text-xs border rounded-lg px-3 py-1.5">Restaurar a Juan Carlos</button>
+      </div>
+      <div class="mt-3 border-t pt-3">
+        <span class="text-xs text-slate-400">Tu link para enviar a clientes (ya personalizado con tu información)</span>
+        <div class="flex gap-2 mt-1">
+          <input id="ag-link" readonly value="${link.replace(/"/g, '&quot;')}" class="flex-1 text-xs border rounded px-2 py-1 bg-slate-50 font-mono"/>
+          <button onclick="VApp.agentCopyLink()" class="text-xs border rounded-lg px-3 py-1.5 whitespace-nowrap">Copiar</button>
+          <button onclick="VApp.agentPreviewLink()" class="text-xs border rounded-lg px-3 py-1.5 whitespace-nowrap">Ver</button>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-1">Guardá primero tus cambios para que el link se actualice. Este es el link de la página pública del cliente.</p>
+      </div>` : '';
+    return `<div class="border rounded-xl p-4 bg-white mb-4">
+      <button onclick="VApp.agentToggle()" class="w-full flex items-center justify-between text-left">
+        <span class="text-sm font-semibold text-slate-700">⚙️ Mi información de agente</span>
+        <span class="text-xs text-slate-400">${a.nombre} · ${agentOpen ? 'ocultar ▲' : 'editar ▼'}</span>
+      </button>${body}</div>`;
+  }
 
   async function login() {
     el('gate-err').classList.add('hidden');
@@ -71,6 +115,7 @@ window.VApp = (function () {
   }
   function render() {
     el('console').innerHTML = `
+      ${agentePanel()}
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-bold">Envío de pólizas</h2>
         <button onclick="VApp.addViajero()" class="text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm" style="background:linear-gradient(135deg,#16a34a 0%,#15803d 100%)"><span style="font-weight:700;font-size:15px">+</span> Agregar viajero</button>
@@ -102,6 +147,22 @@ window.VApp = (function () {
     wire(); renderCanal();
   }
 
+  function readAgentForm() {
+    const a = VAgent.get();
+    el('console').querySelectorAll('input[data-ag]').forEach(inp => { a[inp.dataset.ag] = inp.value; });
+    return a;
+  }
+  function agentToggle() { agentOpen = !agentOpen; render(); }
+  function agentSave() { VAgent.save(readAgentForm()); render(); el('status') && (el('status').textContent = '✅ Tu información de agente fue guardada en este navegador.'); }
+  function agentReset() { VAgent.reset(); render(); }
+  function agentCopyLink() {
+    const inp = el('ag-link'); if (!inp) return;
+    const done = () => { const b = el('ag-link'); if (b) b.classList.add('ring-2','ring-green-400'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(inp.value).then(done).catch(() => { inp.select(); document.execCommand('copy'); done(); });
+    else { inp.select(); document.execCommand('copy'); done(); }
+  }
+  function agentPreviewLink() { const inp = el('ag-link'); if (inp) window.open(inp.value, '_blank', 'noopener'); }
+
   function wire() {
     el('console').querySelectorAll('input[data-vid]').forEach(inp => inp.addEventListener('input', e => {
       const v = state.viajeros.find(x => x.id == e.target.dataset.vid); if (v) v[e.target.dataset.key] = e.target.value;
@@ -125,6 +186,7 @@ window.VApp = (function () {
     el('canalbox').innerHTML = `<div class="border rounded-xl p-3 bg-white">
       <label class="block mb-2"><span class="text-xs text-slate-400">Teléfono del cliente</span><input id="watel" placeholder="506 8888 8888" class="w-full text-sm border rounded px-2 py-1"/></label>
       <textarea id="watxt" rows="6" class="w-full text-sm border rounded px-2 py-1">${txt.replace(/</g,'&lt;')}</textarea>
+      <p class="text-[11px] text-slate-400 mt-1">Comodines: <code>{Nombre}</code> = nombre del cliente · <code>{Agente}</code> = tu nombre · <code>{Link}</code> = tu link personalizado de la app.</p>
       <div class="flex gap-2 mt-2"><button onclick="VApp.waSave()" class="text-xs border rounded px-2 py-1">Guardar como predeterminado</button>
       <button onclick="VApp.waReset()" class="text-xs border rounded px-2 py-1">Restaurar</button></div></div>`;
   }
@@ -133,7 +195,7 @@ window.VApp = (function () {
 
   function preview() {
     if (state.canal === 'correo') { const w = window.open('', '_blank'); w.document.write(VEmail.buildHtml(state)); }
-    else { window.open(VWa.buildLink(el('watel').value, el('watxt').value, state.saludo), '_blank'); }
+    else { window.open(VWa.buildLink(el('watel').value, el('watxt').value, state.saludo, VAgent.get().nombre), '_blank'); }
   }
 
   async function enviar() {
@@ -164,6 +226,7 @@ window.VApp = (function () {
   }
 
   function boot() { try { VAuth.init(); } catch (e) {} el('btn-login').addEventListener('click', login); }
-  return { boot, login, addViajero, removeViajero, setCanal, waSave, waReset, preview, enviar };
+  return { boot, login, addViajero, removeViajero, setCanal, waSave, waReset, preview, enviar,
+    agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink };
 })();
 document.addEventListener('DOMContentLoaded', () => VApp.boot());

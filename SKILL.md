@@ -22,6 +22,7 @@ La consola enlaza a la página pública para reclamos/contactos → "economía d
 - **Repo:** [jhernandez-vibecode/APP-ASISTENCIA-INS-VIAJERO](https://github.com/jhernandez-vibecode/APP-ASISTENCIA-INS-VIAJERO). Local: `C:/Users/segur/APP-ASISTENCIA-INS-VIAJERO`.
 - **Consola `/agente/` (23 jun 2026, commits `2bc66bc` + `61a38b9`):** PDF→correo Gmail multi-viajero + 2 WhatsApp editables. Verificada (parser self-test 12/12).
 - **Cross-sell público "Comprá/Recomendá":** live desde 3 jun 2026.
+- **Personalización multi-agente COMPLETA (1 jul 2026):** el link de la app dentro del correo (botón "Abrir mi guía de emergencias") y de las plantillas WhatsApp (comodín `{Link}`) ahora usa `VAgent.publicLink()` → el cliente abre la pública con la identidad de SU agente. Además: campo `cotizaLink` en el perfil (CTA "Comprar de nuevo" con el código de intermediario de CADA agente, fallback al de JC) y cross-sell público personalizado (`salesUrl()`: `sales` precargado > web del agente `?aw=` > SDI). Verificado en preview (JC default, agente autoservicio y plantilla legacy). Para dar acceso a la consola a otro agente solo falta agregar su Gmail a `WHITELIST` en `config.js`. Icono "Regla de oro" = estrella dorada (antes alert-triangle).
 
 ## Stack técnico
 
@@ -40,9 +41,10 @@ APP-ASISTENCIA-INS-VIAJERO/
 ├── SKILL.md                # Este archivo
 ├── agente/                 # CONSOLA PRIVADA del agente
 │   ├── index.html          # Markup + CDNs + includes
-│   ├── config.js           # window.VCfg (Client ID, whitelist, links, docs, firma)
+│   ├── config.js           # window.VCfg (Client ID, whitelist, links, docs, AGENT_DEFAULT + AGENTES)
 │   ├── parse.js            # window.VParse (extracción PDF + clasificación)
 │   ├── auth.js             # window.VAuth (login GIS + whitelist + token Gmail)
+│   ├── agent.js            # window.VAgent (perfil de agente personalizable + link público)
 │   ├── email.js            # window.VEmail (HTML navy + MIME + envío Gmail)
 │   ├── wa.js               # window.VWa (plantillas WhatsApp editables + link)
 │   ├── app.js              # window.VApp (UI: viajeros, canales, preview, enviar)
@@ -57,6 +59,8 @@ APP-ASISTENCIA-INS-VIAJERO/
 
 Inicio · Contactos de Emergencia · Reclamos y Reembolsos · Guía Wi-Fi Call · Coberturas y Exclusiones · Vigencia y Prórroga · **Comprá / Recomendá** (cross-sell ámbar). Branding INS + Licencia 08-1318 + pie SDI. WhatsApp Universal Assistance: `wa.me/5491167502557` (link al bot de asistencia, se mantiene). Cross-sell a `segurosdelins.com/seguros-de-viaje`.
 
+**Agente personalizable (link por agente):** la info del agente (nombre, licencia, web, copyright, banner de exclusividad, texto de recomendación, título de la pestaña) NO está hardcodeada — se marca con `data-ag="nombre|licencia|web-link|sales-link"` y `applyAgent()` la sustituye al cargar. Registro `AGENTES` (default `jc`, con `sales` = página de ventas) + `getAgent()` lee `?a=<id>` o los parámetros de autoservicio (`?an/&ar/&al/&aw`); si el link trae identidad de autoservicio se descarta el `sales` heredado del base (el agente NO hereda la página de ventas de JC). Cross-sell: `salesUrl()` = `sales` precargado > web del agente > `segurosdelins.com/seguros-de-viaje` literal (NO var — `applyAgent()` corre antes de esa sección). El link de "Recomendá" (`appUrl()`) preserva los parámetros para que el reenvío siga personalizado. Los WhatsApp de Universal Assistance NO son del agente y se dejan fijos.
+
 **Gotcha Lucide:** `lucide.createIcons()` convierte `<i data-lucide>` en `<svg>` cuyo `className` es objeto (SVGAnimatedString) → usar `classList.add/remove/toggle` para recolorar, nunca `.className.replace`.
 
 ## Consola `/agente/` — arquitectura
@@ -69,7 +73,8 @@ VParse.classifyFile(filename, text) -> 'poliza' | 'tarjeta' | 'comprobante' | 'o
 VParse.readPdfText(file) -> Promise<string>     // import dinámico de pdf.js 4.4.168
 VAuth.init() ; VAuth.signIn() -> Promise<{email, token}> ; VAuth.ensureToken() ; VAuth.getToken()
 VEmail.buildHtml(envio) ; VEmail.buildAndSend(envio, attachments, token) ; VEmail.fileToB64 ; VEmail.pathToB64
-VWa.getTemplate(tipo) ; VWa.saveTemplate(tipo, txt) ; VWa.resetTemplate(tipo) ; VWa.buildLink(tel, txt, nombre)
+VWa.getTemplate(tipo) ; VWa.saveTemplate(tipo, txt) ; VWa.resetTemplate(tipo) ; VWa.buildLink(tel, txt, nombre, agente)
+VAgent.get() -> perfil activo ; VAgent.save(p) ; VAgent.reset() ; VAgent.publicLink(p) -> string
 VApp.state = { viajeros:[Viajero], destinatarios:[string], saludo, canal }
 Viajero = { cliente, nombrePila, poliza, cedula, destino, gastosMedicos, vigenciaDesde, vigenciaHasta, correo, files:File[] }
 ```
@@ -78,19 +83,25 @@ Viajero = { cliente, nombrePila, poliza, cedula, destino, gastosMedicos, vigenci
 - `GOOGLE_CLIENT_ID`: `255791314248-apgnrs0tiii72ogau5dpsjm2eie6d2hu.apps.googleusercontent.com` (mismo de los cotizadores, público por diseño).
 - `GMAIL_SCOPE`: `gmail.send openid email profile`. `WHITELIST`: `['jhernandez@segurosdelins.com']`.
 - `APP_LINK`: la pública. `COTIZA_LINK`: `https://cotiza.ins-cr.com/frmDatosIncluir.aspx?P=99&A=1101130` (form INS, código intermediario 1101130).
-- `STANDARD_DOCS`: condiciones.pdf + manual.pdf (auto-adjuntos). `EMERGENCIA`: contactos oficiales (`insinternacional@grupoins.com`, NO `ins-cr.com`). `FIRMA`.
+- `STANDARD_DOCS`: condiciones.pdf + manual.pdf (auto-adjuntos). `EMERGENCIA`: contactos oficiales (`insinternacional@grupoins.com`, NO `ins-cr.com`).
+- `AGENT_DEFAULT`: perfil del agente por defecto (JC) con campos discretos `{ id, nombre, rol, licencia, codigo, tel, whatsapp, correo, web, cotizaLink }`. Reemplaza al viejo `FIRMA`. `AGENTES`: registro de agentes precargados por `id` para el link público `?a=<id>` (por ahora solo `jc`). `cotizaLink` = form INS con el código de intermediario del agente (CTA "Comprar de nuevo" del correo; fallback `COTIZA_LINK` de JC).
+
+### agente/agent.js (window.VAgent) — personalización del agente
+- `get()` → perfil activo (localStorage `viajero_agente`, default = `VCfg.AGENT_DEFAULT`). `save(p)` (auto-genera `id`/slug si falta). `reset()` → vuelve a JC. `publicLink(p)` → arma el link que el agente envía a sus clientes.
+- Lo usan: el correo (firma en `email.js`), la plantilla WhatsApp `directa` (token `{Agente}`) y el botón "Copiar link para clientes" de la consola.
+- **Autoservicio:** un agente NO precargado no necesita editar código — su identidad viaja en el link como parámetros (`?an=`nombre `&ar=`rol `&al=`licencia `&aw=`web). Si está en `VCfg.AGENTES`, el link es corto (`?a=<id>`).
 
 ### parse.js
 Lee la capa de texto del PDF. Anclas: póliza `\d{4}VIA\d{9}` · cliente tras "Nombre o Razón Social:" hasta "Tipo de" · cédula tras "Número de Identificación:" · destino tras "Destino (s) del Viaje:" hasta "Motivo" · gastos médicos tras "Gastos Médicos y Adicionales:" → formateado `US$1.000.000` · vigencia "Desde:/Hasta:" · correo tras "Correo Principal:" (el primero que NO sea @segurosdelins.com). `nombrePila` = tokens después de los 2 apellidos (CR). Todo editable; si algo falla queda vacío (nunca inventar). Verificar con `agente/selftest.html`.
 
 ### email.js — plantilla del correo (solo texto + color, SIN imágenes)
-Encabezado navy `linear-gradient(135deg,#0b2545,#13477e,#1c6fb8)` "Seguro INS Viajero" (SIN avión) → saludo → confirmación → **Viajeros amparados** (fila por viajero: nombre + chips póliza[14px bold]/destino/vigencia + "Gastos médicos contratados: US$X") → botón verde "Centro de asistencia" a `APP_LINK` ("…para tenerla siempre a mano como una App") → adjuntos → contactos emergencia → aviso → firma texto → **CTA sutil "Comprar de nuevo un Seguro INS Viajero"** a `COTIZA_LINK`. Envío: Gmail API `users.messages.send`, MIME `multipart/mixed`, base64url, remitente = cuenta logueada. Adjuntos: por viajero (póliza+tarjeta+comprobante) + condiciones+manual UNA vez.
+La **firma** se arma desde el agente activo (`VAgent.get()`), no hardcodeada. Encabezado navy `linear-gradient(135deg,#0b2545,#13477e,#1c6fb8)` "Seguro INS Viajero" (SIN avión) → saludo → confirmación → **Viajeros amparados** (fila por viajero: nombre + chips póliza[14px bold]/destino/vigencia + "Gastos médicos contratados: US$X") → botón verde "Centro de asistencia" al link personalizado del agente activo (`VAgent.publicLink(A)`, fallback `APP_LINK`) ("…para tenerla siempre a mano como una App") → adjuntos → contactos emergencia → aviso → firma texto → **CTA sutil "Comprar de nuevo un Seguro INS Viajero"** al `cotizaLink` del agente activo (fallback `COTIZA_LINK`). Envío: Gmail API `users.messages.send`, MIME `multipart/mixed`, base64url, remitente = cuenta logueada. Adjuntos: por viajero (póliza+tarjeta+comprobante) + condiciones+manual UNA vez.
 
 ### wa.js — 2 plantillas WhatsApp (editables)
-`emitida` (póliza que emití yo) y `directa` (compra externa). Editables en la consola; "guardar como predeterminado" → `localStorage` clave `viajero_wa_<tipo>` (carga lo guardado, no el `WA_DEF`). Link SIEMPRE `https://web.whatsapp.com/send/?phone=...&text=...` — **NUNCA `wa.me`** (corrompe emojis). `{Nombre}` se sustituye al generar el link. El teléfono lo escribe JC (no viene en la póliza).
+`emitida` (póliza que emití yo) y `directa` (compra externa). Editables en la consola; "guardar como predeterminado" → `localStorage` clave `viajero_wa_<tipo>` (carga lo guardado, no el `WA_DEF`). Link SIEMPRE `https://web.whatsapp.com/send/?phone=...&text=...` — **NUNCA `wa.me`** (corrompe emojis). `{Nombre}` (cliente), `{Agente}` (nombre del agente activo) y `{Link}` (link personalizado `VAgent.publicLink()`) se sustituyen al generar el link; las plantillas viejas guardadas en localStorage con la URL cruda también se personalizan (la URL base se reemplaza por el link del agente vía placeholder `String.fromCharCode(0)` — NUNCA escribir el carácter NUL crudo en el fuente: git trata el archivo como binario). El teléfono lo escribe JC (no viene en la póliza).
 
 ### app.js — UI
-Login gate → **stepper "1 Cargar el PDF · 2 Revisión · 3 Enviar"** (se recalcula en cada `render()`; paso 1 ✓ al haber datos, paso 3 activo al haber destinatario, los 3 ✓ tras enviar) → lista de viajeros con "➕ Agregar viajero". Cada viajero: **drop zone que sirve para arrastrar O hacer clic** (input file oculto `multiple accept=pdf`) → clasifica y autocompleta. Datos del envío: destinatarios (default = correo del 1er viajero) + saludo (default = nombrePila del 1er viajero), editables. Canales: Correo / WhatsApp emitida / WhatsApp directa. Vista previa + Enviar.
+Login gate → **panel colapsable "⚙️ Mi información de agente"** (campos del perfil + Guardar/Restaurar + "Tu link para clientes" con Copiar/Ver) → **stepper "1 Cargar el PDF · 2 Revisión · 3 Enviar"** (se recalcula en cada `render()`; paso 1 ✓ al haber datos, paso 3 activo al haber destinatario, los 3 ✓ tras enviar) → lista de viajeros con "➕ Agregar viajero". Cada viajero: **drop zone que sirve para arrastrar O hacer clic** (input file oculto `multiple accept=pdf`) → clasifica y autocompleta. Datos del envío: destinatarios (default = correo del 1er viajero) + saludo (default = nombrePila del 1er viajero), editables. Canales: Correo / WhatsApp emitida / WhatsApp directa. Vista previa + Enviar.
 
 **Hardening de sesión:** al enviar, `VAuth.ensureToken()` renueva el token si tiene >50 min; si Gmail responde 401 (sesión vencida), reconecta en silencio (`signIn()`) y reintenta el envío una vez. El encabezado de la consola usa degradado navy `linear-gradient(135deg,#0b2545,#13477e,#1c6fb8)` (igual al del correo).
 

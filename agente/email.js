@@ -16,6 +16,16 @@ window.VEmail = (function () {
 
   function buildHtml(envio) {
     const C = VCfg;
+    const A = (window.VAgent ? VAgent.get() : C.AGENT_DEFAULT);
+    // Link de la guía personalizado con la identidad del agente activo, para que
+    // el cliente abra la app pública con el nombre/licencia de SU agente.
+    const guiaLink = (window.VAgent ? VAgent.publicLink(A) : C.APP_LINK);
+    // CTA "Comprar de nuevo": link de cotización INS del agente (con SU código
+    // de intermediario); fallback al de JC si el perfil no lo tiene.
+    const cotizaLink = A.cotizaLink || C.COTIZA_LINK;
+    const lineaLicencia = ['Licencia Sugese ' + (A.licencia || ''), A.codigo ? 'Código ' + A.codigo : '']
+      .filter(s => s && s !== 'Licencia Sugese ').join(' · ');
+    const lineaContacto = [A.tel, A.correo, A.web].filter(Boolean).join(' &middot; ');
     const viajeros = (envio.viajeros || []).map(filaViajero).join('');
     return `<!DOCTYPE html><html><body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9"><tr><td align="center" style="padding:18px">
@@ -31,7 +41,7 @@ window.VEmail = (function () {
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;margin-bottom:16px">${viajeros}</table>
     <div style="background:#ecfdf5;border-radius:8px;padding:14px;text-align:center;margin-bottom:16px">
       <div style="font-size:13px;font-weight:600;color:#0f6e56;margin-bottom:8px">Centro de asistencia 24/7</div>
-      <a href="${esc(C.APP_LINK)}" style="display:inline-block;background:#0f6e56;color:#e1f5ee;font-size:14px;font-weight:600;text-decoration:none;padding:10px 18px;border-radius:8px">&#128241; Abrir mi guía de emergencias</a>
+      <a href="${esc(guiaLink)}" style="display:inline-block;background:#0f6e56;color:#e1f5ee;font-size:14px;font-weight:600;text-decoration:none;padding:10px 18px;border-radius:8px">&#128241; Abrir mi guía de emergencias</a>
       <div style="font-size:12px;color:#64748b;margin-top:8px">Ábrala en el celular y elija "Añadir a pantalla de inicio" para tenerla siempre a mano como una App.</div>
     </div>
     <div style="font-size:12px;color:#64748b;font-weight:600;margin-bottom:6px">Documentos adjuntos</div>
@@ -46,11 +56,11 @@ window.VEmail = (function () {
       &#9888;&#65039; <b>Importante:</b> ante cualquier emergencia médica, contacte primero a la Unidad de Asistencia del INS. Tenga a mano su pasaporte y número de póliza.
     </div>
     <div style="border-top:1px solid #e5e7eb;padding-top:12px;font-size:12px;color:#64748b;line-height:1.7">
-      <b style="color:#0f172a">${esc(C.FIRMA.nombre)}</b><br>${esc(C.FIRMA.rol)}<br>${esc(C.FIRMA.licencia)}<br>${esc(C.FIRMA.tel)} &middot; ${esc(C.FIRMA.correo)} &middot; ${esc(C.FIRMA.web)}
+      <b style="color:#0f172a">${esc(A.nombre)}</b><br>${esc(A.rol)}<br>${esc(lineaLicencia)}<br>${lineaContacto}
     </div>
     <div style="margin-top:14px;background:#f8fafc;border-radius:8px;padding:12px;text-align:center">
       <div style="font-size:12px;color:#64748b;margin-bottom:8px">¿Planeando su próximo viaje?</div>
-      <a href="${esc(C.COTIZA_LINK)}" style="display:inline-block;font-size:13px;color:#13477e;text-decoration:none;border:1px solid #c7d2e0;border-radius:8px;padding:8px 16px">&#9992;&#65039; Comprar de nuevo un Seguro INS Viajero</a>
+      <a href="${esc(cotizaLink)}" style="display:inline-block;font-size:13px;color:#13477e;text-decoration:none;border:1px solid #c7d2e0;border-radius:8px;padding:8px 16px">&#9992;&#65039; Comprar de nuevo un Seguro INS Viajero</a>
     </div>
   </td></tr>
 </table></td></tr></table></body></html>`;
