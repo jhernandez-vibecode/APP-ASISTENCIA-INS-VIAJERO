@@ -37,10 +37,19 @@ window.VAgent = (function () {
     const known = VCfg.AGENTES && VCfg.AGENTES[(p.id || '').toLowerCase()];
     if (!known) {
       // Agente no precargado: viaja su info en el link (autoservicio).
-      if (p.nombre) q.set('an', p.nombre);
-      if (p.rol) q.set('ar', p.rol);
-      if (p.licencia) q.set('al', p.licencia);
-      if (p.web) q.set('aw', p.web);
+      // Un campo que quedó EXACTAMENTE igual al default (JC) NO viaja: así un
+      // agente que cambió su nombre pero olvidó cambiar el código de cotización
+      // (o el sitio web) prefijado no termina difundiendo el dato de JC bajo su
+      // propio nombre. Campo ausente = se muestra vacío, nunca el de JC.
+      const D = VCfg.AGENT_DEFAULT || {};
+      if (p.nombre && p.nombre !== D.nombre) q.set('an', p.nombre);
+      if (p.rol && p.rol !== D.rol) q.set('ar', p.rol);
+      if (p.licencia && p.licencia !== D.licencia) q.set('al', p.licencia);
+      if (p.web && p.web !== D.web) q.set('aw', p.web);
+      // ac = link de compra/cotización del agente (INS con SU código de
+      // intermediario). Viaja para que el cross-sell de la página pública venda
+      // con el código del agente, no con el de JC.
+      if (p.cotizaLink && p.cotizaLink !== D.cotizaLink) q.set('ac', p.cotizaLink);
     }
     return base + '?' + q.toString();
   }

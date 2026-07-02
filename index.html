@@ -748,18 +748,27 @@
             try {
                 var q = new URLSearchParams(window.location.search);
                 var id = (q.get('a') || DEFAULT_AGENT_ID).toLowerCase();
+                // Autoservicio: si el link trae CUALQUIER dato del agente, la
+                // identidad viaja COMPLETA en el link y NO se hereda NADA del
+                // agente base (JC). Un campo ausente queda vacío, nunca con el
+                // dato de JC — así el cross-sell, la firma, la licencia y el
+                // sitio nunca filtran la información de otro agente.
+                var selfService = q.get('an') || q.get('ar') || q.get('al') || q.get('aw') || q.get('ac');
+                if (selfService) {
+                    return {
+                        id: id,
+                        nombre: q.get('an') || '',
+                        rol: q.get('ar') || '',
+                        licencia: q.get('al') || '',
+                        web: q.get('aw') || '',
+                        // sales = link de compra del agente (param ac), con SU
+                        // código de intermediario. Lo usa salesUrl() en el cross-sell.
+                        sales: q.get('ac') || ''
+                    };
+                }
+                // Agente precargado (o JC por defecto): identidad desde AGENTES.
                 var base = AGENTES[id] || AGENTES[DEFAULT_AGENT_ID];
-                var a = Object.assign({}, base);
-                // Autoservicio: si el link trae la info del agente, se respeta.
-                if (q.get('an')) a.nombre = q.get('an');
-                if (q.get('ar')) a.rol = q.get('ar');
-                if (q.get('al')) a.licencia = q.get('al');
-                if (q.get('aw')) a.web = q.get('aw');
-                // Identidad de autoservicio = NO es el agente base: no heredar su
-                // página de ventas (salesUrl usará el sitio web del propio agente).
-                if (q.get('an') || q.get('ar') || q.get('al') || q.get('aw')) delete a.sales;
-                a.id = id;
-                return a;
+                return Object.assign({}, base, { id: id });
             } catch (e) { return Object.assign({}, AGENTES[DEFAULT_AGENT_ID]); }
         }
 
@@ -770,9 +779,13 @@
             document.querySelectorAll('[data-ag="nombre"]').forEach(function (el) { el.textContent = a.nombre; });
             document.querySelectorAll('[data-ag="licencia"]').forEach(function (el) { el.textContent = a.licencia; });
             document.querySelectorAll('[data-ag="web-link"]').forEach(function (el) {
-                if (!a.web) return;
-                el.textContent = a.web;
-                el.href = a.web.indexOf('http') === 0 ? a.web : 'https://' + a.web;
+                if (a.web) {
+                    el.textContent = a.web;
+                    el.href = a.web.indexOf('http') === 0 ? a.web : 'https://' + a.web;
+                } else if (!AGENTES[a.id]) {
+                    // Agente sin sitio propio: ocultar la línea para no mostrar el de JC.
+                    var line = el.closest('p'); if (line) line.style.display = 'none';
+                }
             });
             document.querySelectorAll('[data-ag="sales-link"]').forEach(function (el) {
                 el.href = salesUrl();
@@ -841,7 +854,7 @@
             // tal como llegaron, para que el link recomendado siga personalizado.
             var base = window.location.origin + window.location.pathname;
             var cur = new URLSearchParams(window.location.search), q = new URLSearchParams();
-            ['a', 'an', 'ar', 'al', 'aw'].forEach(function (k) { if (cur.get(k)) q.set(k, cur.get(k)); });
+            ['a', 'an', 'ar', 'al', 'aw', 'ac'].forEach(function (k) { if (cur.get(k)) q.set(k, cur.get(k)); });
             if (![...q].length && ACTIVE_AGENT.id) q.set('a', ACTIVE_AGENT.id);
             var qs = q.toString();
             return qs ? base + '?' + qs : base;
