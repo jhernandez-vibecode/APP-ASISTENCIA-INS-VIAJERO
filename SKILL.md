@@ -14,7 +14,11 @@ App de **asistencia post-venta** para clientes que YA compraron el Seguro INS Vi
 1. **`/` (index.html) — PÚBLICA, del cliente.** El agente la comparte por correo/WhatsApp. El cliente ve contactos de emergencia, paso a paso de reclamos, guía Wi-Fi Call, coberturas/exclusiones, vigencia/prórroga y cross-sell. No configura nada.
 2. **`/agente/` — PRIVADA, del agente (JC).** Consola con login Google + whitelist para preparar y enviar la documentación de pólizas ya emitidas. El cliente NUNCA la ve.
 
-La consola enlaza a la página pública para reclamos/contactos → "economía de código" (no se duplica esa info).
+La consola enlaza a la página pública para reclamos/contactos → "economía de código" (no se duplica esa info). Fue pedido expreso de JC: reusar la sección de reclamos de la pública en vez de duplicarla en la consola.
+
+## Fuente oficial de los datos (REGLA 🔴)
+
+Todo dato del producto que aparezca en la app (coberturas, exclusiones, montos, contactos, plazos) debe poder rastrearse a **`C:/Users/segur/Viajero Asistencia/_INFO-OFICIAL-VERIFICADA.md`**, junto con los 6 PDF oficiales del INS en esa misma carpeta (Condiciones Generales · Kit Cliente · Manual · Montos asegurados · Publi · Tarifas). Producto: **Seguro INS Viajero con Asistencia Autoexpedible, registro SUGESE `P19-57-A01-972 V5`**. Si un dato no está ahí, NO se escribe en la app.
 
 ## Estado actual
 
@@ -22,7 +26,8 @@ La consola enlaza a la página pública para reclamos/contactos → "economía d
 - **Repo:** [jhernandez-vibecode/APP-ASISTENCIA-INS-VIAJERO](https://github.com/jhernandez-vibecode/APP-ASISTENCIA-INS-VIAJERO). Local: `C:/Users/segur/APP-ASISTENCIA-INS-VIAJERO`.
 - **Consola `/agente/` (23 jun 2026, commits `2bc66bc` + `61a38b9`):** PDF→correo Gmail multi-viajero + 2 WhatsApp editables. Verificada (parser self-test 12/12).
 - **Cross-sell público "Comprá/Recomendá":** live desde 3 jun 2026.
-- **Personalización multi-agente COMPLETA (1 jul 2026):** el link de la app dentro del correo (botón "Abrir mi guía de emergencias") y de las plantillas WhatsApp (comodín `{Link}`) ahora usa `VAgent.publicLink()` → el cliente abre la pública con la identidad de SU agente. Además: campo `cotizaLink` en el perfil (CTA "Comprar de nuevo" con el código de intermediario de CADA agente, fallback al de JC) y cross-sell público personalizado (`salesUrl()`: `sales` precargado > web del agente `?aw=` > SDI). Verificado en preview (JC default, agente autoservicio y plantilla legacy). Para dar acceso a la consola a otro agente solo falta agregar su Gmail a `WHITELIST` en `config.js`. Icono "Regla de oro" = estrella dorada (antes alert-triangle). Banner ámbar de exclusividad SIN la coletilla "no es un recurso estándar del INS" (quitada 1 jul por decisión de JC: lo importante es que sepan que es del agente).
+- **Personalización multi-agente COMPLETA (1 jul 2026, commits `732be18` + `c9693b9`):** el link de la app dentro del correo (botón "Abrir mi guía de emergencias") y de las plantillas WhatsApp (comodín `{Link}`) ahora usa `VAgent.publicLink()` → el cliente abre la pública con la identidad de SU agente. Además: campo `cotizaLink` en el perfil (CTA "Comprar de nuevo" con el código de intermediario de CADA agente, fallback al de JC) y cross-sell público personalizado (`salesUrl()`: `sales` precargado > web del agente `?aw=` > SDI). Verificado en preview (JC default, agente autoservicio y plantilla legacy). Para dar acceso a la consola a otro agente solo falta agregar su Gmail a `WHITELIST` en `config.js`. Icono "Regla de oro" = estrella dorada (antes alert-triangle). Banner ámbar de exclusividad SIN la coletilla "no es un recurso estándar del INS" (quitada 1 jul por decisión de JC: lo importante es que sepan que es del agente).
+- **FIX cross-sell por agente (2 jul 2026, commit `9d4020c`, último commit del repo):** el cross-sell de la pública ("Cotizar mi próximo viaje" / "Compartí el seguro") le filtraba a otros agentes el link de compra de JC. Doble causa: (1) el `cotizaLink` del agente NO viajaba en el link público; (2) `getAgent()` copiaba el objeto base de JC y los campos ausentes en el link quedaban con el valor de JC. Fix: parámetro nuevo `ac` en `publicLink()` + `getAgent()` sin herencia + `appUrl()` preserva `ac` + footer web oculto si el agente no tiene web (ver detalle en "Página pública").
 
 ## Stack técnico
 
@@ -57,13 +62,15 @@ APP-ASISTENCIA-INS-VIAJERO/
 
 ## Página pública (index.html) — pestañas
 
-Inicio · Contactos de Emergencia · Reclamos y Reembolsos · Guía Wi-Fi Call · Coberturas y Exclusiones · Vigencia y Prórroga · **Comprá / Recomendá** (cross-sell ámbar). Branding INS + Licencia 08-1318 + pie SDI. WhatsApp Universal Assistance: `wa.me/5491167502557` (link al bot de asistencia, se mantiene). Cross-sell a `segurosdelins.com/seguros-de-viaje`.
+Inicio · Contactos de Emergencia · Reclamos y Reembolsos · Guía Wi-Fi Call · Coberturas y Exclusiones · Vigencia y Prórroga · **Comprá / Recomendá** (cross-sell ámbar). Branding INS + Licencia 08-1318 + pie SDI. WhatsApp Universal Assistance: `wa.me/5491167502557` (link al bot de asistencia, se mantiene; es la excepción a la regla "nunca wa.me" — no lleva texto con emojis).
+
+**Pestaña Comprá / Recomendá (agregada 3 jun 2026):** CTA "Cotizar mi próximo viaje" → `https://www.segurosdelins.com/seguros-de-viaje` (o el link del agente, ver `salesUrl()` abajo) + "recomendar a un amigo", que comparte la página de ventas O la app por tres vías: WhatsApp `api.whatsapp.com/send?text=` (sin teléfono, solo texto), Web Share API y copiar link. La URL de "compartir esta app" se arma en caliente con `window.location.origin + window.location.pathname` → auto-detecta el dominio real, no hay dominio hardcodeado.
 
 **Agente personalizable (link por agente):** la info del agente (nombre, licencia, web, copyright, banner de exclusividad, texto de recomendación, título de la pestaña) NO está hardcodeada — se marca con `data-ag="nombre|licencia|web-link|sales-link"` y `applyAgent()` la sustituye al cargar. Registro `AGENTES` (default `jc`, con `sales` = página de ventas) + `getAgent()` lee `?a=<id>` (precargado) o los parámetros de autoservicio (`?an` nombre `/&ar` rol `/&al` licencia `/&aw` web `/&ac` link de compra). **REGLA anti-fuga (2 jul 2026):** si el link trae CUALQUIER parámetro de autoservicio, `getAgent()` construye la identidad SOLO desde el link y NO hereda NADA del base JC — un campo ausente queda vacío, nunca con el dato de JC (antes se copiaba `Object.assign({}, base)` y los campos no sobreescritos filtraban la web/licencia/link de JC). Cross-sell: `salesUrl()` = `a.sales` (param `ac` = link de compra/cotización del agente con SU código de intermediario; o `sales` precargado de JC) > web del agente > `segurosdelins.com/seguros-de-viaje` literal (NO var — `applyAgent()` corre antes de esa sección). El footer "Visítenos en…" se oculta si el agente no trae web propia (no muestra la de JC). `appUrl()` preserva `a/an/ar/al/aw/ac`. Los WhatsApp de Universal Assistance NO son del agente y se dejan fijos.
 
 **Guarda del `publicLink()` (agent.js):** al generar el link, un campo que quedó EXACTAMENTE igual al `AGENT_DEFAULT` (JC) NO viaja (`if (p.x && p.x !== D.x)`). Motivo: la consola prefija el perfil del agente nuevo con los datos de JC (incluido `cotizaLink` con el código 1101130); si el agente cambia su nombre pero olvida cambiar el link de cotización, sin esta guarda difundiría el código de JC bajo su propio nombre. Con la guarda, ese campo simplemente no viaja → el cross-sell cae a la web del agente o al genérico, nunca al código de JC. **Onboarding:** cada agente DEBE llenar su "Link de cotización INS" con su propio código; si lo deja en el default de JC, su cross-sell no venderá con su código.
 
-**Gotcha Lucide:** `lucide.createIcons()` convierte `<i data-lucide>` en `<svg>` cuyo `className` es objeto (SVGAnimatedString) → usar `classList.add/remove/toggle` para recolorar, nunca `.className.replace`.
+**Gotcha Lucide (aplica a TODAS las single-file de JC que usan Lucide):** `lucide.createIcons()` convierte `<i data-lucide>` en `<svg>` cuyo `className` es objeto (SVGAnimatedString), NO texto → `icon.className.replace(...)` truena. Usar `classList.add/remove/toggle` para recolorar. Era un bug pre-existente en `switchTab`, corregido el 3 jun 2026.
 
 ## Consola `/agente/` — arquitectura
 
@@ -118,11 +125,11 @@ Un solo correo lista a TODOS los viajeros y adjunta los documentos de cada uno +
 4. **Sincronizar SKILL.md en las 3 ubicaciones** (ver abajo).
 
 ## Pre-requisito OAuth (producción)
-Para que el login funcione, el origen del sitio (`https://appasistenciainsviajero.netlify.app`) y, para pruebas, `http://localhost:8960`, deben estar en **"Orígenes de JavaScript autorizados"** del Client ID en Google Cloud Console. Sin eso, el login falla aunque el correo esté en la whitelist.
+Para que el login funcione, el origen del sitio (`https://appasistenciainsviajero.netlify.app`) y, para pruebas, `http://localhost:8960`, deben estar en **"Orígenes de JavaScript autorizados"** del Client ID en Google Cloud Console. Sin eso, el login falla aunque el correo esté en la whitelist. JC confirmó (23 jun 2026) que el origen de Netlify ya está agregado. Si algún día se estrena subdominio propio, hay que agregar ESE origen también.
 
 ## Sincronización del SKILL.md (REGLA 🔴)
 
-Al actualizar este SKILL.md, sincronizar en las 3 ubicaciones:
+Este SKILL nació el 23 jun 2026 (commit `14b44fb`) y cubre las DOS caras: la pública del cliente y la consola `/agente/`. Al actualizarlo, sincronizar en las 3 ubicaciones:
 
 1. **Repo (GitHub):** `C:/Users/segur/APP-ASISTENCIA-INS-VIAJERO/SKILL.md`
 2. **Skill instalado (Claude Code):** `C:/Users/segur/.claude/skills/especialista-asistencia-viajero/SKILL.md`
