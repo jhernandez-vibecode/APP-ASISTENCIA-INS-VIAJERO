@@ -56,6 +56,39 @@ window.VApp = (function () {
     catch (e) { el('gate-err').textContent = e.message; el('gate-err').classList.remove('hidden'); }
   }
 
+  // ----- Permiso de envío de Gmail -----
+  // Google muestra "Enviar correo electrónico en tu nombre" como una casilla que
+  // el agente puede dejar sin marcar: entra a la consola igual, pero Gmail
+  // rechaza el envío con 403. Este aviso lo deja arreglarlo con un clic.
+  function avisoPermiso() {
+    if (!window.VAuth || VAuth.canSend()) return '';
+    return `<div class="border-2 border-amber-300 bg-amber-50 rounded-xl p-4 mb-4">
+      <div class="text-sm font-semibold text-amber-900">⚠️ Falta el permiso para enviar correos</div>
+      <p class="text-xs text-amber-800 mt-1 leading-relaxed">Google no recibió el permiso de envío, así que el correo va a fallar. Hacé clic en el botón y, en la pantalla de Google, <b>marcá la casilla “Enviar correo electrónico en tu nombre”</b> antes de continuar.</p>
+      <button onclick="VApp.pedirPermiso()" class="mt-2 text-white text-xs font-medium rounded-lg px-3 py-1.5" style="background:linear-gradient(135deg,#d97706 0%,#b45309 100%)">Conceder permiso de envío</button>
+    </div>`;
+  }
+  async function pedirPermiso() {
+    try {
+      await VAuth.grantSend(); render();
+      const st = el('status');
+      if (st) st.textContent = VAuth.canSend()
+        ? '✅ Permiso concedido, ya podés enviar correos.'
+        : '❌ Seguís sin el permiso de envío: repetí el paso y marcá la casilla “Enviar correo electrónico en tu nombre”.';
+    } catch (e) { const st = el('status'); if (st) st.textContent = '❌ ' + e.message; }
+  }
+
+  // Traduce el volcado crudo de la API de Gmail a algo que el agente entienda.
+  function msgError(e) {
+    const m = String(e && e.message || e);
+    if (esErrorDePermiso(m)) return 'Google no dio el permiso para enviar correos. Usá el botón “Conceder permiso de envío” y marcá la casilla “Enviar correo electrónico en tu nombre”.';
+    if (/\b401\b|UNAUTHENTICATED/i.test(m)) return 'La sesión de Google venció. Volvé a conectar e intentá de nuevo.';
+    return m;
+  }
+  function esErrorDePermiso(m) {
+    return /\b403\b|insufficient|SCOPE_INSUFFICIENT|PERMISSION_DENIED|insufficientPermissions/i.test(String(m));
+  }
+
   function addViajero() { state.sent = false; state.viajeros.push({ id: nextId++, cliente: '', nombrePila: '', poliza: '', cedula: '', destino: '', gastosMedicos: '', vigenciaDesde: '', vigenciaHasta: '', correo: '', files: [] }); syncEnvio(); render(); }
   function removeViajero(id) { state.viajeros = state.viajeros.filter(v => v.id !== id); syncEnvio(); render(); }
 
@@ -115,6 +148,7 @@ window.VApp = (function () {
   }
   function render() {
     el('console').innerHTML = `
+      ${avisoPermiso()}
       ${agentePanel()}
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-bold">Envío de pólizas</h2>
@@ -203,8 +237,18 @@ window.VApp = (function () {
     if (state.canal !== 'correo') { return preview(); }
     if (!state.viajeros.length) { st.textContent = 'Agregá al menos un viajero.'; return; }
     if (!state.destinatarios.length) { st.textContent = 'Indicá al menos un destinatario.'; return; }
-    el('btn-enviar').disabled = true; st.textContent = 'Preparando adjuntos…';
+    el('btn-enviar').disabled = true;
     try {
+      // Primero el permiso: la pantalla de Google se abre acá, montada sobre el
+      // clic del agente (si se pide después de preparar los adjuntos, el
+      // navegador puede bloquear la ventana emergente).
+      if (!VAuth.canSend()) {
+        st.textContent = 'Falta el permiso de envío, pidiéndolo a Google…';
+        await VAuth.grantSend();
+        if (!VAuth.canSend()) { render(); el('status').textContent = '❌ ' + msgError('403 insufficient'); return; }
+        render();
+      }
+      st.textContent = 'Preparando adjuntos…';
       const att = [];
       for (const v of state.viajeros) for (const f of v.files) att.push({ name: f.name, b64: await VEmail.fileToB64(f) });
       for (const d of VCfg.STANDARD_DOCS) att.push({ name: d.name, b64: await VEmail.pathToB64(d.path) });
@@ -213,7 +257,13 @@ window.VApp = (function () {
       try {
         await VEmail.buildAndSend(state, att, token);
       } catch (e) {
-        if (/\b401\b|UNAUTHENTICATED|invalid|expired/i.test(e.message)) {
+        if (esErrorDePermiso(e.message)) {
+          // El token venía sin el permiso de envío: pedirlo y reintentar.
+          st.textContent = 'Falta el permiso de envío, pidiéndolo a Google…';
+          token = (await VAuth.grantSend()).token;
+          if (!VAuth.canSend()) throw e;
+          await VEmail.buildAndSend(state, att, token);
+        } else if (/\b401\b|UNAUTHENTICATED|invalid|expired/i.test(e.message)) {
           st.textContent = 'Sesión vencida, reconectando…';
           token = (await VAuth.signIn()).token;
           await VEmail.buildAndSend(state, att, token);
@@ -221,12 +271,12 @@ window.VApp = (function () {
       }
       state.sent = true; render();
       el('status').textContent = '✅ Correo enviado a ' + state.destinatarios.join(', ');
-    } catch (e) { st.textContent = '❌ ' + e.message; }
+    } catch (e) { render(); el('status').textContent = '❌ ' + msgError(e); }
     finally { const b = el('btn-enviar'); if (b) b.disabled = false; }
   }
 
   function boot() { try { VAuth.init(); } catch (e) {} el('btn-login').addEventListener('click', login); }
   return { boot, login, addViajero, removeViajero, setCanal, waSave, waReset, preview, enviar,
-    agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink };
+    pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink };
 })();
 document.addEventListener('DOMContentLoaded', () => VApp.boot());
