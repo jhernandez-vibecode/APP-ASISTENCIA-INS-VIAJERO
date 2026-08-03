@@ -14,6 +14,22 @@ window.VEmail = (function () {
       <div style="margin-top:6px;line-height:2">${chips}</div>${med}</td></tr>`;
   }
 
+  // Lista de "Documentos adjuntos" armada con lo que el agente REALMENTE cargó,
+  // para no prometer una tarjeta o un comprobante que no viaja en el correo.
+  function listaAdjuntos(envio) {
+    const kinds = new Set();
+    (envio.viajeros || []).forEach(v => (v.files || []).forEach(f => {
+      kinds.add(f.vKind || (window.VParse ? VParse.classifyFile(f.name, '') : 'otro'));
+    }));
+    const items = [];
+    if (kinds.has('poliza') && kinds.has('tarjeta')) items.push('Póliza y tarjeta de asistencia de cada viajero');
+    else if (kinds.has('poliza')) items.push('Póliza de cada viajero');
+    else if (kinds.has('tarjeta')) items.push('Tarjeta de asistencia de cada viajero');
+    if (kinds.has('comprobante')) items.push('Comprobante de pago');
+    items.push('Condiciones generales y Manual de reembolsos');
+    return items.map(t => '&#9989; ' + esc(t)).join('<br>');
+  }
+
   function buildHtml(envio) {
     const C = VCfg;
     const A = (window.VAgent ? VAgent.get() : C.AGENT_DEFAULT);
@@ -46,7 +62,7 @@ window.VEmail = (function () {
     </div>
     <div style="font-size:12px;color:#64748b;font-weight:600;margin-bottom:6px">Documentos adjuntos</div>
     <div style="font-size:13px;color:#334155;line-height:1.9;margin-bottom:16px">
-      &#9989; Póliza y tarjeta de cada viajero<br>&#9989; Comprobante de pago<br>&#9989; Condiciones generales y Manual de reembolsos
+      ${listaAdjuntos(envio)}
     </div>
     <div style="font-size:12px;color:#64748b;font-weight:600;margin-bottom:6px">Contactos de emergencia</div>
     <div style="font-size:13px;color:#334155;line-height:1.9;margin-bottom:16px">
@@ -66,6 +82,17 @@ window.VEmail = (function () {
 </table></td></tr></table></body></html>`;
   }
 
+  const MIME_POR_EXT = {
+    pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+    gif: 'image/gif', webp: 'image/webp', heic: 'image/heic'
+  };
+  function tipoPorNombre(n) {
+    const ext = (String(n || '').split('.').pop() || '').toLowerCase();
+    return MIME_POR_EXT[ext] || 'application/octet-stream';
+  }
+  // Las comillas y los saltos de línea en el nombre romperían la cabecera MIME.
+  function nombreSeguro(n) { return String(n || 'documento').replace(/[\r\n"]/g, ' ').trim() || 'documento'; }
+
   function abToB64(buf) {
     let bin = ''; const bytes = new Uint8Array(buf), chunk = 0x8000;
     for (let i = 0; i < bytes.length; i += chunk) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
@@ -81,7 +108,16 @@ window.VEmail = (function () {
     let mime = `To: ${to}\r\nSubject: ${subject}\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary="${boundary}"\r\n\r\n`;
     mime += `--${boundary}\r\nContent-Type: text/html; charset="UTF-8"\r\nContent-Transfer-Encoding: 7bit\r\n\r\n${html}\r\n`;
     for (const a of attachments) {
-      mime += `--${boundary}\r\nContent-Type: application/pdf; name="${a.name}"\r\nContent-Transfer-Encoding: base64\r\nContent-Disposition: attachment; filename="${a.name}"\r\n\r\n${a.b64}\r\n`;
+      // El tipo real del archivo: si la tarjeta viene como imagen, no se puede
+      // rotular application/pdf o el cliente de correo la muestra rota.
+      const tipo = a.mime || tipoPorNombre(a.name);
+      const nombre = nombreSeguro(a.name);
+      // Nombre con acentos: RFC 2047 en name= y RFC 2231 en filename*= para que
+      // Gmail y Outlook lo muestren bien en vez de mojibake.
+      const ascii = !/[^\x20-\x7E]/.test(nombre);
+      const name47 = ascii ? `"${nombre}"` : '=?UTF-8?B?' + btoa(unescape(encodeURIComponent(nombre))) + '?=';
+      const disp = ascii ? `filename="${nombre}"` : `filename*=UTF-8''${encodeURIComponent(nombre)}`;
+      mime += `--${boundary}\r\nContent-Type: ${tipo}; name=${name47}\r\nContent-Transfer-Encoding: base64\r\nContent-Disposition: attachment; ${disp}\r\n\r\n${a.b64}\r\n`;
     }
     mime += `--${boundary}--`;
     const raw = b64url(mime);

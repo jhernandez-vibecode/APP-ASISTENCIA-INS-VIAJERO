@@ -99,13 +99,22 @@ window.VApp = (function () {
     if (mails.length && !state.destinatarios.length) state.destinatarios = [mails[0]];
   }
 
+  // 🔴 La FileList que entrega el navegador es VIVA, no una copia: el handler del
+  // input la vacía (`fi.value = ''`) apenas este for cede el control en el primer
+  // `await`, y el DataTransfer del arrastre se neutraliza al terminar el evento.
+  // Sin la copia sincrónica de abajo, el ciclo moría después del PRIMER archivo:
+  // se guardaba solo la póliza y la tarjeta/comprobante se perdían en silencio.
   async function onFiles(viajeroId, fileList) {
     const v = state.viajeros.find(x => x.id === viajeroId); if (!v) return;
+    const entrantes = Array.from(fileList || []);
+    if (!entrantes.length) return;
     state.sent = false;
-    for (const f of fileList) {
+    for (const f of entrantes) {
       v.files.push(f);
-      const text = await VParse.readPdfText(f).catch(() => '');
+      const esPdf = /pdf/i.test(f.type) || /\.pdf$/i.test(f.name);
+      const text = esPdf ? await VParse.readPdfText(f).catch(() => '') : '';
       const kind = VParse.classifyFile(f.name, text);
+      f.vKind = kind; // se recuerda la clasificación (acá sí tenemos el texto del PDF)
       if (kind === 'poliza') { Object.assign(v, VParse.extractAll(text)); }
     }
     syncEnvio(); render();
@@ -116,15 +125,35 @@ window.VApp = (function () {
       <input data-vid="${v.id}" data-key="${key}" value="${(v[key]||'').replace(/"/g,'&quot;')}" class="w-full text-sm border rounded px-2 py-1 ${mono?'font-mono':''}"/></label>`;
   }
 
+  // ----- Archivos cargados por viajero -----
+  const KIND_LABEL = { poliza: 'Póliza', tarjeta: 'Tarjeta', comprobante: 'Comprobante', otro: 'Otro' };
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+  function kindOf(f) { return f.vKind || VParse.classifyFile(f.name, ''); }
+  function listaArchivos(v) {
+    if (!v.files.length) return `<div class="text-xs text-slate-400 mb-2">Sin archivos cargados todavía.</div>`;
+    const chips = v.files.map((f, i) => {
+      const k = kindOf(f);
+      const color = k === 'otro' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-800';
+      return `<span class="inline-flex items-center gap-1 ${color} rounded px-2 py-0.5 mr-1 mb-1 text-[11px]">
+        <b>${KIND_LABEL[k]}</b> ${esc(f.name)}
+        <button onclick="VApp.quitarArchivo(${v.id},${i})" class="text-slate-400 hover:text-red-600 font-bold" title="Quitar este archivo">&times;</button></span>`;
+    }).join('');
+    return `<div class="mb-2"><div class="text-[11px] text-slate-400 mb-1">${v.files.length} archivo${v.files.length > 1 ? 's' : ''} que se van a adjuntar</div>${chips}</div>`;
+  }
+  function quitarArchivo(vid, idx) {
+    const v = state.viajeros.find(x => x.id === vid); if (!v) return;
+    v.files.splice(idx, 1); state.sent = false; render();
+  }
+
   function viajeroCard(v, idx) {
     return `<div class="border rounded-xl p-4 mb-3 bg-white">
       <div class="flex items-center justify-between mb-3"><b class="text-sm">Viajero ${idx + 1}</b>
         <button onclick="VApp.removeViajero(${v.id})" class="text-red-500 text-xs">Quitar</button></div>
       <div class="dropzone border-2 border-dashed rounded-lg p-4 text-center text-sm text-slate-500 mb-3 cursor-pointer hover:bg-blue-50 transition-colors" data-vid="${v.id}">
-        Arrastrá los PDF aquí <span class="text-blue-700 font-medium underline">o hacé clic para cargarlos</span>
-        <input type="file" class="hidden" multiple accept="application/pdf,.pdf">
+        Arrastrá acá la póliza, la tarjeta y el comprobante <span class="text-blue-700 font-medium underline">o hacé clic para cargarlos</span>
+        <input type="file" class="hidden" multiple accept="application/pdf,.pdf,image/*">
       </div>
-      <div class="text-xs text-slate-400 mb-2">${v.files.map(f => VParse.classifyFile(f.name, '') + ': ' + f.name).join(' · ') || 'sin archivos'}</div>
+      ${listaArchivos(v)}
       <div class="grid grid-cols-2 gap-2">
         ${field(v, 'cliente', 'Cliente')}${field(v, 'nombrePila', 'Saludo (nombre)')}
         ${field(v, 'poliza', 'N° Póliza', true)}${field(v, 'correo', 'Correo')}
@@ -250,8 +279,8 @@ window.VApp = (function () {
       }
       st.textContent = 'Preparando adjuntos…';
       const att = [];
-      for (const v of state.viajeros) for (const f of v.files) att.push({ name: f.name, b64: await VEmail.fileToB64(f) });
-      for (const d of VCfg.STANDARD_DOCS) att.push({ name: d.name, b64: await VEmail.pathToB64(d.path) });
+      for (const v of state.viajeros) for (const f of v.files) att.push({ name: f.name, mime: f.type, b64: await VEmail.fileToB64(f) });
+      for (const d of VCfg.STANDARD_DOCS) att.push({ name: d.name, mime: 'application/pdf', b64: await VEmail.pathToB64(d.path) });
       st.textContent = 'Enviando correo…';
       let token = await VAuth.ensureToken();
       try {
@@ -276,7 +305,7 @@ window.VApp = (function () {
   }
 
   function boot() { try { VAuth.init(); } catch (e) {} el('btn-login').addEventListener('click', login); }
-  return { boot, login, addViajero, removeViajero, setCanal, waSave, waReset, preview, enviar,
+  return { boot, login, addViajero, removeViajero, quitarArchivo, setCanal, waSave, waReset, preview, enviar,
     pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink };
 })();
 document.addEventListener('DOMContentLoaded', () => VApp.boot());

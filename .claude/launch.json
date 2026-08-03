@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "asistencia-viajero",
+      "runtimeExecutable": "py",
+      "runtimeArgs": ["-m", "http.server", "8960"],
+      "port": 8960
+    }
+  ]
+}
