@@ -8,6 +8,17 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://accounts.google.com/gsi/client" async></script>
+  <style>
+    /* Confirmación de envío: el check se dibuja y el panel entra desde abajo. */
+    @keyframes v-draw { to { stroke-dashoffset: 0 } }
+    @keyframes v-pop { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+    .v-check path { stroke-dasharray: 30; stroke-dashoffset: 30; animation: v-draw .45s .15s ease forwards }
+    .v-pop { animation: v-pop .3s ease both }
+    @media (prefers-reduced-motion: reduce) {
+      .v-check path { animation: none; stroke-dashoffset: 0 }
+      .v-pop { animation: none }
+    }
+  </style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800">
   <header class="text-white" style="background:linear-gradient(135deg,#0b2545 0%,#13477e 55%,#1c6fb8 100%)">
@@ -25,6 +36,23 @@
     </div>
     <div id="console" class="hidden"></div>
   </main>
+
+  <!-- Registro de cambios: toda actualización de la consola queda anotada acá,
+       con la más reciente arriba. Se despliega con clic para no ocupar espacio. -->
+  <footer class="max-w-5xl mx-auto px-4 pb-10 pt-4">
+    <details class="text-[11px] text-slate-400 border-t pt-3">
+      <summary class="cursor-pointer select-none hover:text-slate-600">
+        Última actualización: <b class="font-semibold">5 ago 2026</b> — confirmación visual del envío, N° de póliza y nuevos íconos en los mensajes de WhatsApp
+      </summary>
+      <ul class="mt-2 space-y-1.5 leading-relaxed">
+        <li><b class="font-semibold text-slate-500">5 ago 2026</b> — Al enviar el correo aparece un panel de confirmación con el destinatario, la cantidad de viajeros, los adjuntos y la hora; los botones desaparecen para no enviar dos veces. En los mensajes de WhatsApp: el mundo pasó a avión, el avión a check, y se agregó el N° de póliza (se llena solo con el del PDF y se puede escribir a mano).</li>
+        <li><b class="font-semibold text-slate-500">3 ago 2026</b> — Se corrigió la pérdida silenciosa de la tarjeta de asistencia y el comprobante: solo se adjuntaba el primer archivo. Ahora se ve la lista de lo que se va a adjuntar, con un botón para quitar cualquiera.</li>
+        <li><b class="font-semibold text-slate-500">27 jul 2026</b> — Aviso y botón para recuperar el permiso de envío de Gmail cuando Google no lo concede al iniciar sesión.</li>
+        <li><b class="font-semibold text-slate-500">1 jul 2026</b> — Panel "Mi información de agente": cada agente personaliza su firma, su licencia, su link de cotización y el link que reciben sus clientes.</li>
+        <li><b class="font-semibold text-slate-500">23 jun 2026</b> — Primera versión: carga del PDF de la póliza, envío del correo con adjuntos y las 2 plantillas de WhatsApp.</li>
+      </ul>
+    </details>
+  </footer>
   <script src="config.js"></script>
   <script src="parse.js"></script>
   <script src="auth.js"></script>

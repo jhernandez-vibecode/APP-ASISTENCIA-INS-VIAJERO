@@ -1,6 +1,6 @@
 // agente/app.js — UI de la consola: login, lista de viajeros, canales, envío.
 window.VApp = (function () {
-  const state = { viajeros: [], destinatarios: [], saludo: '', canal: 'correo', sent: false };
+  const state = { viajeros: [], destinatarios: [], saludo: '', poliza: '', canal: 'correo', sent: false, envio: null };
   let nextId = 1;
   let agentOpen = false;
 
@@ -92,11 +92,21 @@ window.VApp = (function () {
   function addViajero() { state.sent = false; state.viajeros.push({ id: nextId++, cliente: '', nombrePila: '', poliza: '', cedula: '', destino: '', gastosMedicos: '', vigenciaDesde: '', vigenciaHasta: '', correo: '', files: [] }); syncEnvio(); render(); }
   function removeViajero(id) { state.viajeros = state.viajeros.filter(v => v.id !== id); syncEnvio(); render(); }
 
+  // "A, B y C" — el número de póliza va dentro del mensaje de WhatsApp, así que
+  // se une en español y no con separadores técnicos.
+  function unir(arr) {
+    if (arr.length < 2) return arr[0] || '';
+    return arr.slice(0, -1).join(', ') + ' y ' + arr[arr.length - 1];
+  }
+  function polizasAuto() { return unir(state.viajeros.map(v => v.poliza).filter(Boolean)); }
+
   function syncEnvio() {
     const first = state.viajeros[0];
     if (first && !state.saludo) state.saludo = first.nombrePila || '';
     const mails = state.viajeros.map(v => v.correo).filter(Boolean);
     if (mails.length && !state.destinatarios.length) state.destinatarios = [mails[0]];
+    const pol = polizasAuto();
+    if (pol && !state.poliza) state.poliza = pol;
   }
 
   // 🔴 La FileList que entrega el navegador es VIVA, no una copia: el handler del
@@ -162,6 +172,48 @@ window.VApp = (function () {
       </div></div>`;
   }
 
+  // ----- Confirmación del envío -----
+  // Con el correo ya enviado, el panel OCUPA el lugar de los botones: además de
+  // dejar claro que salió, quita la tentación de volver a hacer clic en Enviar y
+  // mandarle el correo dos veces al cliente. Si el agente se pasa a un canal de
+  // WhatsApp, el panel se encoge a una franja para no estorbar ese envío.
+  function datoEnvio(valor, etiqueta) {
+    return `<div class="flex-1 px-1.5">
+      <div class="text-base font-bold" style="color:#14532d">${esc(valor)}</div>
+      <div class="text-[10px] uppercase tracking-wide mt-px" style="color:#4d7c5f">${etiqueta}</div></div>`;
+  }
+  function panelExito() {
+    const e = state.envio || {};
+    return `<div class="v-pop border-2 border-green-300 rounded-2xl p-6 text-center mt-3" style="background:linear-gradient(180deg,#f0fdf4 0%,#ffffff 78%)">
+      <div class="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center" style="background:linear-gradient(135deg,#16a34a,#15803d);box-shadow:0 0 0 7px rgba(34,197,94,.14)">
+        <svg viewBox="0 0 24 24" class="v-check w-7 h-7"><path d="M4.5 12.5l5 5 10-10" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3 class="text-lg font-bold" style="color:#14532d">Correo enviado</h3>
+      <p class="text-sm mt-0.5" style="color:#166534">a <b class="font-semibold">${esc((e.to || []).join(', '))}</b></p>
+      <div class="flex justify-center mt-4 pt-3.5 border-t border-green-100 mx-auto" style="max-width:430px">
+        ${datoEnvio(e.viajeros, e.viajeros === 1 ? 'Viajero' : 'Viajeros')}
+        ${datoEnvio(e.adjuntos, e.adjuntos === 1 ? 'Adjunto' : 'Adjuntos')}
+        ${datoEnvio(e.hora, 'Hora')}
+      </div>
+      <div class="flex flex-wrap justify-center gap-2 mt-4">
+        <button onclick="VApp.setCanal('emitida')" class="text-white text-xs font-semibold rounded-lg px-3.5 py-2 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95" style="background:linear-gradient(135deg,#16a34a 0%,#15803d 100%)">Seguir por WhatsApp</button>
+        <button onclick="VApp.nuevoEnvio()" class="text-xs font-semibold border rounded-lg px-3.5 py-2 bg-white hover:bg-slate-50">Enviar a otro cliente</button>
+      </div></div>`;
+  }
+  function bannerExito() {
+    const e = state.envio || {};
+    return `<div class="v-pop flex items-center gap-3 rounded-lg mt-3 px-4 py-3 bg-green-50 border-l-4 border-green-600">
+      <div class="w-7 h-7 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold flex-none">✓</div>
+      <div><div class="text-sm font-bold" style="color:#14532d">Correo enviado a ${esc((e.to || []).join(', '))}</div>
+        <div class="text-xs" style="color:#3f6b4d">${e.viajeros} ${e.viajeros === 1 ? 'viajero' : 'viajeros'} · ${e.adjuntos} ${e.adjuntos === 1 ? 'adjunto' : 'adjuntos'} · ${esc(e.hora)}</div></div></div>`;
+  }
+  function nuevoEnvio() {
+    state.viajeros = []; state.destinatarios = []; state.saludo = ''; state.poliza = '';
+    state.canal = 'correo'; state.sent = false; state.envio = null;
+    addViajero();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   function stepper() {
     const hasData = state.viajeros.some(v => v.poliza || v.files.length);
     const ready = hasData && state.destinatarios.length;
@@ -176,6 +228,12 @@ window.VApp = (function () {
     return `<div class="flex items-center justify-center gap-3 sm:gap-4 mb-6 flex-wrap">${dot(0)}<div class="w-6 sm:w-10 h-px bg-slate-300"></div>${dot(1)}<div class="w-6 sm:w-10 h-px bg-slate-300"></div>${dot(2)}</div>`;
   }
   function render() {
+    const exito = state.sent && state.envio;
+    const botones = `<div class="flex gap-2 mt-3">
+        <button onclick="VApp.preview()" class="border rounded-lg px-4 py-2 text-sm">Vista previa</button>
+        <button onclick="VApp.enviar()" id="btn-enviar" class="flex-1 text-white text-sm font-medium rounded-lg px-4 py-2.5 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Enviar</button>
+      </div>`;
+    const bloqueAccion = (exito && state.canal === 'correo') ? panelExito() : ((exito ? bannerExito() : '') + botones);
     el('console').innerHTML = `
       ${avisoPermiso()}
       ${agentePanel()}
@@ -202,10 +260,7 @@ window.VApp = (function () {
         }).join('')}
       </div>
       <div id="canalbox"></div>
-      <div class="flex gap-2 mt-3">
-        <button onclick="VApp.preview()" class="border rounded-lg px-4 py-2 text-sm">Vista previa</button>
-        <button onclick="VApp.enviar()" id="btn-enviar" class="flex-1 text-white text-sm font-medium rounded-lg px-4 py-2.5 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Enviar</button>
-      </div>
+      ${bloqueAccion}
       <p id="status" class="text-sm mt-3"></p>`;
     wire(); renderCanal();
   }
@@ -246,19 +301,33 @@ window.VApp = (function () {
   function renderCanal() {
     if (state.canal === 'correo') { el('canalbox').innerHTML = `<p class="text-xs text-slate-500">Se enviará el correo con los adjuntos de cada viajero + Condiciones y Manual.</p>`; return; }
     const tipo = state.canal, txt = VWa.getTemplate(tipo);
+    const auto = polizasAuto();
+    const delPdf = auto && state.poliza === auto;
     el('canalbox').innerHTML = `<div class="border rounded-xl p-3 bg-white">
       <label class="block mb-2"><span class="text-xs text-slate-400">Teléfono del cliente</span><input id="watel" placeholder="506 8888 8888" class="w-full text-sm border rounded px-2 py-1"/></label>
+      <label class="block mb-2"><span class="text-xs text-slate-400">N° de póliza (aparece en el mensaje)</span>
+        <span class="relative block">
+          <input id="wapoliza" value="${esc(state.poliza)}" placeholder="Escribilo a mano si no cargaste el PDF" class="w-full text-sm border rounded px-2 py-1 font-mono ${delPdf ? 'bg-blue-50 border-blue-200 text-blue-800 pr-24' : ''}"/>
+          ${delPdf ? '<span class="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">tomado del PDF</span>' : ''}
+        </span></label>
       <textarea id="watxt" rows="6" class="w-full text-sm border rounded px-2 py-1">${txt.replace(/</g,'&lt;')}</textarea>
-      <p class="text-[11px] text-slate-400 mt-1">Comodines: <code>{Nombre}</code> = nombre del cliente · <code>{Agente}</code> = tu nombre · <code>{Link}</code> = tu link personalizado de la app.</p>
+      <p class="text-[11px] text-slate-400 mt-1">Comodines: <code>{Nombre}</code> = nombre del cliente · <code>{Agente}</code> = tu nombre · <code>{Link}</code> = tu link personalizado de la app · <code>{Poliza}</code> = el número de arriba.</p>
+      <p class="text-[11px] text-slate-400">Si dejás el número vacío, esa línea no aparece en el mensaje.</p>
       <div class="flex gap-2 mt-2"><button onclick="VApp.waSave()" class="text-xs border rounded px-2 py-1">Guardar como predeterminado</button>
       <button onclick="VApp.waReset()" class="text-xs border rounded px-2 py-1">Restaurar</button></div></div>`;
+    // El campo se cablea acá porque wire() corre ANTES de que exista el canalbox.
+    const ip = el('wapoliza');
+    if (ip) ip.addEventListener('input', e => { state.poliza = e.target.value; });
   }
   function waSave() { VWa.saveTemplate(state.canal, el('watxt').value); el('status').textContent = 'Plantilla guardada.'; }
   function waReset() { el('watxt').value = VWa.resetTemplate(state.canal); }
 
   function preview() {
     if (state.canal === 'correo') { const w = window.open('', '_blank'); w.document.write(VEmail.buildHtml(state)); }
-    else { window.open(VWa.buildLink(el('watel').value, el('watxt').value, state.saludo, VAgent.get().nombre), '_blank'); }
+    else {
+      const ip = el('wapoliza');
+      window.open(VWa.buildLink(el('watel').value, el('watxt').value, state.saludo, VAgent.get().nombre, ip ? ip.value : state.poliza), '_blank');
+    }
   }
 
   async function enviar() {
@@ -298,14 +367,20 @@ window.VApp = (function () {
           await VEmail.buildAndSend(state, att, token);
         } else { throw e; }
       }
-      state.sent = true; render();
-      el('status').textContent = '✅ Correo enviado a ' + state.destinatarios.join(', ');
+      state.sent = true;
+      state.envio = {
+        to: state.destinatarios.slice(),
+        viajeros: state.viajeros.length,
+        adjuntos: att.length,
+        hora: new Date().toLocaleTimeString('es-CR', { hour: 'numeric', minute: '2-digit' })
+      };
+      render(); // el panel de confirmación reemplaza a los botones
     } catch (e) { render(); el('status').textContent = '❌ ' + msgError(e); }
     finally { const b = el('btn-enviar'); if (b) b.disabled = false; }
   }
 
   function boot() { try { VAuth.init(); } catch (e) {} el('btn-login').addEventListener('click', login); }
   return { boot, login, addViajero, removeViajero, quitarArchivo, setCanal, waSave, waReset, preview, enviar,
-    pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink };
+    nuevoEnvio, pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink };
 })();
 document.addEventListener('DOMContentLoaded', () => VApp.boot());
