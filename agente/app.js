@@ -1,9 +1,12 @@
 // agente/app.js — UI de la consola: login, lista de viajeros, canales, envío.
 window.VApp = (function () {
-  const state = { viajeros: [], destinatarios: [], saludo: '', poliza: '', canal: 'correo', sent: false, envio: null };
+  // asegurados = [{poliza, nombre}] — lo que sale en el mensaje de WhatsApp.
+  // tel = teléfono del cliente; se guarda en el estado porque antes vivía solo en
+  // el input y cualquier render() lo borraba en silencio.
+  const state = { viajeros: [], destinatarios: [], saludo: '', poliza: '', asegurados: [], tel: '', canal: 'correo', sent: false, envio: null };
   let nextId = 1;
   let agentOpen = false;
-  let polizaManual = false; // el agente escribió el número de póliza a mano
+  let asegManual = false; // el agente editó a mano las pólizas/nombres del mensaje
 
   function el(id) { return document.getElementById(id); }
   function showConsole() { el('gate').classList.add('hidden'); el('console').classList.remove('hidden'); render(); }
@@ -161,18 +164,30 @@ window.VApp = (function () {
     if (arr.length < 2) return arr[0] || '';
     return arr.slice(0, -1).join(', ') + ' y ' + arr[arr.length - 1];
   }
-  function polizasAuto() { return unir(state.viajeros.map(v => v.poliza).filter(Boolean)); }
+  function polizasAuto() { return unir(state.asegurados.map(a => a.poliza).filter(Boolean)); }
+  // El nombre sale TAL COMO viene de la póliza del INS (mayúscula, apellidos
+  // primero): es lo que el cliente reconoce de su documento.
+  function aseguradosAuto() {
+    return state.viajeros.map(v => ({ poliza: (v.poliza || '').trim(), nombre: (v.cliente || '').trim() }));
+  }
+  function telDigitos() { return String(state.tel || '').replace(/\D/g, ''); }
+  function telOk() { return telDigitos().length >= 8; }
+  function telConCodigo() { const d = telDigitos(); return d.length === 8 ? '506' + d : d; }
 
   function syncEnvio() {
     const first = state.viajeros[0];
     if (first && !state.saludo) state.saludo = first.nombrePila || '';
     const mails = state.viajeros.map(v => v.correo).filter(Boolean);
     if (mails.length && !state.destinatarios.length) state.destinatarios = [mails[0]];
-    // 🔴 El número de póliza SIGUE a los viajeros cargados, no se llena una sola
-    // vez: si entra un segundo asegurado, el mensaje de WhatsApp tiene que llevar
-    // las DOS pólizas (las mismas que viajaron adjuntas en el correo). Solo se
-    // congela si el agente lo escribió a mano.
-    if (!polizaManual) state.poliza = polizasAuto();
+    // 🔴 Las pólizas del mensaje SIGUEN a los viajeros cargados, no se llenan una
+    // sola vez: si entra un segundo asegurado, el mensaje de WhatsApp tiene que
+    // llevar las DOS pólizas (las mismas que viajaron adjuntas en el correo).
+    // Solo se congela si el agente las editó a mano.
+    if (!asegManual) state.asegurados = aseguradosAuto();
+    // En "WhatsApp directa" el cliente compró por su cuenta y no hay viajeros
+    // cargados: queda una fila vacía para escribir la póliza y el nombre.
+    if (!state.asegurados.length) state.asegurados = [{ poliza: '', nombre: '' }];
+    state.poliza = polizasAuto(); // comodín viejo {Poliza}: solo los números
   }
 
   // 🔴 La FileList que entrega el navegador es VIVA, no una copia: el handler del
@@ -275,7 +290,8 @@ window.VApp = (function () {
   }
   function nuevoEnvio() {
     state.viajeros = []; state.destinatarios = []; state.saludo = ''; state.poliza = '';
-    state.canal = 'correo'; state.sent = false; state.envio = null; polizaManual = false;
+    state.asegurados = []; state.tel = ''; asegManual = false;
+    state.canal = 'correo'; state.sent = false; state.envio = null;
     pushViajero(); // sin preguntar: el agente acaba de pedir empezar de cero
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -295,9 +311,13 @@ window.VApp = (function () {
   }
   function render() {
     const exito = state.sent && state.envio;
+    // En WhatsApp, "Vista previa" y "Enviar" hacían exactamente lo mismo (abrir el
+    // chat). Queda un solo botón, que además dice qué falta si no hay teléfono.
+    const esWa = state.canal !== 'correo';
+    const listo = !esWa || telOk();
     const botones = `<div class="flex gap-2 mt-3">
-        <button onclick="VApp.preview()" class="border rounded-lg px-4 py-2 text-sm">Vista previa</button>
-        <button onclick="VApp.enviar()" id="btn-enviar" class="flex-1 text-white text-sm font-medium rounded-lg px-4 py-2.5 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Enviar</button>
+        ${esWa ? '' : '<button onclick="VApp.preview()" class="border rounded-lg px-4 py-2 text-sm">Vista previa</button>'}
+        <button onclick="VApp.enviar()" id="btn-enviar" ${listo ? '' : 'disabled'} class="flex-1 text-white text-sm font-medium rounded-lg px-4 py-2.5 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm" style="background:${(esWa && listo) ? 'linear-gradient(135deg,#16a34a 0%,#15803d 100%)' : 'linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)'}">${esWa ? (listo ? 'Abrir WhatsApp' : 'Escribí el teléfono del cliente') : 'Enviar'}</button>
       </div>`;
     const bloqueAccion = (exito && state.canal === 'correo') ? panelExito() : ((exito ? bannerExito() : '') + botones);
     el('console').innerHTML = `
@@ -350,12 +370,17 @@ window.VApp = (function () {
   function wire() {
     el('console').querySelectorAll('input[data-vid]').forEach(inp => inp.addEventListener('input', e => {
       const v = state.viajeros.find(x => x.id == e.target.dataset.vid); if (v) v[e.target.dataset.key] = e.target.value;
-      // Corregir una póliza a mano en la tarjeta también refresca la del mensaje
-      // de WhatsApp. Se toca solo el input, sin render(), para no perder el foco
-      // mientras el agente escribe.
-      if (e.target.dataset.key === 'poliza' && !polizaManual) {
+      // Corregir la póliza o el nombre en la tarjeta también refresca lo que sale
+      // en el mensaje de WhatsApp. Se tocan solo los inputs, sin render(), para no
+      // perder el foco mientras el agente escribe.
+      if (!asegManual && (e.target.dataset.key === 'poliza' || e.target.dataset.key === 'cliente')) {
+        state.asegurados = aseguradosAuto();
         state.poliza = polizasAuto();
-        const ip = el('wapoliza'); if (ip) ip.value = state.poliza;
+        state.asegurados.forEach((a, i) => {
+          const p = el('aseg-p-' + i), nm = el('aseg-n-' + i);
+          if (p) p.value = a.poliza;
+          if (nm) nm.value = a.nombre;
+        });
       }
     }));
     el('dest') && el('dest').addEventListener('input', e => state.destinatarios = e.target.value.split(',').map(s => s.trim()).filter(Boolean));
@@ -370,32 +395,88 @@ window.VApp = (function () {
     });
   }
 
-  function setCanal(c) { state.canal = c; render(); }
+  function setCanal(c) {
+    state.canal = c; render();
+    // Al entrar a WhatsApp el cursor cae solo en el teléfono: es lo único que
+    // falta y el motivo por el que el agente entró acá.
+    if (c !== 'correo') { const t = el('watel'); if (t) t.focus(); }
+  }
   function renderCanal() {
     if (state.canal === 'correo') { el('canalbox').innerHTML = `<p class="text-xs text-slate-500">Se enviará el correo con los adjuntos de cada viajero + Condiciones y Manual.</p>`; return; }
     const tipo = state.canal, txt = VWa.getTemplate(tipo);
-    const auto = polizasAuto();
-    const delPdf = auto && state.poliza === auto;
+    const n = state.asegurados.length;
+    const filas = state.asegurados.map((a, i) => `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+        <label class="block"><span class="text-[11px] text-slate-400">N° de póliza${n > 1 ? ' · asegurado ' + (i + 1) : ''}</span>
+          <input id="aseg-p-${i}" data-aseg="${i}" data-campo="poliza" value="${esc(a.poliza)}" placeholder="0201VIA000000000" class="w-full text-sm border rounded px-2 py-1 font-mono"/></label>
+        <label class="block"><span class="text-[11px] text-slate-400">Nombre del asegurado</span>
+          <input id="aseg-n-${i}" data-aseg="${i}" data-campo="nombre" value="${esc(a.nombre)}" placeholder="Como aparece en la póliza" class="w-full text-sm border rounded px-2 py-1"/></label>
+      </div>`).join('');
+    const hayDatos = state.asegurados.some(a => a.poliza || a.nombre);
     el('canalbox').innerHTML = `<div class="border rounded-xl p-3 bg-white">
-      <label class="block mb-2"><span class="text-xs text-slate-400">Teléfono del cliente</span><input id="watel" placeholder="506 8888 8888" class="w-full text-sm border rounded px-2 py-1"/></label>
-      <label class="block mb-2"><span class="text-xs text-slate-400">N° de póliza (aparece en el mensaje)</span>
-        <span class="relative block">
-          <input id="wapoliza" value="${esc(state.poliza)}" placeholder="Escribilo a mano si no cargaste el PDF" class="w-full text-sm border rounded px-2 py-1 font-mono ${delPdf ? 'bg-blue-50 border-blue-200 text-blue-800 pr-24' : ''}"/>
-          ${delPdf ? '<span class="absolute right-1.5 top-1/2 -translate-y-1/2 text-[10px] font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">tomado del PDF</span>' : ''}
-        </span></label>
-      <textarea id="watxt" rows="6" class="w-full text-sm border rounded px-2 py-1">${txt.replace(/</g,'&lt;')}</textarea>
-      <p class="text-[11px] text-slate-400 mt-1">Comodines: <code>{Nombre}</code> = nombre del cliente · <code>{Agente}</code> = tu nombre · <code>{Link}</code> = tu link personalizado de la app · <code>{Poliza}</code> = el número de arriba.</p>
-      <p class="text-[11px] text-slate-400">Si dejás el número vacío, esa línea no aparece en el mensaje.</p>
+      ${bloqueTel()}
+      <div class="mt-3 mb-1 flex items-center gap-2">
+        <span class="text-xs font-semibold text-slate-600">Lo que va en el mensaje</span>
+        ${(!asegManual && hayDatos) ? '<span class="text-[10px] font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">tomado del PDF</span>' : ''}
+      </div>
+      ${filas}
+      <textarea id="watxt" rows="6" class="w-full text-sm border rounded px-2 py-1 mt-1">${txt.replace(/</g,'&lt;')}</textarea>
+      <p class="text-[11px] text-slate-400 mt-1">Comodines: <code>{Nombre}</code> = nombre del cliente · <code>{Agente}</code> = tu nombre · <code>{Link}</code> = tu link personalizado de la app · <code>{Asegurados}</code> = las pólizas de arriba con su nombre debajo.</p>
+      <p class="text-[11px] text-slate-400">Si no hay ninguna póliza ni nombre, esa parte no aparece en el mensaje.</p>
       <div class="flex gap-2 mt-2"><button onclick="VApp.waSave()" class="text-xs border rounded px-2 py-1">Guardar como predeterminado</button>
       <button onclick="VApp.waReset()" class="text-xs border rounded px-2 py-1">Restaurar</button></div></div>`;
-    // El campo se cablea acá porque wire() corre ANTES de que exista el canalbox.
-    const ip = el('wapoliza');
-    if (ip) ip.addEventListener('input', e => {
-      state.poliza = e.target.value;
-      // Vaciar el campo devuelve el autocompletado: es la salida si el agente
-      // se arrepiente de haberlo escrito a mano.
-      polizaManual = e.target.value.trim() !== '';
-    });
+    // Estos campos se cablean acá porque wire() corre ANTES de que exista el canalbox.
+    const tel = el('watel');
+    if (tel) tel.addEventListener('input', e => { state.tel = e.target.value; pintarTel(); });
+    el('canalbox').querySelectorAll('input[data-aseg]').forEach(inp => inp.addEventListener('input', e => {
+      const a = state.asegurados[+e.target.dataset.aseg]; if (!a) return;
+      a[e.target.dataset.campo] = e.target.value;
+      asegManual = true; // a partir de acá manda lo que escribió el agente
+      state.poliza = polizasAuto();
+    }));
+  }
+
+  // El teléfono es el ÚNICO dato que no viene en el PDF y el único que falta al
+  // pasarse a WhatsApp: por eso va como bloque, no como una línea más. Ámbar
+  // mientras falta, verde con el número confirmado cuando ya está.
+  function bloqueTel() {
+    const ok = telOk();
+    return `<div id="tel-box" class="flex gap-3 items-start rounded-xl p-3.5 border-2 ${ok ? 'border-green-300 bg-green-50' : 'border-amber-300 bg-amber-50'}">
+      <div id="tel-ic" class="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-none ${ok ? 'bg-green-100' : 'bg-amber-100'}">${ok ? '✅' : '📱'}</div>
+      <div class="flex-1 min-w-0">
+        <div id="tel-tit" class="text-sm font-bold ${ok ? 'text-green-900' : 'text-amber-900'}">${ok ? 'Teléfono del cliente' : 'Falta el teléfono del cliente'}</div>
+        <input id="watel" value="${esc(state.tel)}" placeholder="8888 8888" inputmode="tel" autocomplete="off"
+          class="w-full mt-1.5 border-2 rounded-lg px-3 py-2 text-base tracking-wide ${ok ? 'border-green-300' : 'border-amber-300'}"/>
+        <div id="tel-pie" class="text-[11px] mt-1.5 ${ok ? 'text-green-800' : 'text-amber-700'}">${ok ? 'Se va a abrir el chat con <b>+' + esc(telConCodigo()) + '</b>' : 'Es el único dato que no viene en la póliza. Sin él no se puede abrir el chat.'}</div>
+      </div></div>`;
+  }
+  // Repinta el bloque y el botón sin render(), para no perder el foco mientras
+  // el agente escribe el número.
+  function pintarTel() {
+    const box = el('tel-box'); if (!box) return;
+    const ok = telOk();
+    box.className = 'flex gap-3 items-start rounded-xl p-3.5 border-2 ' + (ok ? 'border-green-300 bg-green-50' : 'border-amber-300 bg-amber-50');
+    const ic = el('tel-ic');
+    ic.textContent = ok ? '✅' : '📱';
+    ic.className = 'w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-none ' + (ok ? 'bg-green-100' : 'bg-amber-100');
+    const tit = el('tel-tit');
+    tit.textContent = ok ? 'Teléfono del cliente' : 'Falta el teléfono del cliente';
+    tit.className = 'text-sm font-bold ' + (ok ? 'text-green-900' : 'text-amber-900');
+    const pie = el('tel-pie');
+    pie.innerHTML = ok ? 'Se va a abrir el chat con <b>+' + esc(telConCodigo()) + '</b>'
+      : 'Es el único dato que no viene en la póliza. Sin él no se puede abrir el chat.';
+    pie.className = 'text-[11px] mt-1.5 ' + (ok ? 'text-green-800' : 'text-amber-700');
+    const inp = el('watel');
+    inp.classList.toggle('border-green-300', ok);
+    inp.classList.toggle('border-amber-300', !ok);
+    pintarBoton();
+  }
+  function pintarBoton() {
+    const b = el('btn-enviar'); if (!b) return;
+    const esWa = state.canal !== 'correo';
+    const ok = !esWa || telOk();
+    b.disabled = !ok;
+    b.textContent = esWa ? (ok ? 'Abrir WhatsApp' : 'Escribí el teléfono del cliente') : 'Enviar';
+    b.style.background = (esWa && ok) ? 'linear-gradient(135deg,#16a34a 0%,#15803d 100%)' : 'linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)';
   }
   function waSave() { VWa.saveTemplate(state.canal, el('watxt').value); el('status').textContent = 'Plantilla guardada.'; }
   function waReset() { el('watxt').value = VWa.resetTemplate(state.canal); }
@@ -403,14 +484,22 @@ window.VApp = (function () {
   function preview() {
     if (state.canal === 'correo') { const w = window.open('', '_blank'); w.document.write(VEmail.buildHtml(state)); }
     else {
-      const ip = el('wapoliza');
-      window.open(VWa.buildLink(el('watel').value, el('watxt').value, state.saludo, VAgent.get().nombre, ip ? ip.value : state.poliza), '_blank');
+      window.open(VWa.buildLink(state.tel, el('watxt').value, state.saludo, VAgent.get().nombre, state.poliza, state.asegurados), '_blank');
     }
   }
 
   async function enviar() {
     const st = el('status'); st.textContent = '';
-    if (state.canal !== 'correo') { return preview(); }
+    if (state.canal !== 'correo') {
+      // Con el teléfono vacío, el link abría WhatsApp sin destinatario y fallaba
+      // en silencio. Ahora no se abre nada y se dice qué falta.
+      if (!telOk()) {
+        st.textContent = 'Escribí el teléfono del cliente para abrir el chat.';
+        const t = el('watel'); if (t) t.focus();
+        return;
+      }
+      return preview();
+    }
     if (!state.viajeros.length) { st.textContent = 'Agregá al menos un viajero.'; return; }
     if (!state.destinatarios.length) { st.textContent = 'Indicá al menos un destinatario.'; return; }
     el('btn-enviar').disabled = true;
