@@ -3,6 +3,7 @@ window.VApp = (function () {
   const state = { viajeros: [], destinatarios: [], saludo: '', poliza: '', canal: 'correo', sent: false, envio: null };
   let nextId = 1;
   let agentOpen = false;
+  let polizaManual = false; // el agente escribió el número de póliza a mano
 
   function el(id) { return document.getElementById(id); }
   function showConsole() { el('gate').classList.add('hidden'); el('console').classList.remove('hidden'); render(); }
@@ -89,8 +90,70 @@ window.VApp = (function () {
     return /\b403\b|insufficient|SCOPE_INSUFFICIENT|PERMISSION_DENIED|insufficientPermissions/i.test(String(m));
   }
 
-  function addViajero() { state.sent = false; state.viajeros.push({ id: nextId++, cliente: '', nombrePila: '', poliza: '', cedula: '', destino: '', gastosMedicos: '', vigenciaDesde: '', vigenciaHasta: '', correo: '', files: [] }); syncEnvio(); render(); }
+  function pushViajero() {
+    state.sent = false;
+    state.viajeros.push({ id: nextId++, cliente: '', nombrePila: '', poliza: '', cedula: '', destino: '', gastosMedicos: '', vigenciaDesde: '', vigenciaHasta: '', correo: '', files: [] });
+    syncEnvio(); render();
+  }
+
+  // "+ Agregar viajero" agregaba en silencio: un doble clic por error dejaba una
+  // tarjeta vacía sin que el agente se enterara. Se pregunta SOLO del segundo
+  // asegurado en adelante (al primero siempre se lo agrega a propósito) y la
+  // ventana va CENTRADA, lejos del botón: si apareciera debajo, el segundo clic
+  // del doble clic caería justo encima del "Sí" y no serviría de nada.
+  function addViajero() {
+    if (!state.viajeros.length) return pushViajero();
+    if (modal.abierto) return; // el 2º clic del doble clic no abre una segunda ventana
+    pedirConfirmacionViajero();
+  }
   function removeViajero(id) { state.viajeros = state.viajeros.filter(v => v.id !== id); syncEnvio(); render(); }
+
+  // ----- Ventana de confirmación -----
+  // Vive colgada del <body>, no de #console, para que un render() no la borre.
+  const modal = { abierto: false, desde: 0 };
+  function cerrarModal() {
+    const ov = el('v-modal'); if (ov) ov.remove();
+    modal.abierto = false;
+    document.removeEventListener('keydown', escModal);
+  }
+  function escModal(e) { if (e.key === 'Escape') cerrarModal(); }
+  function pedirConfirmacionViajero() {
+    const n = state.viajeros.length;
+    const nombres = state.viajeros.map(v => (v.cliente || v.nombrePila || '').trim()).filter(Boolean);
+    const lista = nombres.length
+      ? nombres.map(x => esc(x)).join('<br>')
+      : '<span class="text-slate-400">Todavía sin nombre: no cargaste el PDF.</span>';
+    const ov = document.createElement('div');
+    ov.id = 'v-modal';
+    ov.className = 'fixed inset-0 z-50 flex items-center justify-center px-4';
+    ov.style.background = 'rgba(15,23,42,.5)';
+    ov.innerHTML = `<div class="v-pop bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl">
+      <div class="w-11 h-11 mx-auto mb-3 rounded-full bg-blue-50 flex items-center justify-center text-xl">👤</div>
+      <h4 class="text-base font-bold leading-snug" style="color:#0b2545">¿Querés enviar los documentos de otro asegurado?</h4>
+      <p class="text-xs text-slate-500 mt-2 leading-relaxed">Se va a abrir una segunda tarjeta para cargar su póliza. Todos los asegurados viajan en el <b>mismo correo</b>.</p>
+      <div class="bg-slate-50 border rounded-lg px-3 py-2 mt-3 text-left text-[11px] text-slate-600 leading-relaxed">
+        <b class="block text-xs mb-0.5" style="color:#0b2545">Ya cargaste ${n} asegurado${n === 1 ? '' : 's'}</b>${lista}</div>
+      <div class="flex gap-2 mt-4">
+        <button id="v-no" class="flex-1 text-xs font-semibold border rounded-lg px-3 py-2.5 bg-white hover:bg-slate-50">No, era sin querer</button>
+        <button id="v-si" class="flex-1 text-white text-xs font-semibold rounded-lg px-3 py-2.5 shadow-sm transition-all duration-200 hover:shadow-lg active:scale-95" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Sí, agregar otro</button>
+      </div></div>`;
+    document.body.appendChild(ov);
+    modal.abierto = true; modal.desde = Date.now();
+    // El clic de afuera cierra, pero NO durante el primer instante: si no, el
+    // segundo clic del doble clic accidental cerraría la ventana de un plumazo y
+    // el agente solo vería un parpadeo en vez de la pregunta.
+    ov.addEventListener('click', e => {
+      if (e.target === ov && (Date.now() - modal.desde) > 400) cerrarModal();
+    });
+    el('v-no').addEventListener('click', cerrarModal);
+    el('v-si').addEventListener('click', () => {
+      cerrarModal(); pushViajero();
+      const zonas = el('console').querySelectorAll('.dropzone');
+      if (zonas.length) zonas[zonas.length - 1].scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+    document.addEventListener('keydown', escModal);
+    el('v-no').focus(); // con Enter se cancela: es lo seguro ante un clic accidental
+  }
 
   // "A, B y C" — el número de póliza va dentro del mensaje de WhatsApp, así que
   // se une en español y no con separadores técnicos.
@@ -105,8 +168,11 @@ window.VApp = (function () {
     if (first && !state.saludo) state.saludo = first.nombrePila || '';
     const mails = state.viajeros.map(v => v.correo).filter(Boolean);
     if (mails.length && !state.destinatarios.length) state.destinatarios = [mails[0]];
-    const pol = polizasAuto();
-    if (pol && !state.poliza) state.poliza = pol;
+    // 🔴 El número de póliza SIGUE a los viajeros cargados, no se llena una sola
+    // vez: si entra un segundo asegurado, el mensaje de WhatsApp tiene que llevar
+    // las DOS pólizas (las mismas que viajaron adjuntas en el correo). Solo se
+    // congela si el agente lo escribió a mano.
+    if (!polizaManual) state.poliza = polizasAuto();
   }
 
   // 🔴 La FileList que entrega el navegador es VIVA, no una copia: el handler del
@@ -209,8 +275,8 @@ window.VApp = (function () {
   }
   function nuevoEnvio() {
     state.viajeros = []; state.destinatarios = []; state.saludo = ''; state.poliza = '';
-    state.canal = 'correo'; state.sent = false; state.envio = null;
-    addViajero();
+    state.canal = 'correo'; state.sent = false; state.envio = null; polizaManual = false;
+    pushViajero(); // sin preguntar: el agente acaba de pedir empezar de cero
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -284,6 +350,13 @@ window.VApp = (function () {
   function wire() {
     el('console').querySelectorAll('input[data-vid]').forEach(inp => inp.addEventListener('input', e => {
       const v = state.viajeros.find(x => x.id == e.target.dataset.vid); if (v) v[e.target.dataset.key] = e.target.value;
+      // Corregir una póliza a mano en la tarjeta también refresca la del mensaje
+      // de WhatsApp. Se toca solo el input, sin render(), para no perder el foco
+      // mientras el agente escribe.
+      if (e.target.dataset.key === 'poliza' && !polizaManual) {
+        state.poliza = polizasAuto();
+        const ip = el('wapoliza'); if (ip) ip.value = state.poliza;
+      }
     }));
     el('dest') && el('dest').addEventListener('input', e => state.destinatarios = e.target.value.split(',').map(s => s.trim()).filter(Boolean));
     el('saludo') && el('saludo').addEventListener('input', e => state.saludo = e.target.value);
@@ -317,7 +390,12 @@ window.VApp = (function () {
       <button onclick="VApp.waReset()" class="text-xs border rounded px-2 py-1">Restaurar</button></div></div>`;
     // El campo se cablea acá porque wire() corre ANTES de que exista el canalbox.
     const ip = el('wapoliza');
-    if (ip) ip.addEventListener('input', e => { state.poliza = e.target.value; });
+    if (ip) ip.addEventListener('input', e => {
+      state.poliza = e.target.value;
+      // Vaciar el campo devuelve el autocompletado: es la salida si el agente
+      // se arrepiente de haberlo escrito a mano.
+      polizaManual = e.target.value.trim() !== '';
+    });
   }
   function waSave() { VWa.saveTemplate(state.canal, el('watxt').value); el('status').textContent = 'Plantilla guardada.'; }
   function waReset() { el('watxt').value = VWa.resetTemplate(state.canal); }
