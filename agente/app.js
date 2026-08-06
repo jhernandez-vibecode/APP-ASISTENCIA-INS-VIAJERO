@@ -120,25 +120,22 @@ window.VApp = (function () {
     document.removeEventListener('keydown', escModal);
   }
   function escModal(e) { if (e.key === 'Escape') cerrarModal(); }
-  function pedirConfirmacionViajero() {
-    const n = state.viajeros.length;
-    const nombres = state.viajeros.map(v => (v.cliente || v.nombrePila || '').trim()).filter(Boolean);
-    const lista = nombres.length
-      ? nombres.map(x => esc(x)).join('<br>')
-      : '<span class="text-slate-400">Todavía sin nombre: no cargaste el PDF.</span>';
+  // o = { icono, fondo, titulo, detalle, recuadroTitulo, recuadroTexto, si, no, rojo, onSi }
+  function confirmar(o) {
     const ov = document.createElement('div');
     ov.id = 'v-modal';
     ov.className = 'fixed inset-0 z-50 flex items-center justify-center px-4';
     ov.style.background = 'rgba(15,23,42,.5)';
+    const fondoSi = o.rojo ? 'linear-gradient(135deg,#dc2626 0%,#b91c1c 100%)' : 'linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)';
     ov.innerHTML = `<div class="v-pop bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl">
-      <div class="w-11 h-11 mx-auto mb-3 rounded-full bg-blue-50 flex items-center justify-center text-xl">👤</div>
-      <h4 class="text-base font-bold leading-snug" style="color:#0b2545">¿Querés enviar los documentos de otro asegurado?</h4>
-      <p class="text-xs text-slate-500 mt-2 leading-relaxed">Se va a abrir una segunda tarjeta para cargar su póliza. Todos los asegurados viajan en el <b>mismo correo</b>.</p>
+      <div class="w-11 h-11 mx-auto mb-3 rounded-full ${o.fondo} flex items-center justify-center text-xl">${o.icono}</div>
+      <h4 class="text-base font-bold leading-snug" style="color:#0b2545">${o.titulo}</h4>
+      <p class="text-xs text-slate-500 mt-2 leading-relaxed">${o.detalle}</p>
       <div class="bg-slate-50 border rounded-lg px-3 py-2 mt-3 text-left text-[11px] text-slate-600 leading-relaxed">
-        <b class="block text-xs mb-0.5" style="color:#0b2545">Ya cargaste ${n} asegurado${n === 1 ? '' : 's'}</b>${lista}</div>
+        <b class="block text-xs mb-0.5" style="color:#0b2545">${o.recuadroTitulo}</b>${o.recuadroTexto}</div>
       <div class="flex gap-2 mt-4">
-        <button id="v-no" class="flex-1 text-xs font-semibold border rounded-lg px-3 py-2.5 bg-white hover:bg-slate-50">No, era sin querer</button>
-        <button id="v-si" class="flex-1 text-white text-xs font-semibold rounded-lg px-3 py-2.5 shadow-sm transition-all duration-200 hover:shadow-lg active:scale-95" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Sí, agregar otro</button>
+        <button id="v-no" class="flex-1 text-xs font-semibold border rounded-lg px-3 py-2.5 bg-white hover:bg-slate-50">${o.no}</button>
+        <button id="v-si" class="flex-1 text-white text-xs font-semibold rounded-lg px-3 py-2.5 shadow-sm transition-all duration-200 hover:shadow-lg active:scale-95" style="background:${fondoSi}">${o.si}</button>
       </div></div>`;
     document.body.appendChild(ov);
     modal.abierto = true; modal.desde = Date.now();
@@ -149,13 +146,58 @@ window.VApp = (function () {
       if (e.target === ov && (Date.now() - modal.desde) > 400) cerrarModal();
     });
     el('v-no').addEventListener('click', cerrarModal);
-    el('v-si').addEventListener('click', () => {
-      cerrarModal(); pushViajero();
-      const zonas = el('console').querySelectorAll('.dropzone');
-      if (zonas.length) zonas[zonas.length - 1].scrollIntoView({ block: 'center', behavior: 'smooth' });
-    });
+    el('v-si').addEventListener('click', () => { cerrarModal(); o.onSi(); });
     document.addEventListener('keydown', escModal);
     el('v-no').focus(); // con Enter se cancela: es lo seguro ante un clic accidental
+  }
+
+  function pedirConfirmacionViajero() {
+    const n = state.viajeros.length;
+    const nombres = state.viajeros.map(v => (v.cliente || v.nombrePila || '').trim()).filter(Boolean);
+    confirmar({
+      icono: '👤', fondo: 'bg-blue-50',
+      titulo: '¿Querés enviar los documentos de otro asegurado?',
+      detalle: 'Se va a abrir una segunda tarjeta para cargar su póliza. Todos los asegurados viajan en el <b>mismo correo</b>.',
+      recuadroTitulo: `Ya cargaste ${n} asegurado${n === 1 ? '' : 's'}`,
+      recuadroTexto: nombres.length ? nombres.map(x => esc(x)).join('<br>')
+        : '<span class="text-slate-400">Todavía sin nombre: no cargaste el PDF.</span>',
+      no: 'No, era sin querer', si: 'Sí, agregar otro',
+      onSi: () => {
+        pushViajero();
+        const zonas = el('console').querySelectorAll('.dropzone');
+        if (zonas.length) zonas[zonas.length - 1].scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    });
+  }
+
+  // ----- Limpiar para preparar otro cliente -----
+  // Antes, terminado el correo Y el WhatsApp, no quedaba salida: el botón
+  // "Enviar a otro cliente" solo vivía en el panel del canal Correo, así que al
+  // pasarse a WhatsApp la única forma de empezar de nuevo era recargar con F5.
+  function hayAlgoQueLimpiar() {
+    return state.sent || String(state.tel).trim() !== '' || state.destinatarios.length > 0 ||
+      state.viajeros.some(v => v.files.length || v.poliza || v.cliente || v.correo);
+  }
+  function resumenDeLoQueSeBorra() {
+    const partes = [];
+    const conDatos = state.viajeros.filter(v => v.poliza || v.cliente || v.files.length).length;
+    if (conDatos) partes.push(conDatos + (conDatos === 1 ? ' asegurado cargado' : ' asegurados cargados'));
+    const arch = state.viajeros.reduce((s, v) => s + v.files.length, 0);
+    if (arch) partes.push(arch + (arch === 1 ? ' archivo' : ' archivos'));
+    if (state.destinatarios.length) partes.push('el destinatario');
+    if (String(state.tel).trim()) partes.push('el teléfono');
+    return partes.length ? unir(partes) + '.' : 'La pantalla ya está vacía.';
+  }
+  function pedirLimpiar() {
+    if (modal.abierto) return;
+    confirmar({
+      icono: '🧹', fondo: 'bg-red-50', rojo: true,
+      titulo: '¿Borrar todo y empezar de cero?',
+      detalle: 'Se va a limpiar la pantalla para preparar el envío de otro cliente. <b>Lo que ya enviaste no se toca.</b>',
+      recuadroTitulo: 'Se va a borrar', recuadroTexto: esc(resumenDeLoQueSeBorra()),
+      no: 'No, seguir acá', si: 'Sí, limpiar',
+      onSi: nuevoEnvio
+    });
   }
 
   // "A, B y C" — el número de póliza va dentro del mensaje de WhatsApp, así que
@@ -278,7 +320,7 @@ window.VApp = (function () {
       </div>
       <div class="flex flex-wrap justify-center gap-2 mt-4">
         <button onclick="VApp.setCanal('emitida')" class="text-white text-xs font-semibold rounded-lg px-3.5 py-2 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95" style="background:linear-gradient(135deg,#16a34a 0%,#15803d 100%)">Seguir por WhatsApp</button>
-        <button onclick="VApp.nuevoEnvio()" class="text-xs font-semibold border rounded-lg px-3.5 py-2 bg-white hover:bg-slate-50">Enviar a otro cliente</button>
+        <button onclick="VApp.pedirLimpiar()" class="text-xs font-semibold border rounded-lg px-3.5 py-2 bg-white hover:bg-slate-50">Enviar a otro cliente</button>
       </div></div>`;
   }
   function bannerExito() {
@@ -286,7 +328,9 @@ window.VApp = (function () {
     return `<div class="v-pop flex items-center gap-3 rounded-lg mt-3 px-4 py-3 bg-green-50 border-l-4 border-green-600">
       <div class="w-7 h-7 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-bold flex-none">✓</div>
       <div><div class="text-sm font-bold" style="color:#14532d">Correo enviado a ${esc((e.to || []).join(', '))}</div>
-        <div class="text-xs" style="color:#3f6b4d">${e.viajeros} ${e.viajeros === 1 ? 'viajero' : 'viajeros'} · ${e.adjuntos} ${e.adjuntos === 1 ? 'adjunto' : 'adjuntos'} · ${esc(e.hora)}</div></div></div>`;
+        <div class="text-xs" style="color:#3f6b4d">${e.viajeros} ${e.viajeros === 1 ? 'viajero' : 'viajeros'} · ${e.adjuntos} ${e.adjuntos === 1 ? 'adjunto' : 'adjuntos'} · ${esc(e.hora)}</div></div>
+      <div class="flex-1"></div>
+      <button onclick="VApp.pedirLimpiar()" class="text-xs font-semibold border rounded-lg px-3 py-2 bg-white hover:bg-slate-50 whitespace-nowrap flex-none">Enviar a otro cliente</button></div>`;
   }
   function nuevoEnvio() {
     state.viajeros = []; state.destinatarios = []; state.saludo = ''; state.poliza = '';
@@ -325,7 +369,10 @@ window.VApp = (function () {
       ${agentePanel()}
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-bold">Envío de pólizas</h2>
-        <button onclick="VApp.addViajero()" class="text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm" style="background:linear-gradient(135deg,#16a34a 0%,#15803d 100%)"><span style="font-weight:700;font-size:15px">+</span> Agregar viajero</button>
+        <div class="flex items-center gap-2">
+          ${hayAlgoQueLimpiar() ? '<button onclick="VApp.pedirLimpiar()" class="text-sm font-medium border rounded-lg px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-50 whitespace-nowrap">🧹 Limpiar</button>' : ''}
+          <button onclick="VApp.addViajero()" class="text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm" style="background:linear-gradient(135deg,#16a34a 0%,#15803d 100%)"><span style="font-weight:700;font-size:15px">+</span> Agregar viajero</button>
+        </div>
       </div>
       ${stepper()}
       ${state.viajeros.map(viajeroCard).join('') || '<p class="text-slate-500 text-sm mb-3">Agregá un viajero para empezar.</p>'}
@@ -548,6 +595,6 @@ window.VApp = (function () {
 
   function boot() { try { VAuth.init(); } catch (e) {} el('btn-login').addEventListener('click', login); }
   return { boot, login, addViajero, removeViajero, quitarArchivo, setCanal, waSave, waReset, preview, enviar,
-    nuevoEnvio, pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink };
+    nuevoEnvio, pedirLimpiar, pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink };
 })();
 document.addEventListener('DOMContentLoaded', () => VApp.boot());
