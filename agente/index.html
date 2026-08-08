@@ -4,11 +4,42 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Consola de Envíos · Viajero</title>
+  <!-- Favicon propio (avión): decisión de JC, cada app lleva el suyo para poder
+       distinguirlas con varias pestañas abiertas. El favicon del kit SDI es para
+       avatares y redes de la empresa, no para las pestañas de las apps. -->
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <!-- Tipografía SDI, tres roles (Questrial, el cuarto, va vectorizada DENTRO del
+       logo y no se descarga). Solo los pesos que se usan. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Inter pasa a ser la letra de toda la interfaz y JetBrains Mono la de las
+    // cifras (font-mono ya está puesto en el N° de póliza). Los colores de marca
+    // quedan como clases: bg-sdi-azul, text-sdi-azul, border-sdi-azul.
+    tailwind.config = {
+      theme: { extend: {
+        fontFamily: {
+          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
+        },
+        colors: { sdi: {
+          azul: '#0369A1', azulD: '#075985',
+          verde: '#0D9488', naranja: '#EA580C', dorado: '#C9A227'
+        } }
+      } }
+    };
+  </script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://accounts.google.com/gsi/client" async></script>
   <style>
+    /* Poppins en los títulos: es la hermana con pesos de la letra del logotipo,
+       así el logo y los títulos se leen como una sola cosa. */
+    h1, h2, h3, h4, .t-display {
+      font-family: 'Poppins', 'Inter', ui-sans-serif, sans-serif;
+      letter-spacing: -.01em;
+    }
     /* Confirmación de envío: el check se dibuja y el panel entra desde abajo. */
     @keyframes v-draw { to { stroke-dashoffset: 0 } }
     @keyframes v-pop { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
@@ -21,17 +52,56 @@
   </style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800">
+  <!-- IDENTIDAD SDI (8 ago 2026). La consola es la herramienta del agente: acá manda
+       Seguros Digitales SDI y el INS no entra. Al revés de index.html (la página del
+       cliente), donde el logo del INS va arriba y SDI al pie.
+       El logo es el 08-sdi-logo-header.svg del kit — wordmark blanco, barra en los 4
+       colores — copiado INLINE y VECTORIZADO: las letras son curvas, no texto, así que
+       no dependen de ninguna fuente instalada. Si se regenera, mantenerlo en curvas;
+       el archivo canónico está en C:/Users/segur/SDI-BRAND-KIT.
+       El fondo se queda en el navy de siempre: el azul institucional ya se probó en el
+       Cotizador y JC lo descartó por verse demasiado claro. -->
   <header class="text-white" style="background:linear-gradient(135deg,#0b2545 0%,#13477e 55%,#1c6fb8 100%)">
-    <div class="max-w-5xl mx-auto px-4 h-14 flex items-center gap-3">
-      <i data-lucide="plane" class="w-5 h-5"></i>
-      <div class="font-bold">Consola de envíos · Viajero</div>
-      <span class="ml-auto text-xs text-blue-200" id="who">uso interno</span>
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
+      <svg class="h-8 w-auto flex-none" viewBox="0 0 184 90" role="img" aria-label="Seguros Digitales SDI">
+        <path d="M36.076 74.656Q28.04 74.656 23.038 72.483Q18.036 70.31 15.535 66.456Q13.034 62.602000000000004 12.624 57.763999999999996H19.02Q19.266 61.7 21.644 64.119Q24.022 66.538 27.917 67.686Q31.812 68.834 36.486000000000004 68.834Q43.374 68.834 47.392 66.415Q51.410000000000004 63.996 51.410000000000004 59.24Q51.410000000000004 56.370000000000005 49.401 54.607Q47.392 52.843999999999994 44.071 51.696Q40.75 50.548 36.814 49.605000000000004Q32.878 48.662 28.901 47.596000000000004Q24.924 46.53 21.603 44.89Q18.282 43.25 16.273 40.667Q14.264 38.083999999999996 14.264 34.065999999999995Q14.264 27.424 19.389000000000003 23.241999999999997Q24.514000000000003 19.059999999999995 34.682 19.059999999999995Q41.897999999999996 19.059999999999995 46.572 21.232999999999997Q51.246 23.406 53.583 26.932Q55.92 30.458 56.166000000000004 34.558H49.852000000000004Q49.36 30.458 45.751999999999995 27.628999999999998Q42.144 24.799999999999997 34.682 24.799999999999997Q30.09 24.799999999999997 27.22 25.701999999999998Q24.35 26.604 22.833000000000002 28.038999999999998Q21.316000000000003 29.473999999999997 20.783 31.031999999999996Q20.25 32.589999999999996 20.25 33.984Q20.25 36.69 22.259 38.370999999999995Q24.268 40.052 27.589 41.159Q30.91 42.266 34.928 43.168Q38.946 44.07 42.923 45.177Q46.9 46.284 50.221000000000004 47.965Q53.542 49.646 55.551 52.269999999999996Q57.56 54.894 57.56 58.994Q57.56 66.538 51.82 70.59700000000001Q46.08 74.656 36.076 74.656ZM64.572 74.0V19.716H87.45Q92.28800000000001 19.716 96.757 21.561Q101.226 23.406 104.752 26.932Q108.27799999999999 30.458 110.328 35.459999999999994Q112.378 40.461999999999996 112.378 46.858000000000004Q112.378 53.254 110.328 58.256Q108.27799999999999 63.257999999999996 104.752 66.78399999999999Q101.226 70.31 96.757 72.155Q92.28800000000001 74.0 87.45 74.0ZM70.722 68.178H87.20400000000001Q93.02600000000001 68.178 97.29 65.226Q101.554 62.274 103.891 57.436Q106.22800000000001 52.598 106.22800000000001 46.858000000000004Q106.22800000000001 41.036 103.891 36.198Q101.554 31.36 97.29 28.448999999999998Q93.02600000000001 25.537999999999997 87.20400000000001 25.537999999999997H70.722ZM119.71799999999999 74.0V19.716H125.868V74.0Z" fill="#FFFFFF"/>
+        <g transform="translate(143.87, 19.06)">
+          <rect x="0" y="0.0" width="30.0" height="6.15" rx="1.5" fill="#0369A1"/>
+          <rect x="0" y="16.48" width="30.0" height="6.15" rx="1.5" fill="#0D9488"/>
+          <rect x="0" y="32.96" width="30.0" height="6.15" rx="1.5" fill="#EA580C"/>
+          <rect x="0" y="49.45" width="30.0" height="6.15" rx="1.5" fill="#C9A227"/>
+        </g>
+      </svg>
+      <div class="w-px h-8 flex-none" style="background:rgba(255,255,255,.3)"></div>
+      <!-- whitespace-nowrap + truncate en el correo: al entrar, #who deja de decir "uso
+           interno" y pasa a mostrar el correo del agente, que es largo. Sin esto, en
+           celular el flex comprimía este bloque, el subtítulo se partía en tres líneas
+           y el encabezado se estiraba de 61 a 126 px. -->
+      <div class="whitespace-nowrap">
+        <div class="t-display font-bold text-[15px] leading-tight">Consola de envíos</div>
+        <div class="text-[11px] leading-tight mt-px" style="color:rgba(255,255,255,.75)">Seguro Viajero con Asistencia</div>
+      </div>
+      <span class="ml-auto text-xs text-blue-200 truncate max-w-[40%] text-right" id="who">uso interno</span>
     </div>
+    <!-- Filete de marca: la proporción 60/25/10/5 del manual hecha línea. Es lo único
+         que mete el dorado, la firma de SDI. -->
+    <div style="height:4px;background:linear-gradient(to right,#0369A1 0 60%,#0D9488 60% 85%,#EA580C 85% 95%,#C9A227 95% 100%)"></div>
   </header>
   <main class="max-w-5xl mx-auto px-4 py-6">
-    <div id="gate" class="text-center py-20">
-      <p class="text-slate-600 mb-4">Iniciá sesión con tu cuenta autorizada para continuar.</p>
-      <button id="btn-login" class="bg-blue-700 hover:bg-blue-800 text-white px-5 py-2.5 rounded-lg font-medium">Iniciar sesión con Google</button>
+    <div id="gate" class="text-center py-16">
+      <!-- Logo en color (02-sdi-logo-compacto del kit) para fondo claro. -->
+      <svg class="h-10 w-auto mx-auto mb-5" viewBox="0 0 184 90" role="img" aria-label="Seguros Digitales SDI">
+        <path d="M36.076 74.656Q28.04 74.656 23.038 72.483Q18.036 70.31 15.535 66.456Q13.034 62.602000000000004 12.624 57.763999999999996H19.02Q19.266 61.7 21.644 64.119Q24.022 66.538 27.917 67.686Q31.812 68.834 36.486000000000004 68.834Q43.374 68.834 47.392 66.415Q51.410000000000004 63.996 51.410000000000004 59.24Q51.410000000000004 56.370000000000005 49.401 54.607Q47.392 52.843999999999994 44.071 51.696Q40.75 50.548 36.814 49.605000000000004Q32.878 48.662 28.901 47.596000000000004Q24.924 46.53 21.603 44.89Q18.282 43.25 16.273 40.667Q14.264 38.083999999999996 14.264 34.065999999999995Q14.264 27.424 19.389000000000003 23.241999999999997Q24.514000000000003 19.059999999999995 34.682 19.059999999999995Q41.897999999999996 19.059999999999995 46.572 21.232999999999997Q51.246 23.406 53.583 26.932Q55.92 30.458 56.166000000000004 34.558H49.852000000000004Q49.36 30.458 45.751999999999995 27.628999999999998Q42.144 24.799999999999997 34.682 24.799999999999997Q30.09 24.799999999999997 27.22 25.701999999999998Q24.35 26.604 22.833000000000002 28.038999999999998Q21.316000000000003 29.473999999999997 20.783 31.031999999999996Q20.25 32.589999999999996 20.25 33.984Q20.25 36.69 22.259 38.370999999999995Q24.268 40.052 27.589 41.159Q30.91 42.266 34.928 43.168Q38.946 44.07 42.923 45.177Q46.9 46.284 50.221000000000004 47.965Q53.542 49.646 55.551 52.269999999999996Q57.56 54.894 57.56 58.994Q57.56 66.538 51.82 70.59700000000001Q46.08 74.656 36.076 74.656ZM64.572 74.0V19.716H87.45Q92.28800000000001 19.716 96.757 21.561Q101.226 23.406 104.752 26.932Q108.27799999999999 30.458 110.328 35.459999999999994Q112.378 40.461999999999996 112.378 46.858000000000004Q112.378 53.254 110.328 58.256Q108.27799999999999 63.257999999999996 104.752 66.78399999999999Q101.226 70.31 96.757 72.155Q92.28800000000001 74.0 87.45 74.0ZM70.722 68.178H87.20400000000001Q93.02600000000001 68.178 97.29 65.226Q101.554 62.274 103.891 57.436Q106.22800000000001 52.598 106.22800000000001 46.858000000000004Q106.22800000000001 41.036 103.891 36.198Q101.554 31.36 97.29 28.448999999999998Q93.02600000000001 25.537999999999997 87.20400000000001 25.537999999999997H70.722ZM119.71799999999999 74.0V19.716H125.868V74.0Z" fill="#0369A1"/>
+        <g transform="translate(143.87, 19.06)">
+          <rect x="0" y="0.0" width="30.0" height="6.15" rx="1.5" fill="#0369A1"/>
+          <rect x="0" y="16.48" width="30.0" height="6.15" rx="1.5" fill="#0D9488"/>
+          <rect x="0" y="32.96" width="30.0" height="6.15" rx="1.5" fill="#EA580C"/>
+          <rect x="0" y="49.45" width="30.0" height="6.15" rx="1.5" fill="#C9A227"/>
+        </g>
+      </svg>
+      <h1 class="text-xl font-semibold mb-1.5">Consola de envíos</h1>
+      <p class="text-slate-600 mb-5">Iniciá sesión con tu cuenta autorizada para continuar.</p>
+      <button id="btn-login" class="bg-sdi-azul hover:bg-sdi-azulD text-white px-5 py-2.5 rounded-lg font-medium transition-colors" style="box-shadow:0 4px 12px rgba(3,105,161,.25)">Iniciar sesión con Google</button>
       <p id="gate-err" class="text-red-600 text-sm mt-4 hidden"></p>
     </div>
     <div id="console" class="hidden"></div>
@@ -42,9 +112,10 @@
   <footer class="max-w-5xl mx-auto px-4 pb-10 pt-4">
     <details class="text-[11px] text-slate-400 border-t pt-3">
       <summary class="cursor-pointer select-none hover:text-slate-600">
-        Última actualización: <b class="font-semibold">6 ago 2026</b> — ya se puede limpiar la pantalla para preparar el envío del siguiente cliente
+        Última actualización: <b class="font-semibold">8 ago 2026</b> — la consola ya lleva la marca Seguros Digitales SDI
       </summary>
       <ul class="mt-2 space-y-1.5 leading-relaxed">
+        <li><b class="font-semibold text-slate-500">8 ago 2026</b> — La consola pasó a llevar la marca <b>Seguros Digitales SDI</b>: el logotipo en el encabezado y en la pantalla de entrada, la línea de colores de la marca, y la letra propia de la empresa. Los números de póliza y los montos ahora salen en una letra donde todos los dígitos miden igual, así quedan alineados en columna y es más fácil revisarlos contra el PDF. Solo cambia cómo se ve: los pasos, los botones y el envío funcionan igual, y la página que recibe el cliente no se tocó.</li>
         <li><b class="font-semibold text-slate-500">6 ago 2026 · noche</b> — Terminado el correo y el WhatsApp, la pantalla se quedaba con los datos del cliente y la única salida era recargar con F5. Ahora el botón <b>"Enviar a otro cliente"</b> también aparece en la franja verde cuando estás en WhatsApp, y hay un <b>"🧹 Limpiar"</b> siempre a mano arriba, que sirve incluso si no enviaste nada (cargaste el PDF equivocado, el cliente se arrepintió). Antes de borrar te pregunta y te dice exactamente qué se lleva.</li>
         <li><b class="font-semibold text-slate-500">6 ago 2026 · tarde</b> — En el mensaje de WhatsApp, cada póliza ahora lleva el <b>nombre del asegurado debajo</b>, para saber cuál le corresponde a cada quien. Y el teléfono del cliente pasó a ser un bloque destacado: el cursor cae solo ahí al entrar, avisa mientras falta y confirma con qué número se va a abrir el chat. Además, el botón ya no abre WhatsApp sin destinatario, el número que escribís ya no se borra al redibujarse la pantalla, y si escribís los 8 dígitos se le agrega el 506 solo.</li>
         <li><b class="font-semibold text-slate-500">6 ago 2026</b> — Cuando el envío lleva más de un asegurado, el mensaje de WhatsApp ahora muestra los números de <b>todas</b> las pólizas que van adjuntas en el correo (antes se quedaba con la del primero). Y al presionar "Agregar viajero" teniendo uno ya cargado, se pide confirmación: un doble clic por error ya no abre una tarjeta vacía en silencio.</li>

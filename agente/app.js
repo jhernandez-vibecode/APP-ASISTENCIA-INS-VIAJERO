@@ -283,7 +283,7 @@ window.VApp = (function () {
       <div class="flex items-center justify-between mb-3"><b class="text-sm">Viajero ${idx + 1}</b>
         <button onclick="VApp.removeViajero(${v.id})" class="text-red-500 text-xs">Quitar</button></div>
       <div class="dropzone border-2 border-dashed rounded-lg p-4 text-center text-sm text-slate-500 mb-3 cursor-pointer hover:bg-blue-50 transition-colors" data-vid="${v.id}">
-        Arrastrá acá la póliza, la tarjeta y el comprobante <span class="text-blue-700 font-medium underline">o hacé clic para cargarlos</span>
+        Arrastrá acá la póliza, la tarjeta y el comprobante <span class="text-sdi-azul font-medium underline">o hacé clic para cargarlos</span>
         <input type="file" class="hidden" multiple accept="application/pdf,.pdf,image/*">
       </div>
       ${listaArchivos(v)}
@@ -347,7 +347,7 @@ window.VApp = (function () {
     const labels = ['Cargar el PDF', 'Revisión', 'Enviar'];
     const dot = i => {
       const s = st[i];
-      const cls = s === 'done' ? 'bg-green-600 text-white' : s === 'active' ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-400';
+      const cls = s === 'done' ? 'bg-green-600 text-white' : s === 'active' ? 'bg-sdi-azul text-white' : 'bg-slate-200 text-slate-400';
       const txt = s === 'pending' ? 'text-slate-400' : 'text-slate-700 font-medium';
       return `<div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${cls}">${s === 'done' ? '✓' : (i + 1)}</div><span class="text-sm ${txt}">${labels[i]}</span></div>`;
     };
@@ -387,7 +387,7 @@ window.VApp = (function () {
           const isWA = c !== 'correo';
           const active = state.canal === c;
           const base = isWA ? 'border-green-500 text-green-700' : 'border-slate-300 text-slate-700';
-          const act = active ? (isWA ? 'border-green-600 border-2 bg-green-50' : 'border-blue-600 border-2 text-blue-700') : '';
+          const act = active ? (isWA ? 'border-green-600 border-2 bg-green-50' : 'border-sdi-azul border-2 text-sdi-azul') : '';
           const label = c === 'correo' ? 'Correo' : c === 'emitida' ? 'WhatsApp emitida' : 'WhatsApp directa';
           return `<button onclick="VApp.setCanal('${c}')" class="flex-1 border rounded-lg py-2 text-sm ${base} ${act}">${label}</button>`;
         }).join('')}
@@ -463,7 +463,7 @@ window.VApp = (function () {
       ${bloqueTel()}
       <div class="mt-3 mb-1 flex items-center gap-2">
         <span class="text-xs font-semibold text-slate-600">Lo que va en el mensaje</span>
-        ${(!asegManual && hayDatos) ? '<span class="text-[10px] font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">tomado del PDF</span>' : ''}
+        ${(!asegManual && hayDatos) ? '<span class="text-[10px] font-bold bg-blue-100 text-sdi-azul rounded-full px-2 py-0.5">tomado del PDF</span>' : ''}
       </div>
       ${filas}
       <textarea id="watxt" rows="6" class="w-full text-sm border rounded px-2 py-1 mt-1">${txt.replace(/</g,'&lt;')}</textarea>
