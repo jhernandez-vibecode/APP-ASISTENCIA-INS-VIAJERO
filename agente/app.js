@@ -3,13 +3,22 @@ window.VApp = (function () {
   // asegurados = [{poliza, nombre}] — lo que sale en el mensaje de WhatsApp.
   // tel = teléfono del cliente; se guarda en el estado porque antes vivía solo en
   // el input y cualquier render() lo borraba en silencio.
-  const state = { viajeros: [], destinatarios: [], saludo: '', poliza: '', asegurados: [], tel: '', canal: 'correo', sent: false, envio: null };
+  // paso = la pantalla que se ve: 1 cargar · 2 revisar · 3 enviar. Desde el
+  // 21 ago la consola muestra UNA sola por vez (opción A del rediseño): antes
+  // todo vivía en el mismo scroll y los tres botones de canal se confundían
+  // con los dos de envío.
+  const state = { paso: 1, viajeros: [], destinatarios: [], saludo: '', poliza: '', asegurados: [], tel: '', canal: 'correo', sent: false, envio: null };
   let nextId = 1;
   let agentOpen = false;
   let asegManual = false; // el agente editó a mano las pólizas/nombres del mensaje
 
   function el(id) { return document.getElementById(id); }
-  function showConsole() { el('gate').classList.add('hidden'); el('console').classList.remove('hidden'); render(); }
+  function showConsole() {
+    el('gate').classList.add('hidden');
+    el('console').classList.remove('hidden');
+    const g = el('btn-agente'); if (g) g.classList.remove('hidden');
+    render();
+  }
 
   // ----- Panel "Mi información de agente" -----
   const AG_LABELS = {
@@ -23,10 +32,13 @@ window.VApp = (function () {
     return `<label style="display:block"><span style="font-size:11px;color:#94a3b8">${AG_LABELS[key]}</span>
       <input data-ag="${order}" value="${(a[key] || '').replace(/"/g, '&quot;')}" class="w-full text-sm border rounded px-2 py-1"/></label>`;
   }
+  // Se dibuja SOLO si el agente abrió el engranaje del encabezado. Cerrado no
+  // ocupa ni una línea: el trabajo del día empieza arriba de todo.
   function agentePanel() {
+    if (!agentOpen) return '';
     const a = VAgent.get();
     const link = VAgent.publicLink(a);
-    const body = agentOpen ? `
+    const body = `
       <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
         ${agentField(a, 'nombre')}${agentField(a, 'rol')}
         ${agentField(a, 'licencia')}${agentField(a, 'codigo')}
@@ -46,12 +58,14 @@ window.VApp = (function () {
           <button onclick="VApp.agentPreviewLink()" class="text-xs border rounded-lg px-3 py-1.5 whitespace-nowrap">Ver</button>
         </div>
         <p class="text-[11px] text-slate-400 mt-1">Guardá primero tus cambios para que el link se actualice. Este es el link de la página pública del cliente.</p>
-      </div>` : '';
-    return `<div class="border rounded-xl p-4 bg-white mb-4">
-      <button onclick="VApp.agentToggle()" class="w-full flex items-center justify-between text-left">
+      </div>`;
+    return `<div class="v-pop border-2 border-sdi-azul rounded-xl p-4 bg-white mb-4">
+      <div class="flex items-center justify-between gap-2">
         <span class="text-sm font-semibold text-slate-700">⚙️ Mi información de agente</span>
-        <span class="text-xs text-slate-400">${a.nombre} · ${agentOpen ? 'ocultar ▲' : 'editar ▼'}</span>
-      </button>${body}</div>`;
+        <button onclick="VApp.agentToggle()" class="text-xs border rounded-lg px-3 py-1.5 whitespace-nowrap hover:bg-slate-50">Cerrar ✕</button>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-1">${esc(a.nombre)} · esto se guarda en este navegador y no hace falta volver a tocarlo.</p>
+      ${body}</div>`;
   }
 
   async function login() {
@@ -278,14 +292,14 @@ window.VApp = (function () {
     v.files.splice(idx, 1); state.sent = false; render();
   }
 
+  // Tarjeta del paso 2: acá se revisan los datos. Los archivos se cargan en el
+  // paso 1, así que sobra la zona de arrastre — queda solo la lista, con su ×
+  // por si algo entró de más.
   function viajeroCard(v, idx) {
+    const titulo = (v.cliente || '').trim() || `Asegurado ${idx + 1}`;
     return `<div class="border rounded-xl p-4 mb-3 bg-white">
-      <div class="flex items-center justify-between mb-3"><b class="text-sm">Viajero ${idx + 1}</b>
-        <button onclick="VApp.removeViajero(${v.id})" class="text-red-500 text-xs">Quitar</button></div>
-      <div class="dropzone border-2 border-dashed rounded-lg p-4 text-center text-sm text-slate-500 mb-3 cursor-pointer hover:bg-blue-50 transition-colors" data-vid="${v.id}">
-        Arrastrá acá la póliza, la tarjeta y el comprobante <span class="text-sdi-azul font-medium underline">o hacé clic para cargarlos</span>
-        <input type="file" class="hidden" multiple accept="application/pdf,.pdf,image/*">
-      </div>
+      <div class="flex items-center justify-between mb-3"><b class="text-sm" id="tit-v${v.id}">👤 ${esc(titulo)}</b>
+        ${state.viajeros.length > 1 ? `<button onclick="VApp.removeViajero(${v.id})" class="text-red-500 text-xs">Quitar</button>` : ''}</div>
       ${listaArchivos(v)}
       <div class="grid grid-cols-2 gap-2">
         ${field(v, 'cliente', 'Cliente')}${field(v, 'nombrePila', 'Saludo (nombre)')}
@@ -336,66 +350,183 @@ window.VApp = (function () {
     state.viajeros = []; state.destinatarios = []; state.saludo = ''; state.poliza = '';
     state.asegurados = []; state.tel = ''; asegManual = false;
     state.canal = 'correo'; state.sent = false; state.envio = null;
+    state.paso = 1; // el siguiente cliente arranca por donde se arranca siempre
     pushViajero(); // sin preguntar: el agente acaba de pedir empezar de cero
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function stepper() {
-    const hasData = state.viajeros.some(v => v.poliza || v.files.length);
-    const ready = hasData && state.destinatarios.length;
-    const st = [hasData ? 'done' : 'active', state.sent ? 'done' : (hasData ? 'active' : 'pending'), state.sent ? 'done' : (ready ? 'active' : 'pending')];
-    const labels = ['Cargar el PDF', 'Revisión', 'Enviar'];
-    const dot = i => {
-      const s = st[i];
-      const cls = s === 'done' ? 'bg-green-600 text-white' : s === 'active' ? 'bg-sdi-azul text-white' : 'bg-slate-200 text-slate-400';
-      const txt = s === 'pending' ? 'text-slate-400' : 'text-slate-700 font-medium';
-      return `<div class="flex items-center gap-2"><div class="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold ${cls}">${s === 'done' ? '✓' : (i + 1)}</div><span class="text-sm ${txt}">${labels[i]}</span></div>`;
-    };
-    return `<div class="flex items-center justify-center gap-3 sm:gap-4 mb-6 flex-wrap">${dot(0)}<div class="w-6 sm:w-10 h-px bg-slate-300"></div>${dot(1)}<div class="w-6 sm:w-10 h-px bg-slate-300"></div>${dot(2)}</div>`;
+  // ═══════════════ Los tres pasos ═══════════════
+  // La barra de pasos dejó de ser un dibujo: es la navegación. Los tres puntos
+  // se pueden tocar siempre — el paso 3 valida por su cuenta antes de enviar,
+  // así que nunca hay que dejar al agente encerrado en un paso.
+  const PASOS = ['Cargar', 'Revisar', 'Enviar'];
+  function irA(p) {
+    state.paso = Math.min(3, Math.max(1, p));
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-  function render() {
-    const exito = state.sent && state.envio;
-    // En WhatsApp, "Vista previa" y "Enviar" hacían exactamente lo mismo (abrir el
-    // chat). Queda un solo botón, que además dice qué falta si no hay teléfono.
-    const esWa = state.canal !== 'correo';
-    const listo = !esWa || telOk();
-    const botones = `<div class="flex gap-2 mt-3">
-        ${esWa ? '' : '<button onclick="VApp.preview()" class="border rounded-lg px-4 py-2 text-sm">Vista previa</button>'}
-        <button onclick="VApp.enviar()" id="btn-enviar" ${listo ? '' : 'disabled'} class="flex-1 text-white text-sm font-medium rounded-lg px-4 py-2.5 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm" style="background:${(esWa && listo) ? 'linear-gradient(135deg,#16a34a 0%,#15803d 100%)' : 'linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)'}">${esWa ? (listo ? 'Abrir WhatsApp' : 'Escribí el teléfono del cliente') : 'Enviar'}</button>
+  function totalArchivos() { return state.viajeros.reduce((s, v) => s + v.files.length, 0); }
+  function totalAdjuntos() { return totalArchivos() + (VCfg.STANDARD_DOCS || []).length; }
+
+  function rail() {
+    const punto = i => {
+      const n = i + 1;
+      const hecho = state.sent || n < state.paso;
+      const aqui = n === state.paso;
+      const cls = hecho ? 'bg-green-600 text-white' : aqui ? 'bg-sdi-azul text-white' : 'bg-slate-200 text-slate-400';
+      const anillo = aqui ? 'box-shadow:0 0 0 4px rgba(3,105,161,.16)' : '';
+      const txt = aqui ? 'text-slate-800 font-bold' : hecho ? 'text-slate-600' : 'text-slate-400';
+      return `<button onclick="VApp.irA(${n})" class="flex items-center gap-2 rounded-lg px-1.5 py-1 -mx-1.5 hover:bg-slate-100 transition-colors" ${aqui ? 'aria-current="step"' : ''}>
+        <span class="w-7 h-7 rounded-full flex items-center justify-center text-sm font-bold flex-none ${cls}" style="${anillo}">${hecho ? '✓' : n}</span>
+        <span class="text-sm ${txt} whitespace-nowrap">${PASOS[i]}</span></button>`;
+    };
+    const linea = i => `<div class="flex-1 h-0.5 rounded mx-2 sm:mx-3 min-w-[16px] ${(state.sent || state.paso > i + 1) ? 'bg-green-600' : 'bg-slate-200'}"></div>`;
+    return `<div class="flex items-center mb-5">${punto(0)}${linea(0)}${punto(1)}${linea(1)}${punto(2)}</div>`;
+  }
+
+  // Botón de avance de los pasos 1 y 2. Nunca se bloquea: los datos se pueden
+  // escribir a mano y hay clientes que compraron por su cuenta (sin PDF).
+  function botonSiguiente(texto, sub) {
+    return `<div class="mt-4">
+      <button onclick="VApp.irA(${state.paso + 1})" class="w-full text-white text-sm font-semibold rounded-xl px-4 py-3.5 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">${texto}</button>
+      ${sub ? `<p id="paso-sub" class="text-[11px] text-slate-400 mt-1.5 text-center">${sub}</p>` : ''}
+    </div>`;
+  }
+  function botonAtras(texto) {
+    return `<button onclick="VApp.irA(${state.paso - 1})" class="text-sm text-slate-500 hover:text-slate-800 mb-3">← ${texto}</button>`;
+  }
+  function ghostAgregar() {
+    return `<button onclick="VApp.addViajero()" class="w-full border-2 border-dashed border-slate-300 rounded-xl py-3 text-sm font-semibold text-sdi-azul hover:bg-blue-50 transition-colors">+ Agregar otro asegurado al mismo correo</button>`;
+  }
+
+  // ---- Paso 1: cargar ----
+  function pantalla1() {
+    const n = totalArchivos();
+    const sub = n
+      ? `${n} archivo${n === 1 ? '' : 's'} cargado${n === 1 ? '' : 's'}. En el siguiente paso revisás los datos que salieron del PDF.`
+      : 'Todavía no cargaste ningún archivo. Podés seguir igual y escribir los datos a mano.';
+    return `<h3 class="text-base font-bold text-slate-800 mb-0.5">Cargá los documentos del asegurado</h3>
+      <p class="text-xs text-slate-500 mb-4">Arrastrá la póliza, la tarjeta de asistencia y el comprobante de pago. De la póliza se leen solos el nombre, el número, el destino y la vigencia.</p>
+      ${state.viajeros.map(cardCarga).join('')}
+      ${ghostAgregar()}
+      ${botonSiguiente('Continuar a revisar los datos →', sub)}
+      <div class="text-center mt-5 pt-4 border-t">
+        <button onclick="VApp.sinPoliza()" class="text-xs text-slate-500 underline underline-offset-2 hover:text-sdi-azul">El cliente compró por su cuenta y solo le mando el link de la guía →</button>
       </div>`;
-    const bloqueAccion = (exito && state.canal === 'correo') ? panelExito() : ((exito ? bannerExito() : '') + botones);
+  }
+  function cardCarga(v, idx) {
+    const titulo = (v.cliente || '').trim() || `Asegurado ${idx + 1}`;
+    return `<div class="border rounded-xl p-4 mb-3 bg-white">
+      <div class="flex items-center justify-between mb-3">
+        <b class="text-sm">👤 ${esc(titulo)}</b>
+        ${state.viajeros.length > 1 ? `<button onclick="VApp.removeViajero(${v.id})" class="text-red-500 text-xs">Quitar</button>` : ''}
+      </div>
+      <div class="dropzone border-2 border-dashed rounded-lg p-5 text-center text-sm text-slate-500 cursor-pointer hover:bg-blue-50 transition-colors" data-vid="${v.id}">
+        Arrastrá acá la póliza, la tarjeta y el comprobante <span class="text-sdi-azul font-medium underline">o hacé clic para cargarlos</span>
+        <input type="file" class="hidden" multiple accept="application/pdf,.pdf,image/*">
+      </div>
+      <div class="mt-3">${listaArchivos(v)}</div></div>`;
+  }
+
+  // ---- Paso 2: revisar ----
+  function pantalla2() {
+    return `${botonAtras('Volver a cargar documentos')}
+      <h3 class="text-base font-bold text-slate-800 mb-0.5">Revisá lo que salió del PDF</h3>
+      <p class="text-xs text-slate-500 mb-4">Todo se puede corregir a mano. Lo que quede acá es lo que va a ver el cliente en su correo.</p>
+      ${state.viajeros.map(viajeroCard).join('') || '<p class="text-slate-500 text-sm mb-3">No hay asegurados cargados.</p>'}
+      ${ghostAgregar()}
+      <div class="border rounded-xl p-4 bg-white mt-3">
+        <b class="text-sm block mb-2">¿A quién le llega?</b>
+        <label class="block mb-2"><span class="text-xs text-slate-400">Correo del cliente (varios, separados por coma)</span>
+          <input id="dest" value="${state.destinatarios.join(', ')}" class="w-full text-sm border rounded px-2 py-1"/></label>
+        <label class="block"><span class="text-xs text-slate-400">Saludo (así lo saluda el correo)</span>
+          <input id="saludo" value="${state.saludo.replace(/"/g, '&quot;')}" class="w-full text-sm border rounded px-2 py-1"/></label>
+      </div>
+      ${botonSiguiente('Continuar a enviar →', subPaso2())}`;
+  }
+  // El aviso de abajo tiene que SEGUIR al campo mientras el agente escribe: si
+  // solo se recalculara en el render(), diría "falta el correo" con el correo
+  // ya escrito. Lo repinta wire() sin redibujar, para no perder el foco.
+  function subPaso2() {
+    return state.destinatarios.length
+      ? 'En el siguiente paso elegís si va por correo o por WhatsApp.'
+      : 'Sin el correo del cliente se puede mandar el WhatsApp, pero no el correo.';
+  }
+
+  // ---- Paso 3: enviar ----
+  const CANALES = [
+    { id: 'correo', ico: '📧', tit: 'Correo con los documentos', reco: true,
+      desc: 'Le llegan la póliza, la tarjeta, el comprobante, las Condiciones Generales y el Manual, más el botón a su guía de emergencias.' },
+    { id: 'emitida', ico: '💬', tit: 'WhatsApp · póliza que emití yo',
+      desc: 'Mensaje de aviso con el número de póliza y el link de la guía. Los documentos van por correo, no por acá.' },
+    { id: 'directa', ico: '💬', tit: 'WhatsApp · compró por su cuenta',
+      desc: 'Mensaje para el cliente al que no le emití yo la póliza: solo el link de la guía.' }
+  ];
+  function canalPick(c) {
+    const on = state.canal === c.id;
+    return `<button onclick="VApp.setCanal('${c.id}')" class="w-full text-left flex gap-3 items-start rounded-xl p-3.5 mb-2 transition-colors ${on ? 'border-2 border-sdi-azul bg-blue-50' : 'border border-slate-200 bg-white hover:bg-slate-50'}">
+      <span class="w-9 h-9 rounded-lg flex items-center justify-center text-lg flex-none ${on ? 'bg-blue-100' : 'bg-slate-100'}">${c.ico}</span>
+      <span class="flex-1 min-w-0">
+        <span class="block text-sm font-bold text-slate-800">${c.tit}${c.reco ? '<span class="ml-1.5 align-middle text-[9px] font-bold uppercase tracking-wide bg-sdi-azul text-white rounded-full px-2 py-0.5">lo normal</span>' : ''}</span>
+        <span class="block text-[11px] text-slate-500 leading-relaxed mt-0.5">${c.desc}</span>
+      </span>
+      ${on ? '<span class="text-sdi-azul font-bold flex-none">✓</span>' : ''}</button>`;
+  }
+  // Resumen del correo, con atajos para devolverse a corregir. Solo en correo:
+  // en WhatsApp el bloque del teléfono ya dice con qué número se abre el chat.
+  function resumenCorreo() {
+    const celda = (k, v, accion) => `<div class="flex-1 min-w-[110px] px-3 border-r last:border-r-0">
+      <div class="text-[9.5px] uppercase tracking-wide text-slate-400">${k}</div>
+      <div class="text-[12.5px] font-semibold text-slate-800 mt-0.5 break-words">${v}</div>
+      ${accion || ''}</div>`;
+    const cambiar = `<button onclick="VApp.irA(2)" class="text-[10.5px] text-sdi-azul underline">cambiar</button>`;
+    const nv = state.viajeros.length;
+    const nombres = state.viajeros.map(v => (v.nombrePila || v.cliente || '').trim()).filter(Boolean);
+    return `<div class="flex flex-wrap bg-slate-50 border rounded-xl py-3 px-1 my-4">
+      ${celda('Le llega a', esc(state.destinatarios.join(', ')) || '<span class="text-red-500">falta el correo</span>', cambiar)}
+      ${celda('Asegurados', nv + (nombres.length ? ' · ' + esc(unir(nombres)) : ''), cambiar)}
+      ${celda('Adjuntos', totalAdjuntos() + ' archivos', `<button onclick="VApp.irA(1)" class="text-[10.5px] text-sdi-azul underline">ver cuáles</button>`)}
+    </div>`;
+  }
+  function pantalla3() {
+    const esWa = state.canal !== 'correo';
+    const exito = state.sent && state.envio;
+    // Con el correo ya enviado, el panel de éxito OCUPA el lugar del botón: es
+    // lo que impide mandarle el mismo correo dos veces al cliente.
+    if (exito && !esWa) {
+      return `${botonAtras('Volver a revisar')}
+        ${CANALES.map(canalPick).join('')}
+        ${panelExito()}`;
+    }
+    const listo = !esWa || telOk();
+    const texto = esc(textoBoton());
+    return `${botonAtras('Volver a revisar')}
+      <h3 class="text-base font-bold text-slate-800 mb-0.5">¿Cómo se lo mandás${state.saludo ? ' a ' + esc(state.saludo) : ''}?</h3>
+      <p class="text-xs text-slate-500 mb-4">Elegí uno. Podés mandar el correo primero y el WhatsApp después.</p>
+      ${CANALES.map(canalPick).join('')}
+      <div id="canalbox" class="mt-3"></div>
+      ${exito ? bannerExito() : ''}
+      ${esWa ? '' : resumenCorreo()}
+      <button onclick="VApp.enviar()" id="btn-enviar" ${listo ? '' : 'disabled'} class="w-full text-white text-sm font-semibold rounded-xl px-4 py-3.5 mt-3 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm" style="background:${(esWa && listo) ? 'linear-gradient(135deg,#16a34a 0%,#15803d 100%)' : 'linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)'}">${texto}</button>
+      ${esWa ? '' : '<div class="text-center"><button onclick="VApp.preview()" class="text-xs text-sdi-azul underline underline-offset-2 mt-2.5 hover:text-sdi-azulD">Ver primero cómo le va a llegar →</button></div>'}`;
+  }
+  // Atajo del paso 1 para el cliente que compró por su cuenta: no hay PDF que
+  // cargar ni datos que revisar, así que salta directo al mensaje.
+  function sinPoliza() { state.canal = 'directa'; irA(3); }
+  function render() {
+    const p = state.paso;
     el('console').innerHTML = `
       ${avisoPermiso()}
       ${agentePanel()}
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center justify-between gap-2 mb-4">
         <h2 class="text-lg font-bold">Envío de pólizas</h2>
-        <div class="flex items-center gap-2">
-          ${hayAlgoQueLimpiar() ? '<button onclick="VApp.pedirLimpiar()" class="text-sm font-medium border rounded-lg px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-50 whitespace-nowrap">🧹 Limpiar</button>' : ''}
-          <button onclick="VApp.addViajero()" class="text-white text-sm font-medium px-3 py-1.5 rounded-lg shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm" style="background:linear-gradient(135deg,#16a34a 0%,#15803d 100%)"><span style="font-weight:700;font-size:15px">+</span> Agregar viajero</button>
-        </div>
+        ${hayAlgoQueLimpiar() ? '<button onclick="VApp.pedirLimpiar()" class="text-sm font-medium border rounded-lg px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-50 whitespace-nowrap flex-none">🧹 Limpiar</button>' : ''}
       </div>
-      ${stepper()}
-      ${state.viajeros.map(viajeroCard).join('') || '<p class="text-slate-500 text-sm mb-3">Agregá un viajero para empezar.</p>'}
-      <div class="border rounded-xl p-4 bg-white mb-3">
-        <label class="block mb-2"><span class="text-xs text-slate-400">Destinatarios (separados por coma)</span>
-          <input id="dest" value="${state.destinatarios.join(', ')}" class="w-full text-sm border rounded px-2 py-1"/></label>
-        <label class="block"><span class="text-xs text-slate-400">Saludo</span>
-          <input id="saludo" value="${state.saludo.replace(/"/g,'&quot;')}" class="w-full text-sm border rounded px-2 py-1"/></label>
-      </div>
-      <div class="flex gap-2 mb-3">
-        ${['correo','emitida','directa'].map(c => {
-          const isWA = c !== 'correo';
-          const active = state.canal === c;
-          const base = isWA ? 'border-green-500 text-green-700' : 'border-slate-300 text-slate-700';
-          const act = active ? (isWA ? 'border-green-600 border-2 bg-green-50' : 'border-sdi-azul border-2 text-sdi-azul') : '';
-          const label = c === 'correo' ? 'Correo' : c === 'emitida' ? 'WhatsApp emitida' : 'WhatsApp directa';
-          return `<button onclick="VApp.setCanal('${c}')" class="flex-1 border rounded-lg py-2 text-sm ${base} ${act}">${label}</button>`;
-        }).join('')}
-      </div>
-      <div id="canalbox"></div>
-      ${bloqueAccion}
+      ${rail()}
+      ${p === 1 ? pantalla1() : p === 2 ? pantalla2() : pantalla3()}
       <p id="status" class="text-sm mt-3"></p>`;
-    wire(); renderCanal();
+    wire();
+    if (p === 3) renderCanal();
   }
 
   function readAgentForm() {
@@ -420,6 +551,13 @@ window.VApp = (function () {
       // Corregir la póliza o el nombre en la tarjeta también refresca lo que sale
       // en el mensaje de WhatsApp. Se tocan solo los inputs, sin render(), para no
       // perder el foco mientras el agente escribe.
+      // El encabezado de la tarjeta lleva el nombre: si no lo seguimos mientras
+      // se escribe, con dos asegurados quedan dos tarjetas "Asegurado 1/2" hasta
+      // el siguiente redibujado y no se sabe cuál es cuál.
+      if (v && e.target.dataset.key === 'cliente') {
+        const t = el('tit-v' + v.id);
+        if (t) t.textContent = '👤 ' + ((v.cliente || '').trim() || ('Asegurado ' + (state.viajeros.indexOf(v) + 1)));
+      }
       if (!asegManual && (e.target.dataset.key === 'poliza' || e.target.dataset.key === 'cliente')) {
         state.asegurados = aseguradosAuto();
         state.poliza = polizasAuto();
@@ -430,7 +568,10 @@ window.VApp = (function () {
         });
       }
     }));
-    el('dest') && el('dest').addEventListener('input', e => state.destinatarios = e.target.value.split(',').map(s => s.trim()).filter(Boolean));
+    el('dest') && el('dest').addEventListener('input', e => {
+      state.destinatarios = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+      const s = el('paso-sub'); if (s) s.textContent = subPaso2();
+    });
     el('saludo') && el('saludo').addEventListener('input', e => state.saludo = e.target.value);
     el('console').querySelectorAll('.dropzone').forEach(dz => {
       const fi = dz.querySelector('input[type=file]');
@@ -443,13 +584,18 @@ window.VApp = (function () {
   }
 
   function setCanal(c) {
-    state.canal = c; render();
+    state.canal = c;
+    state.paso = 3; // "Seguir por WhatsApp" del panel de éxito entra por acá
+    render();
     // Al entrar a WhatsApp el cursor cae solo en el teléfono: es lo único que
     // falta y el motivo por el que el agente entró acá.
     if (c !== 'correo') { const t = el('watel'); if (t) t.focus(); }
   }
   function renderCanal() {
-    if (state.canal === 'correo') { el('canalbox').innerHTML = `<p class="text-xs text-slate-500">Se enviará el correo con los adjuntos de cada viajero + Condiciones y Manual.</p>`; return; }
+    if (!el('canalbox')) return; // el panel de éxito reemplaza al canalbox
+    // En correo no hay nada que configurar: la tarjeta del canal ya explica qué
+    // se manda, y el resumen de abajo dice a quién. Repetirlo acá era ruido.
+    if (state.canal === 'correo') { el('canalbox').innerHTML = ''; return; }
     const tipo = state.canal, txt = VWa.getTemplate(tipo);
     const n = state.asegurados.length;
     const filas = state.asegurados.map((a, i) => `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
@@ -517,19 +663,32 @@ window.VApp = (function () {
     inp.classList.toggle('border-amber-300', !ok);
     pintarBoton();
   }
+  // Misma etiqueta que arma pantalla3(): si las dos se separan, el botón cambia
+  // de texto solo por escribir el teléfono.
+  function textoBoton() {
+    const esWa = state.canal !== 'correo';
+    if (esWa) return telOk() ? 'Abrir WhatsApp' : 'Escribí el teléfono del cliente';
+    return 'Enviar el correo' + (state.destinatarios[0] ? ' a ' + state.destinatarios[0] : '');
+  }
   function pintarBoton() {
     const b = el('btn-enviar'); if (!b) return;
     const esWa = state.canal !== 'correo';
     const ok = !esWa || telOk();
     b.disabled = !ok;
-    b.textContent = esWa ? (ok ? 'Abrir WhatsApp' : 'Escribí el teléfono del cliente') : 'Enviar';
+    b.textContent = textoBoton();
     b.style.background = (esWa && ok) ? 'linear-gradient(135deg,#16a34a 0%,#15803d 100%)' : 'linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)';
   }
   function waSave() { VWa.saveTemplate(state.canal, el('watxt').value); el('status').textContent = 'Plantilla guardada.'; }
   function waReset() { el('watxt').value = VWa.resetTemplate(state.canal); }
 
   function preview() {
-    if (state.canal === 'correo') { const w = window.open('', '_blank'); w.document.write(VEmail.buildHtml(state)); }
+    if (state.canal === 'correo') {
+      const w = window.open('', '_blank');
+      // Si el navegador bloqueó la ventana emergente, w viene null y esto
+      // reventaba con un error crudo en la consola, sin decirle nada al agente.
+      if (!w) { const st = el('status'); if (st) st.textContent = 'El navegador bloqueó la ventana de la vista previa. Permitila para este sitio e intentá de nuevo.'; return; }
+      w.document.write(VEmail.buildHtml(state));
+    }
     else {
       window.open(VWa.buildLink(state.tel, el('watxt').value, state.saludo, VAgent.get().nombre, state.poliza, state.asegurados), '_blank');
     }
@@ -595,6 +754,6 @@ window.VApp = (function () {
 
   function boot() { try { VAuth.init(); } catch (e) {} el('btn-login').addEventListener('click', login); }
   return { boot, login, addViajero, removeViajero, quitarArchivo, setCanal, waSave, waReset, preview, enviar,
-    nuevoEnvio, pedirLimpiar, pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink };
+    irA, sinPoliza, nuevoEnvio, pedirLimpiar, pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink };
 })();
 document.addEventListener('DOMContentLoaded', () => VApp.boot());

@@ -81,7 +81,18 @@
         <div class="t-display font-bold text-[15px] leading-tight">Consola de envíos</div>
         <div class="text-[11px] leading-tight mt-px" style="color:rgba(255,255,255,.75)">Seguro Viajero con Asistencia</div>
       </div>
-      <span class="ml-auto text-xs text-blue-200 truncate max-w-[40%] text-right" id="who">uso interno</span>
+      <!-- El panel "Mi información de agente" se llena una vez y no se vuelve a
+           tocar: por eso vive acá arriba y no encima del trabajo del día. En
+           celular queda solo el engranaje, para no estirar el encabezado. -->
+      <div class="ml-auto flex items-center gap-2 min-w-0 max-w-[62%] justify-end">
+        <button id="btn-agente" onclick="VApp.agentToggle()" title="Mi información de agente"
+          class="hidden flex-none rounded-lg px-2 py-1 text-[11px] font-medium leading-none transition-colors hover:bg-white/25"
+          style="background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22)">⚙️<span class="hidden sm:inline ml-1">Mi información</span></button>
+        <!-- En celular el correo se comprimía a ~44 px ("jhe…"), que no dice nada:
+             ahí queda solo el engranaje. El encabezado se queda en 61 px, medido
+             con el correo de producción y no con el "uso interno" del arranque. -->
+        <span class="hidden sm:inline text-xs text-blue-200 truncate text-right" id="who">uso interno</span>
+      </div>
     </div>
     <!-- Filete de marca: la proporción 60/25/10/5 del manual hecha línea. Es lo único
          que mete el dorado, la firma de SDI. -->
@@ -112,9 +123,10 @@
   <footer class="max-w-5xl mx-auto px-4 pb-10 pt-4">
     <details class="text-[11px] text-slate-400 border-t pt-3">
       <summary class="cursor-pointer select-none hover:text-slate-600">
-        Última actualización: <b class="font-semibold">8 ago 2026</b> — la consola ya lleva la marca Seguros Digitales SDI
+        Última actualización: <b class="font-semibold">21 ago 2026</b> — la pantalla ahora te lleva de la mano, paso por paso
       </summary>
       <ul class="mt-2 space-y-1.5 leading-relaxed">
+        <li><b class="font-semibold text-slate-500">21 ago 2026</b> — La pantalla se partió en <b>tres pasos: Cargar, Revisar y Enviar</b>, y se ve uno solo a la vez. Antes todo estaba en la misma pantalla larga y quedaban cinco botones casi seguidos: tres para <i>elegir</i> por dónde mandarlo y dos más para mandarlo, sin forma de distinguirlos. Ahora el canal se elige con tres tarjetas que explican qué manda cada una, y abajo queda <b>un solo botón</b> que dice a quién le llega ("Enviar el correo a maría@…"); la vista previa bajó a un enlace chiquito debajo. El panel <b>⚙️ Mi información de agente</b> se fue arriba al encabezado, así la pantalla arranca directo en el trabajo del día. Se agregó un atajo para el cliente que compró la póliza por su cuenta, que salta directo al mensaje de WhatsApp. Nada cambió en lo que recibe el cliente: el correo, los adjuntos y los mensajes de WhatsApp son los mismos.</li>
         <li><b class="font-semibold text-slate-500">8 ago 2026</b> — La consola pasó a llevar la marca <b>Seguros Digitales SDI</b>: el logotipo en el encabezado y en la pantalla de entrada, la línea de colores de la marca, y la letra propia de la empresa. Los números de póliza y los montos ahora salen en una letra donde todos los dígitos miden igual, así quedan alineados en columna y es más fácil revisarlos contra el PDF. Solo cambia cómo se ve: los pasos, los botones y el envío funcionan igual, y la página que recibe el cliente no se tocó.</li>
         <li><b class="font-semibold text-slate-500">6 ago 2026 · noche</b> — Terminado el correo y el WhatsApp, la pantalla se quedaba con los datos del cliente y la única salida era recargar con F5. Ahora el botón <b>"Enviar a otro cliente"</b> también aparece en la franja verde cuando estás en WhatsApp, y hay un <b>"🧹 Limpiar"</b> siempre a mano arriba, que sirve incluso si no enviaste nada (cargaste el PDF equivocado, el cliente se arrepintió). Antes de borrar te pregunta y te dice exactamente qué se lleva.</li>
         <li><b class="font-semibold text-slate-500">6 ago 2026 · tarde</b> — En el mensaje de WhatsApp, cada póliza ahora lleva el <b>nombre del asegurado debajo</b>, para saber cuál le corresponde a cada quien. Y el teléfono del cliente pasó a ser un bloque destacado: el cursor cae solo ahí al entrar, avisa mientras falta y confirma con qué número se va a abrir el chat. Además, el botón ya no abre WhatsApp sin destinatario, el número que escribís ya no se borra al redibujarse la pantalla, y si escribís los 8 dígitos se le agrega el 506 solo.</li>
