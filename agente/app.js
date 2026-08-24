@@ -7,7 +7,7 @@ window.VApp = (function () {
   // 21 ago la consola muestra UNA sola por vez (opción A del rediseño): antes
   // todo vivía en el mismo scroll y los tres botones de canal se confundían
   // con los dos de envío.
-  const state = { paso: 1, viajeros: [], destinatarios: [], saludo: '', poliza: '', asegurados: [], tel: '', canal: 'correo', sent: false, envio: null, cargando: null, descartes: [] };
+  const state = { paso: 1, viajeros: [], destinatarios: [], saludo: '', poliza: '', asegurados: [], tel: '', canal: 'correo', sent: false, envio: null, cargando: null, descartes: [], aviso: '' };
   let nextId = 1;
   let agentOpen = false;
   let asegManual = false; // el agente editó a mano las pólizas/nombres del mensaje
@@ -289,7 +289,10 @@ window.VApp = (function () {
   function pintarCarga() {
     const c = el('carga'); if (!c) return;
     const p = state.cargando;
-    if (!p) { c.innerHTML = ''; return; }
+    // Sin carga en curso, el mismo hueco muestra el aviso de por qué no pasó nada.
+    // Va JUSTO DEBAJO de la zona de arrastre a propósito: en #status, al final de
+    // la pantalla, el agente no lo veía.
+    if (!p) { c.innerHTML = state.aviso ? cajaAviso(state.aviso) : ''; return; }
     const conTotal = p.total > 0;
     const pct = conTotal ? Math.round(100 * p.hechos / p.total) : 100;
     const barra = conTotal
@@ -305,6 +308,14 @@ window.VApp = (function () {
     '</div>';
   }
   function cargando(p) { state.cargando = p; pintarCarga(); }
+  function cajaAviso(html) {
+    return `<div class="v-pop border-2 border-amber-300 bg-amber-50 rounded-xl px-4 py-3.5 mb-3">
+      <div class="flex gap-2.5">
+        <span class="text-lg leading-none flex-none">⚠️</span>
+        <div class="text-xs text-amber-900 leading-relaxed">${html}</div>
+      </div></div>`;
+  }
+  function avisoZona(html) { state.aviso = html; cargando(null); }
   function avisar(txt) { const st = el('status'); if (st) st.textContent = txt; }
 
   // ----- Arrastre: ZIP, carpeta o archivos sueltos -----
@@ -316,11 +327,24 @@ window.VApp = (function () {
     if (VZip.hayCarpetas(entradas)) {
       cargando({ etapa: 'Abriendo la carpeta…', hechos: 0, total: 0 });
       VZip.desdeEntradas(entradas)
-        .then(fs => procesarEntrada(fs.length ? fs : sueltos, destinoId))
-        .catch(() => procesarEntrada(sueltos, destinoId));
+        .then(fs => (fs.length || sueltos.length) ? procesarEntrada(fs.length ? fs : sueltos, destinoId) : nadaLlegó())
+        .catch(() => sueltos.length ? procesarEntrada(sueltos, destinoId) : nadaLlegó());
       return;
     }
+    if (!sueltos.length) return nadaLlegó();
     procesarEntrada(sueltos, destinoId);
+  }
+
+  // 🔴 Un arrastre puede llegar SIN un solo archivo, y es un caso común, no raro:
+  // pasa al arrastrar desde adentro de un ZIP abierto en el Explorador de Windows
+  // (Windows no extrae el archivo ni se lo entrega al navegador) y al arrastrar algo
+  // que no es un archivo. Antes no ocurría NADA y no se decía NADA: desde el lado del
+  // agente, la app simplemente "no lo deja". Un fallo silencioso es peor que un error.
+  function nadaLlegó() {
+    avisoZona('<b>No llegó ningún archivo en ese arrastre.</b><br>' +
+      'Si los sacaste de un <b>ZIP abierto dentro del Explorador de Windows</b>, Windows no se los entrega al navegador. ' +
+      'Tenés tres salidas: arrastrar el <b>ZIP entero</b> (la consola lo abre sola), <b>extraerlo</b> primero a una carpeta ' +
+      'y arrastrar los PDF desde ahí, o usar el botón <b>“Elegir PDF o ZIP”</b>.');
   }
 
   function elegirArchivos() { const i = el('fi-lote'); if (i) i.click(); }
@@ -348,6 +372,7 @@ window.VApp = (function () {
   async function abrirLote(brutos, destinoId) {
     state.sent = false;
     state.descartes = [];
+    state.aviso = '';
     cargando({ etapa: 'Revisando lo que cargaste…', hechos: 0, total: 0 });
 
     let planos;
@@ -363,8 +388,11 @@ window.VApp = (function () {
       utiles.push({ f, kind, poliza: VParse.polizaDeNombre(f.name) });
     }
     if (!utiles.length) {
-      cargando(null); syncEnvio(); render();
-      avisar('No encontré pólizas ni tarjetas en lo que cargaste. Revisá que sean los archivos que manda el INS.');
+      syncEnvio();
+      avisoZona('<b>No encontré ninguna póliza ni tarjeta en lo que cargaste.</b><br>' +
+        'Revisá que sean los archivos que manda el INS: la <b>oferta-constancia</b> y la <b>tarjeta de asistencia</b>.' +
+        (state.descartes.length ? ' Lo que sí reconocí pero no se adjunta está listado abajo.' : ''));
+      render();
       return;
     }
 
@@ -398,10 +426,16 @@ window.VApp = (function () {
     if (sueltos.length) {
       cargando({ etapa: 'Ubicando los documentos sueltos', hechos, total });
       const destino = destinoId ? state.viajeros.find(v => v.id === destinoId) : null;
-      const conDatos = state.viajeros.filter(v => v.poliza || v.files.length);
-      const unica = tocadas.size === 1 ? Array.from(tocadas)[0] : (conDatos.length === 1 ? conDatos[0] : null);
+      // Se recalcula en CADA vuelta: si el primer suelto acaba de crear la tarjeta,
+      // el segundo (la tarjeta de asistencia sin número en el nombre) tiene que
+      // caer en ESA, no abrir un asegurado nuevo.
+      const unica = () => {
+        if (tocadas.size === 1) return Array.from(tocadas)[0];
+        const conDatos = state.viajeros.filter(v => v.poliza || v.files.length);
+        return conDatos.length === 1 ? conDatos[0] : null;
+      };
       for (const it of sueltos) {
-        let v = destino || unica;
+        let v = destino || unica();
         if (!v && esPdfArchivo(it.f)) {
           const leido = await leerPdf(it.f);
           it.kind = leido.kind;
@@ -409,6 +443,7 @@ window.VApp = (function () {
           if (datos.poliza) { v = tarjetaPara(datos.poliza.toUpperCase()); asignarDatos(v, datos); }
         }
         if (!v) v = tarjetaPara('');
+        tocadas.add(v);
         await volcar(v, [it]);
       }
       hechos++;
@@ -532,7 +567,7 @@ window.VApp = (function () {
     state.viajeros = []; state.destinatarios = []; state.saludo = ''; state.poliza = '';
     state.asegurados = []; state.tel = ''; asegManual = false;
     state.canal = 'correo'; state.sent = false; state.envio = null;
-    state.cargando = null; state.descartes = [];
+    state.cargando = null; state.descartes = []; state.aviso = '';
     state.paso = 1; // el siguiente cliente arranca por donde se arranca siempre
     // Ya no se deja una tarjeta vacía esperando: la zona de carga del paso 1 es la
     // que arma las tarjetas, una por póliza, apenas caen los ZIP.
@@ -585,7 +620,7 @@ window.VApp = (function () {
   function ghostAgregar() {
     const t = state.viajeros.length
       ? '+ Agregar otro asegurado al mismo correo'
-      : '+ Escribir los datos a mano, sin PDF';
+      : '+ Agregar un asegurado en blanco y escribir los datos a mano';
     return `<button onclick="VApp.addViajero()" class="w-full border-2 border-dashed border-slate-300 rounded-xl py-3 text-sm font-semibold text-sdi-azul hover:bg-blue-50 transition-colors">${t}</button>`;
   }
 
@@ -597,14 +632,14 @@ window.VApp = (function () {
   function zonaLote() {
     return `<div id="zona-lote" class="border-2 border-dashed border-sdi-azul rounded-2xl px-5 py-7 text-center bg-blue-50 cursor-pointer transition-colors mb-4">
       <div class="text-3xl leading-none mb-2">🗂️</div>
-      <div class="text-sm font-bold text-slate-800">Arrastrá acá los ZIP tal como los manda el INS</div>
-      <p class="text-xs text-slate-600 mt-1.5 leading-relaxed max-w-md mx-auto">Uno por asegurado o los nueve juntos: se abren solos y se arma <b>una tarjeta por póliza</b>, con la oferta-constancia y la tarjeta de asistencia listas para adjuntar.</p>
+      <div class="text-sm font-bold text-slate-800">Arrastrá acá los documentos del INS</div>
+      <p class="text-xs text-slate-600 mt-1.5 leading-relaxed max-w-md mx-auto">Los <b>PDF sueltos</b> (oferta-constancia y tarjeta de asistencia) o los <b>ZIP</b> tal como los manda el INS — uno por asegurado o los nueve juntos. Se arma <b>una tarjeta por póliza</b>.</p>
       <div class="flex flex-wrap gap-2 justify-center mt-4">
-        <button type="button" onclick="VApp.elegirArchivos()" class="text-white text-xs font-semibold rounded-lg px-3.5 py-2 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Elegir archivos o ZIP</button>
+        <button type="button" onclick="VApp.elegirArchivos()" class="text-white text-xs font-semibold rounded-lg px-3.5 py-2 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Elegir PDF o ZIP</button>
         <button type="button" onclick="VApp.elegirCarpeta()" class="text-xs font-semibold border rounded-lg px-3.5 py-2 bg-white hover:bg-slate-50">Elegir una carpeta</button>
       </div>
-      <p class="text-[11px] text-slate-400 mt-2.5">También sirve para PDF sueltos. Las Condiciones Generales que vienen dentro del ZIP no se adjuntan otra vez: el correo ya las lleva.</p>
-      <input id="fi-lote" type="file" class="hidden" multiple accept=".zip,application/zip,application/x-zip-compressed,application/pdf,.pdf,image/*">
+      <p class="text-[11px] text-slate-400 mt-2.5">Las Condiciones Generales que vienen dentro del ZIP no se adjuntan otra vez: el correo ya las lleva.</p>
+      <input id="fi-lote" type="file" class="hidden" multiple accept=".pdf,application/pdf,.zip,application/zip,application/x-zip-compressed,image/*">
       <input id="fi-carpeta" type="file" class="hidden" multiple webkitdirectory directory>
     </div>`;
   }
@@ -628,7 +663,7 @@ window.VApp = (function () {
       ? `${a} asegurado${a === 1 ? '' : 's'} y ${n} archivo${n === 1 ? '' : 's'} listos. En el siguiente paso revisás los datos que salieron de las pólizas.`
       : 'Todavía no cargaste ningún archivo. Podés seguir igual y escribir los datos a mano.';
     return `<h3 class="text-base font-bold text-slate-800 mb-0.5">Cargá los documentos</h3>
-      <p class="text-xs text-slate-500 mb-4">De cada póliza se leen solos el nombre, el número, el destino, la vigencia y el correo del cliente.</p>
+      <p class="text-xs text-slate-500 mb-4">Sirven los PDF sueltos o los ZIP del INS. De cada póliza se leen solos el nombre, el número, el destino, la vigencia y el correo del cliente.</p>
       ${zonaLote()}
       <div id="carga"></div>
       ${bloqueDescartes()}
