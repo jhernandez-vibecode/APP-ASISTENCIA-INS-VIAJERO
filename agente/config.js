@@ -12,6 +12,14 @@ window.VCfg = {
   ],
   APP_LINK: 'https://appasistenciainsviajero.netlify.app/',
   COTIZA_LINK: 'https://cotiza.ins-cr.com/frmDatosIncluir.aspx?P=99&A=1101130',
+  // Documentos que van adjuntos en TODO correo, una sola vez (no por viajero).
+  // 🔴 assets/condiciones.pdf es el "DERSA+CG Seguro INS Viajero con Asistencia
+  // Autoexpedible V5" que el propio INS mete dentro de cada ZIP de póliza.
+  // Sincronizado el 24 ago 2026 con la versión que el INS entrega desde el 8 jul
+  // 2026 (24 páginas, 344 KB); la anterior era la de antes de esa fecha (23 páginas)
+  // y se siguió mandando seis semanas de más. Mismo registro SUGESE
+  // P19-57-A01-972 V5: cambió la repaginación y el pie de firma, no las coberturas.
+  // Al detectar un DERSA nuevo dentro de un ZIP, comparar y volver a sincronizar.
   STANDARD_DOCS: [
     { name: 'Condiciones Generales - Seguro INS Viajero.pdf', path: 'assets/condiciones.pdf' },
     { name: 'Manual de Indemnizacion - Viajero paso a paso.pdf', path: 'assets/manual.pdf' }

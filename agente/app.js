@@ -7,7 +7,7 @@ window.VApp = (function () {
   // 21 ago la consola muestra UNA sola por vez (opción A del rediseño): antes
   // todo vivía en el mismo scroll y los tres botones de canal se confundían
   // con los dos de envío.
-  const state = { paso: 1, viajeros: [], destinatarios: [], saludo: '', poliza: '', asegurados: [], tel: '', canal: 'correo', sent: false, envio: null };
+  const state = { paso: 1, viajeros: [], destinatarios: [], saludo: '', poliza: '', asegurados: [], tel: '', canal: 'correo', sent: false, envio: null, cargando: null, descartes: [] };
   let nextId = 1;
   let agentOpen = false;
   let asegManual = false; // el agente editó a mano las pólizas/nombres del mensaje
@@ -107,9 +107,17 @@ window.VApp = (function () {
     return /\b403\b|insufficient|SCOPE_INSUFFICIENT|PERMISSION_DENIED|insufficientPermissions/i.test(String(m));
   }
 
+  // Crea la tarjeta y la devuelve SIN redibujar: durante la carga de un lote se
+  // crean varias seguidas y un render() por cada una destruiria la zona de
+  // arrastre en plena operacion.
+  function crearViajero() {
+    const v = { id: nextId++, cliente: '', nombrePila: '', poliza: '', cedula: '', destino: '', gastosMedicos: '', vigenciaDesde: '', vigenciaHasta: '', correo: '', files: [] };
+    state.viajeros.push(v);
+    return v;
+  }
   function pushViajero() {
     state.sent = false;
-    state.viajeros.push({ id: nextId++, cliente: '', nombrePila: '', poliza: '', cedula: '', destino: '', gastosMedicos: '', vigenciaDesde: '', vigenciaHasta: '', correo: '', files: [] });
+    crearViajero();
     syncEnvio(); render();
   }
 
@@ -192,6 +200,9 @@ window.VApp = (function () {
     return state.sent || String(state.tel).trim() !== '' || state.destinatarios.length > 0 ||
       state.viajeros.some(v => v.files.length || v.poliza || v.cliente || v.correo);
   }
+  // Cuántos asegurados hay de verdad: una tarjeta recién agregada a mano todavía
+  // no cuenta como asegurado hasta que tenga póliza, nombre o archivos.
+  function aseguradosReales() { return state.viajeros.filter(v => v.poliza || v.cliente || v.files.length).length; }
   function resumenDeLoQueSeBorra() {
     const partes = [];
     const conDatos = state.viajeros.filter(v => v.poliza || v.cliente || v.files.length).length;
@@ -246,25 +257,190 @@ window.VApp = (function () {
     state.poliza = polizasAuto(); // comodín viejo {Poliza}: solo los números
   }
 
-  // 🔴 La FileList que entrega el navegador es VIVA, no una copia: el handler del
-  // input la vacía (`fi.value = ''`) apenas este for cede el control en el primer
-  // `await`, y el DataTransfer del arrastre se neutraliza al terminar el evento.
-  // Sin la copia sincrónica de abajo, el ciclo moría después del PRIMER archivo:
-  // se guardaba solo la póliza y la tarjeta/comprobante se perdían en silencio.
-  async function onFiles(viajeroId, fileList) {
-    const v = state.viajeros.find(x => x.id === viajeroId); if (!v) return;
-    const entrantes = Array.from(fileList || []);
-    if (!entrantes.length) return;
-    state.sent = false;
-    for (const f of entrantes) {
-      v.files.push(f);
-      const esPdf = /pdf/i.test(f.type) || /\.pdf$/i.test(f.name);
-      const text = esPdf ? await VParse.readPdfText(f).catch(() => '') : '';
-      const kind = VParse.classifyFile(f.name, text);
-      f.vKind = kind; // se recuerda la clasificación (acá sí tenemos el texto del PDF)
-      if (kind === 'poliza') { Object.assign(v, VParse.extractAll(text)); }
+  // ═══════ Entrada de documentos ═══════
+  // El INS manda UN ZIP por póliza: la oferta-constancia, la tarjeta de asistencia
+  // y una copia de las Condiciones Generales. Nueve viajeros son nueve ZIP. Acá se
+  // abren solos, se descarta lo repetido y cada póliza arma SU tarjeta: antes todo
+  // caía en el mismo asegurado y solo sobrevivían los datos del último PDF leído.
+  //
+  // 🔴 Las colecciones del navegador (FileList, DataTransferItemList) son VIVAS: el
+  // handler las vacía apenas cede el control en el primer `await`. Toda la copia se
+  // hace SINCRÓNICAMENTE antes de esperar nada. Lección del 3 ago 2026.
+
+  function esPdfArchivo(f) { return /pdf/i.test(f.type || '') || /\.pdf$/i.test(f.name || ''); }
+  function yaCargado(v, f) { return v.files.some(x => x.name === f.name && x.size === f.size); }
+  // Rellena SOLO lo que el PDF trajo: nunca borra un dato que el agente ya corrigió.
+  function asignarDatos(v, d) { Object.keys(d).forEach(k => { if (d[k]) v[k] = d[k]; }); }
+
+  // A qué tarjeta va una póliza: la que ya la tiene, si no una vacía sin estrenar,
+  // si no una nueva. Así volver a soltar el mismo ZIP no duplica el asegurado.
+  function tarjetaPara(poliza) {
+    if (poliza) {
+      const ya = state.viajeros.find(v => (v.poliza || '').toUpperCase() === poliza);
+      if (ya) return ya;
     }
-    syncEnvio(); render();
+    const vacia = state.viajeros.find(v => !v.files.length && !v.poliza && !v.cliente && !v.correo);
+    return vacia || crearViajero();
+  }
+
+  // ----- Barra de progreso -----
+  // Se pinta sobre #carga sin render(): un redibujado en plena carga se lleva por
+  // delante la zona de arrastre y los archivos que el navegador todavía está leyendo.
+  function pintarCarga() {
+    const c = el('carga'); if (!c) return;
+    const p = state.cargando;
+    if (!p) { c.innerHTML = ''; return; }
+    const conTotal = p.total > 0;
+    const pct = conTotal ? Math.round(100 * p.hechos / p.total) : 100;
+    const barra = conTotal
+      ? '<div class="h-full bg-sdi-azul rounded-full transition-all duration-300" style="width:' + pct + '%"></div>'
+      : '<div class="h-full bg-sdi-azul rounded-full v-indeterminada"></div>';
+    c.innerHTML = '<div class="v-pop border-2 border-sdi-azul rounded-xl px-4 py-3.5 mb-3 bg-blue-50">' +
+      '<div class="flex items-center gap-2">' +
+        '<span class="v-spin w-4 h-4 flex-none rounded-full border-2 border-sdi-azul border-t-transparent"></span>' +
+        '<span class="text-sm font-semibold text-sdi-azul truncate">' + esc(p.etapa || 'Procesando…') + '</span>' +
+      '</div>' +
+      '<div class="h-1.5 bg-white rounded-full mt-2.5 overflow-hidden">' + barra + '</div>' +
+      (conTotal ? '<div class="text-[11px] text-slate-500 mt-1">' + p.hechos + ' de ' + p.total + '</div>' : '') +
+    '</div>';
+  }
+  function cargando(p) { state.cargando = p; pintarCarga(); }
+  function avisar(txt) { const st = el('status'); if (st) st.textContent = txt; }
+
+  // ----- Arrastre: ZIP, carpeta o archivos sueltos -----
+  // webkitGetAsEntry() SOLO funciona dentro del handler, antes del primer await:
+  // por eso las dos colecciones se copian de una vez y recién después se espera.
+  function soltar(dataTransfer, destinoId) {
+    const entradas = VZip.entradasDe(dataTransfer);
+    const sueltos = Array.from(dataTransfer && dataTransfer.files || []);
+    if (VZip.hayCarpetas(entradas)) {
+      cargando({ etapa: 'Abriendo la carpeta…', hechos: 0, total: 0 });
+      VZip.desdeEntradas(entradas)
+        .then(fs => procesarEntrada(fs.length ? fs : sueltos, destinoId))
+        .catch(() => procesarEntrada(sueltos, destinoId));
+      return;
+    }
+    procesarEntrada(sueltos, destinoId);
+  }
+
+  function elegirArchivos() { const i = el('fi-lote'); if (i) i.click(); }
+  function elegirCarpeta() { const i = el('fi-carpeta'); if (i) i.click(); }
+
+  // Lee un PDF y devuelve { texto, kind }. El catch va acá adentro para que un PDF
+  // dañado no tumbe la carga de los otros ocho asegurados.
+  async function leerPdf(f) {
+    const texto = await VParse.readPdfText(f).catch(() => '');
+    return { texto, kind: VParse.classifyFile(f.name, texto) };
+  }
+
+  // Soltar un segundo lote con el primero a medio abrir dejaba dos recorridos
+  // pisandose sobre el mismo state (tarjetas duplicadas, contadores mezclados).
+  let procesando = false;
+
+  async function procesarEntrada(archivos, destinoId) {
+    const brutos = Array.from(archivos || []); // 🔴 copia sincrónica, antes de todo await
+    if (!brutos.length) return;
+    if (procesando) { avisar('Esperá a que termine de abrir lo anterior y volvé a soltarlo.'); return; }
+    procesando = true;
+    try { await abrirLote(brutos, destinoId); } finally { procesando = false; }
+  }
+
+  async function abrirLote(brutos, destinoId) {
+    state.sent = false;
+    state.descartes = [];
+    cargando({ etapa: 'Revisando lo que cargaste…', hechos: 0, total: 0 });
+
+    let planos;
+    try { planos = await VZip.expandir(brutos, p => cargando(p)); }
+    catch (e) { cargando(null); render(); avisar('❌ ' + e.message); return; }
+
+    // 1. Clasificar por NOMBRE (gratis) y apartar lo que no se adjunta.
+    const utiles = [];
+    for (const f of planos) {
+      const kind = VParse.classifyFile(f.name, '');
+      if (kind === 'condiciones') { state.descartes.push({ nombre: f.name, motivo: 'las Condiciones Generales ya viajan adjuntas una sola vez' }); continue; }
+      if (kind === 'promo') { state.descartes.push({ nombre: f.name, motivo: 'lámina publicitaria del INS' }); continue; }
+      utiles.push({ f, kind, poliza: VParse.polizaDeNombre(f.name) });
+    }
+    if (!utiles.length) {
+      cargando(null); syncEnvio(); render();
+      avisar('No encontré pólizas ni tarjetas en lo que cargaste. Revisá que sean los archivos que manda el INS.');
+      return;
+    }
+
+    // 2. Agrupar por número de póliza. Lo que trae número SIEMPRE se va con su
+    //    póliza, aunque se haya soltado sobre otra tarjeta: es lo único que evita
+    //    que nueve asegurados terminen amontonados en uno.
+    const grupos = new Map();
+    const sueltos = [];
+    for (const it of utiles) {
+      if (!it.poliza) { sueltos.push(it); continue; }
+      if (!grupos.has(it.poliza)) grupos.set(it.poliza, []);
+      grupos.get(it.poliza).push(it);
+    }
+
+    const total = grupos.size + (sueltos.length ? 1 : 0);
+    let hechos = 0;
+    const tocadas = new Set();
+
+    for (const [poliza, items] of grupos) {
+      cargando({ etapa: 'Leyendo la póliza ' + poliza, hechos, total });
+      const v = tarjetaPara(poliza);
+      tocadas.add(v);
+      await volcar(v, items);
+      hechos++;
+      cargando({ etapa: 'Leyendo pólizas', hechos, total });
+    }
+
+    // 3. Lo que no trae número de póliza (el comprobante de pago, un escaneo): va a
+    //    la tarjeta donde se soltó; si no hubo, a la única del lote; y si hay varias,
+    //    se abre el PDF para ver a cuál pertenece antes de dejarlo en cualquiera.
+    if (sueltos.length) {
+      cargando({ etapa: 'Ubicando los documentos sueltos', hechos, total });
+      const destino = destinoId ? state.viajeros.find(v => v.id === destinoId) : null;
+      const conDatos = state.viajeros.filter(v => v.poliza || v.files.length);
+      const unica = tocadas.size === 1 ? Array.from(tocadas)[0] : (conDatos.length === 1 ? conDatos[0] : null);
+      for (const it of sueltos) {
+        let v = destino || unica;
+        if (!v && esPdfArchivo(it.f)) {
+          const leido = await leerPdf(it.f);
+          it.kind = leido.kind;
+          const datos = VParse.extractAll(leido.texto);
+          if (datos.poliza) { v = tarjetaPara(datos.poliza.toUpperCase()); asignarDatos(v, datos); }
+        }
+        if (!v) v = tarjetaPara('');
+        await volcar(v, [it]);
+      }
+      hechos++;
+    }
+
+    cargando(null);
+    syncEnvio();
+    render();
+    const asegurados = aseguradosReales();
+    const arch = totalArchivos();
+    avisar('✅ ' + asegurados + ' asegurado' + (asegurados === 1 ? '' : 's') + ' · ' +
+           arch + ' archivo' + (arch === 1 ? '' : 's') + ' listos para adjuntar.');
+  }
+
+  // Mete los archivos de un grupo en su tarjeta y saca los datos de la póliza.
+  async function volcar(v, items) {
+    for (const it of items) {
+      if (yaCargado(v, it.f)) { state.descartes.push({ nombre: it.f.name, motivo: 'ya estaba cargado' }); continue; }
+      it.f.vKind = it.kind;
+      v.files.push(it.f);
+    }
+    // La póliza es el único PDF que hay que leer: de la tarjeta no sale ningún dato
+    // y abrirla costaba varios segundos por asegurado.
+    const pol = items.find(i => i.kind === 'poliza' && esPdfArchivo(i.f));
+    if (pol) asignarDatos(v, VParse.extractAll((await leerPdf(pol.f)).texto));
+    // Un PDF que el nombre no alcanzó a clasificar: se abre para ver qué es.
+    for (const it of items) {
+      if (it.kind !== 'otro' || !esPdfArchivo(it.f)) continue;
+      const leido = await leerPdf(it.f);
+      it.f.vKind = leido.kind;
+      if (leido.kind === 'poliza') asignarDatos(v, VParse.extractAll(leido.texto));
+    }
   }
 
   function field(v, key, label, mono) {
@@ -278,12 +454,18 @@ window.VApp = (function () {
   function kindOf(f) { return f.vKind || VParse.classifyFile(f.name, ''); }
   function listaArchivos(v) {
     if (!v.files.length) return `<div class="text-xs text-slate-400 mb-2">Sin archivos cargados todavía.</div>`;
+    // 🔴 Los nombres que manda el INS pasan los 70 caracteres
+    // ("0221VIA040890800_054_540_Seguro_Viajero_con_Asis_Dolares_V4_20260621_204531.pdf").
+    // En chips en línea empujaban la página a 578 px de ancho en un celular de 375:
+    // una fila por archivo, con el nombre recortado, y el ancho vuelve a mandarlo
+    // la pantalla. El nombre completo queda en el title, al pasar el mouse.
     const chips = v.files.map((f, i) => {
       const k = kindOf(f);
       const color = k === 'otro' ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-800';
-      return `<span class="inline-flex items-center gap-1 ${color} rounded px-2 py-0.5 mr-1 mb-1 text-[11px]">
-        <b>${KIND_LABEL[k]}</b> ${esc(f.name)}
-        <button onclick="VApp.quitarArchivo(${v.id},${i})" class="text-slate-400 hover:text-red-600 font-bold" title="Quitar este archivo">&times;</button></span>`;
+      return `<span class="flex items-center gap-1.5 max-w-full ${color} rounded px-2 py-1 mb-1 text-[11px]">
+        <b class="flex-none">${KIND_LABEL[k]}</b>
+        <span class="truncate min-w-0 flex-1" title="${esc(f.name)}">${esc(f.name)}</span>
+        <button onclick="VApp.quitarArchivo(${v.id},${i})" class="flex-none text-slate-400 hover:text-red-600 font-bold px-1" title="Quitar este archivo">&times;</button></span>`;
     }).join('');
     return `<div class="mb-2"><div class="text-[11px] text-slate-400 mb-1">${v.files.length} archivo${v.files.length > 1 ? 's' : ''} que se van a adjuntar</div>${chips}</div>`;
   }
@@ -350,8 +532,11 @@ window.VApp = (function () {
     state.viajeros = []; state.destinatarios = []; state.saludo = ''; state.poliza = '';
     state.asegurados = []; state.tel = ''; asegManual = false;
     state.canal = 'correo'; state.sent = false; state.envio = null;
+    state.cargando = null; state.descartes = [];
     state.paso = 1; // el siguiente cliente arranca por donde se arranca siempre
-    pushViajero(); // sin preguntar: el agente acaba de pedir empezar de cero
+    // Ya no se deja una tarjeta vacía esperando: la zona de carga del paso 1 es la
+    // que arma las tarjetas, una por póliza, apenas caen los ZIP.
+    syncEnvio(); render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -395,18 +580,58 @@ window.VApp = (function () {
   function botonAtras(texto) {
     return `<button onclick="VApp.irA(${state.paso - 1})" class="text-sm text-slate-500 hover:text-slate-800 mb-3">← ${texto}</button>`;
   }
+  // Con la lista vacía no hay ningún "otro": el botón es la salida para el cliente
+  // sin PDF, y con la lista llena es el botón de agregar uno más al mismo correo.
   function ghostAgregar() {
-    return `<button onclick="VApp.addViajero()" class="w-full border-2 border-dashed border-slate-300 rounded-xl py-3 text-sm font-semibold text-sdi-azul hover:bg-blue-50 transition-colors">+ Agregar otro asegurado al mismo correo</button>`;
+    const t = state.viajeros.length
+      ? '+ Agregar otro asegurado al mismo correo'
+      : '+ Escribir los datos a mano, sin PDF';
+    return `<button onclick="VApp.addViajero()" class="w-full border-2 border-dashed border-slate-300 rounded-xl py-3 text-sm font-semibold text-sdi-azul hover:bg-blue-50 transition-colors">${t}</button>`;
   }
 
   // ---- Paso 1: cargar ----
+  // La zona grande es la entrada principal: recibe el ZIP tal como lo manda el INS
+  // —uno por póliza—, la carpeta entera, o los PDF sueltos de siempre. Antes acá
+  // no había NADA hasta agregar un asegurado a mano: la consola abría sin una sola
+  // zona donde soltar los archivos.
+  function zonaLote() {
+    return `<div id="zona-lote" class="border-2 border-dashed border-sdi-azul rounded-2xl px-5 py-7 text-center bg-blue-50 cursor-pointer transition-colors mb-4">
+      <div class="text-3xl leading-none mb-2">🗂️</div>
+      <div class="text-sm font-bold text-slate-800">Arrastrá acá los ZIP tal como los manda el INS</div>
+      <p class="text-xs text-slate-600 mt-1.5 leading-relaxed max-w-md mx-auto">Uno por asegurado o los nueve juntos: se abren solos y se arma <b>una tarjeta por póliza</b>, con la oferta-constancia y la tarjeta de asistencia listas para adjuntar.</p>
+      <div class="flex flex-wrap gap-2 justify-center mt-4">
+        <button type="button" onclick="VApp.elegirArchivos()" class="text-white text-xs font-semibold rounded-lg px-3.5 py-2 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Elegir archivos o ZIP</button>
+        <button type="button" onclick="VApp.elegirCarpeta()" class="text-xs font-semibold border rounded-lg px-3.5 py-2 bg-white hover:bg-slate-50">Elegir una carpeta</button>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-2.5">También sirve para PDF sueltos. Las Condiciones Generales que vienen dentro del ZIP no se adjuntan otra vez: el correo ya las lleva.</p>
+      <input id="fi-lote" type="file" class="hidden" multiple accept=".zip,application/zip,application/x-zip-compressed,application/pdf,.pdf,image/*">
+      <input id="fi-carpeta" type="file" class="hidden" multiple webkitdirectory directory>
+    </div>`;
+  }
+
+  // Lo que vino en el ZIP y NO se adjunta se dice, no se descarta en silencio: la
+  // pérdida callada de un archivo ya costó un incidente el 3 ago 2026.
+  function bloqueDescartes() {
+    const d = state.descartes || [];
+    if (!d.length) return '';
+    const filas = d.map(x => `<li><b class="text-slate-600">${esc(x.nombre)}</b> — ${esc(x.motivo)}</li>`).join('');
+    return `<details class="border rounded-xl bg-slate-50 px-4 py-2.5 mb-3">
+      <summary class="text-[11px] text-slate-500 cursor-pointer select-none hover:text-slate-700">${d.length} archivo${d.length === 1 ? '' : 's'} del ZIP no se ${d.length === 1 ? 'adjunta' : 'adjuntan'} · ver cuáles</summary>
+      <ul class="text-[11px] text-slate-500 mt-2 space-y-1 list-disc pl-4 leading-relaxed">${filas}</ul>
+    </details>`;
+  }
+
   function pantalla1() {
     const n = totalArchivos();
+    const a = aseguradosReales();
     const sub = n
-      ? `${n} archivo${n === 1 ? '' : 's'} cargado${n === 1 ? '' : 's'}. En el siguiente paso revisás los datos que salieron del PDF.`
+      ? `${a} asegurado${a === 1 ? '' : 's'} y ${n} archivo${n === 1 ? '' : 's'} listos. En el siguiente paso revisás los datos que salieron de las pólizas.`
       : 'Todavía no cargaste ningún archivo. Podés seguir igual y escribir los datos a mano.';
-    return `<h3 class="text-base font-bold text-slate-800 mb-0.5">Cargá los documentos del asegurado</h3>
-      <p class="text-xs text-slate-500 mb-4">Arrastrá la póliza, la tarjeta de asistencia y el comprobante de pago. De la póliza se leen solos el nombre, el número, el destino y la vigencia.</p>
+    return `<h3 class="text-base font-bold text-slate-800 mb-0.5">Cargá los documentos</h3>
+      <p class="text-xs text-slate-500 mb-4">De cada póliza se leen solos el nombre, el número, el destino, la vigencia y el correo del cliente.</p>
+      ${zonaLote()}
+      <div id="carga"></div>
+      ${bloqueDescartes()}
       ${state.viajeros.map(cardCarga).join('')}
       ${ghostAgregar()}
       ${botonSiguiente('Continuar a revisar los datos →', sub)}
@@ -416,16 +641,19 @@ window.VApp = (function () {
   }
   function cardCarga(v, idx) {
     const titulo = (v.cliente || '').trim() || `Asegurado ${idx + 1}`;
+    const chipPol = v.poliza ? `<span class="font-mono text-[11px] bg-blue-50 text-sdi-azul rounded px-2 py-0.5">${esc(v.poliza)}</span>` : '';
+    const tieneComprobante = v.files.some(f => kindOf(f) === 'comprobante');
     return `<div class="border rounded-xl p-4 mb-3 bg-white">
-      <div class="flex items-center justify-between mb-3">
-        <b class="text-sm">👤 ${esc(titulo)}</b>
-        ${state.viajeros.length > 1 ? `<button onclick="VApp.removeViajero(${v.id})" class="text-red-500 text-xs">Quitar</button>` : ''}
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <b class="text-sm truncate">👤 ${esc(titulo)}</b>
+        <span class="flex items-center gap-2 flex-none">${chipPol}
+        <button onclick="VApp.removeViajero(${v.id})" class="text-red-500 text-xs">Quitar</button></span>
       </div>
-      <div class="dropzone border-2 border-dashed rounded-lg p-5 text-center text-sm text-slate-500 cursor-pointer hover:bg-blue-50 transition-colors" data-vid="${v.id}">
-        Arrastrá acá la póliza, la tarjeta y el comprobante <span class="text-sdi-azul font-medium underline">o hacé clic para cargarlos</span>
-        <input type="file" class="hidden" multiple accept="application/pdf,.pdf,image/*">
-      </div>
-      <div class="mt-3">${listaArchivos(v)}</div></div>`;
+      <div class="mt-3">${listaArchivos(v)}</div>
+      <div class="dropzone border-2 border-dashed rounded-lg p-3 text-center text-xs text-slate-500 cursor-pointer hover:bg-blue-50 transition-colors" data-vid="${v.id}">
+        ${tieneComprobante ? 'Agregar otro documento de este asegurado' : 'Falta el comprobante de pago u otro documento de este asegurado'}: <span class="text-sdi-azul font-medium underline">arrastralo acá o hacé clic</span>
+        <input type="file" class="hidden" multiple accept=".zip,application/zip,application/x-zip-compressed,application/pdf,.pdf,image/*">
+      </div></div>`;
   }
 
   // ---- Paso 2: revisar ----
@@ -526,6 +754,7 @@ window.VApp = (function () {
       ${p === 1 ? pantalla1() : p === 2 ? pantalla2() : pantalla3()}
       <p id="status" class="text-sm mt-3"></p>`;
     wire();
+    pintarCarga(); // sobrevive a un redibujado disparado en plena carga
     if (p === 3) renderCanal();
   }
 
@@ -573,13 +802,37 @@ window.VApp = (function () {
       const s = el('paso-sub'); if (s) s.textContent = subPaso2();
     });
     el('saludo') && el('saludo').addEventListener('input', e => state.saludo = e.target.value);
+    // Zona grande del paso 1: ZIP, carpeta o archivos sueltos.
+    const zl = el('zona-lote');
+    if (zl) {
+      const fl = el('fi-lote'), fc = el('fi-carpeta');
+      // El clic en los dos botones de adentro no debe disparar también el selector
+      // de archivos de la zona, o se abren dos ventanas del sistema encimadas.
+      zl.addEventListener('click', e => { if (e.target.closest('button') || e.target.tagName === 'INPUT') return; fl.click(); });
+      const desdeInput = e => { const copia = Array.from(e.target.files || []); e.target.value = ''; procesarEntrada(copia); };
+      fl.addEventListener('change', desdeInput);
+      fc.addEventListener('change', desdeInput);
+      // El resaltado va por estilo directo: con dos clases de fondo de Tailwind
+      // (bg-blue-50 de base y bg-blue-100 al arrastrar) gana la que la hoja emita
+      // de última, y eso no está bajo nuestro control.
+      const prender = () => { zl.style.background = '#dbeafe'; zl.style.borderStyle = 'solid'; };
+      const apagar = () => { zl.style.background = ''; zl.style.borderStyle = ''; };
+      zl.addEventListener('dragover', e => { e.preventDefault(); prender(); });
+      zl.addEventListener('dragleave', apagar);
+      zl.addEventListener('drop', e => {
+        e.preventDefault(); apagar();
+        soltar(e.dataTransfer); // 🔴 copia sincrónica adentro, antes de cualquier await
+      });
+    }
+    // Zona chica de cada tarjeta: sirve para el comprobante. Lo que traiga número
+    // de póliza igual se va con SU póliza, no con la tarjeta donde se soltó.
     el('console').querySelectorAll('.dropzone').forEach(dz => {
       const fi = dz.querySelector('input[type=file]');
       dz.addEventListener('click', e => { if (e.target !== fi) fi.click(); });
-      fi.addEventListener('change', e => { if (e.target.files.length) onFiles(+dz.dataset.vid, e.target.files); fi.value = ''; });
+      fi.addEventListener('change', e => { const copia = Array.from(e.target.files || []); e.target.value = ''; procesarEntrada(copia, +dz.dataset.vid); });
       dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('bg-blue-50'); });
       dz.addEventListener('dragleave', () => dz.classList.remove('bg-blue-50'));
-      dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('bg-blue-50'); onFiles(+dz.dataset.vid, e.dataTransfer.files); });
+      dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('bg-blue-50'); soltar(e.dataTransfer, +dz.dataset.vid); });
     });
   }
 
@@ -754,6 +1007,7 @@ window.VApp = (function () {
 
   function boot() { try { VAuth.init(); } catch (e) {} el('btn-login').addEventListener('click', login); }
   return { boot, login, addViajero, removeViajero, quitarArchivo, setCanal, waSave, waReset, preview, enviar,
-    irA, sinPoliza, nuevoEnvio, pedirLimpiar, pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink };
+    irA, sinPoliza, nuevoEnvio, pedirLimpiar, pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink,
+    elegirArchivos, elegirCarpeta, procesarEntrada, state };
 })();
 document.addEventListener('DOMContentLoaded', () => VApp.boot());

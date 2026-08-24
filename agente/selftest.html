@@ -1,31 +1,55 @@
 <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Selftest VParse</title></head>
 <body style="font-family:monospace;padding:20px">
-<h3>Selftest VParse</h3><pre id="out"></pre>
+<h3>Selftest VParse</h3>
+<!-- 🔴 Netlify publica este archivo tal cual: los datos de las muestras son
+     INVENTADOS a proposito. Nunca pegar aca el texto de una poliza real: el nombre,
+     la cedula y el correo del cliente quedarian visibles en internet. --><pre id="out"></pre>
 <script src="config.js"></script>
 <script src="parse.js"></script>
 <script>
 const SAMPLE = `INSTITUTO NACIONAL DE SEGUROS Oferta- Constancia de Seguro Seguro INS Viajero con Asistencia Autoexpedible
-N° Póliza: 0201VIA023182200 Lugar: Sucursal Central Fecha: 23/06/2026
-Nombre o Razón Social: CANGIANO ALMEYDA JOSE ANGEL Tipo de Identificación: Número de Identificación: 6184000178709
-Nombre: CANGIANO ALMEYDA JOSE ANGEL N° Identificación: 184000178709 Monto Asegurado: $200 000 Prima: $ 164.79
+N° Póliza: 0201VIA000000001 Lugar: Sucursal Central Fecha: 23/06/2026
+Nombre o Razón Social: PEREZ RAMIREZ CARLOS ANDRES Tipo de Identificación: Número de Identificación: 6111111111111
+Nombre: PEREZ RAMIREZ CARLOS ANDRES N° Identificación: 111111111111 Monto Asegurado: $200 000 Prima: $ 164.79
 GASTOS MÉDICOS Y ADICIONALES INCURRIDOS POR ACCIDENTE Gastos Médicos y Adicionales: $1 000 000
 Destino (s) del Viaje: ESTADOS UNIDOS- ITALIA Motivo (s) del viaje:
 Vigencia: Desde: 24/07/2026 Hasta: 07/08/2026
-Correo Principal: jose.cangiano@gmail.com,jhernandez@segurosdelins.com`;
+Correo Principal: cliente.ejemplo@gmail.com,jhernandez@segurosdelins.com`;
+const SAMPLE_VIRTUAL = `INSTITUTO NACIONAL DE SEGUROS Oferta- Constancia de Seguro Seguro INS Viajero con Asistencia Autoexpedible
+LUGAR Y FECHA N° Póliza: 0221VIA000000002 Lugar: Sucursal Virtual Fecha: 22/06/2026
+DATOS DEL RIESGO Nombre: SOLANO VEGA ANDREA N° Identificación: 111111111 Monto Asegurado: $50 000 Prima: $ 159.70 Plan: Plan Unificado V4
+GASTOS MÉDICOS Y ADICIONALES INCURRIDOS POR ACCIDENTE Gastos Médicos y Adicionales: $250 000
+ASPECTOS RELACIONADOS AL RIESGO Destino (s) del Viaje: EUROPA Motivo (s) del viaje:
+PLAZO DE VIGENCIA Vigencia: Desde: 14/06/2026 Hasta: 13/07/2026
+Creación: 22/06/2026 Sucursal: Juan Carlos Hernández Vargas Correo Principal: Cc: SEGURO INS VIAJERO`;
 const r = VParse.extractAll(SAMPLE);
+const VIRT = VParse.extractAll(SAMPLE_VIRTUAL);
 const checks = [
-  ['poliza', r.poliza, '0201VIA023182200'],
-  ['cliente', r.cliente, 'CANGIANO ALMEYDA JOSE ANGEL'],
-  ['cedula', r.cedula, '6184000178709'],
+  ['poliza', r.poliza, '0201VIA000000001'],
+  ['cliente', r.cliente, 'PEREZ RAMIREZ CARLOS ANDRES'],
+  ['cedula', r.cedula, '6111111111111'],
   ['destino', r.destino, 'ESTADOS UNIDOS- ITALIA'],
   ['gastosMedicos', r.gastosMedicos, 'US$1.000.000'],
   ['vigenciaDesde', r.vigenciaDesde, '24/07/2026'],
   ['vigenciaHasta', r.vigenciaHasta, '07/08/2026'],
-  ['correo', r.correo, 'jose.cangiano@gmail.com'],
-  ['nombrePila', r.nombrePila, 'Jose Angel'],
-  ['classify poliza', VParse.classifyFile('0201VIA023182200_054_540_Seguro_Viajero.pdf',''), 'poliza'],
+  ['correo', r.correo, 'cliente.ejemplo@gmail.com'],
+  ['nombrePila', r.nombrePila, 'Carlos Andres'],
+  ['classify poliza', VParse.classifyFile('0201VIA000000001_054_540_Seguro_Viajero.pdf',''), 'poliza'],
   ['classify tarjeta', VParse.classifyFile('0201VIA0_Tarjeta_Seguro_Viajero.pdf',''), 'tarjeta'],
   ['classify comprobante', VParse.classifyFile('Comprobante De Pago.pdf',''), 'comprobante'],
+  ['classify condiciones', VParse.classifyFile('DERSA+CG Seguro INS Viajero con Asistencia Autoexpedible V5.pdf',''), 'condiciones'],
+  ['classify promo', VParse.classifyFile('HTML-Bienvenida-Centenario-2024-540.jpg',''), 'promo'],
+  ['classify con carpeta', VParse.classifyFile('lote/2026/0201VIA000000001_054_540_x.pdf',''), 'poliza'],
+  ['polizaDeNombre', VParse.polizaDeNombre('0203VIA000000003_Tarjeta_Seguro.pdf'), '0203VIA000000003'],
+  ['polizaDeNombre vacio', VParse.polizaDeNombre('Comprobante De Pago.pdf'), ''],
+  // Plantilla de Sucursal Virtual (serie 0221): otra cabecera y el correo vacio.
+  ['virtual cliente', VIRT.cliente, 'SOLANO VEGA ANDREA'],
+  ['virtual nombrePila', VIRT.nombrePila, 'Andrea'],
+  ['virtual cedula', VIRT.cedula, '111111111'],
+  ['virtual poliza', VIRT.poliza, '0221VIA000000002'],
+  ['virtual destino', VIRT.destino, 'EUROPA'],
+  ['virtual gastosMedicos', VIRT.gastosMedicos, 'US$250.000'],
+  ['virtual correo vacio (no "Cc:")', VIRT.correo, ''],
 ];
 let pass=0; const lines=checks.map(([n,got,exp])=>{const ok=got===exp;if(ok)pass++;return `${ok?'PASS':'FAIL'}  ${n}: ${JSON.stringify(got)}${ok?'':' != '+JSON.stringify(exp)}`;});
 document.getElementById('out').textContent = lines.join('\n')+`\n\n${pass}/${checks.length} OK`;

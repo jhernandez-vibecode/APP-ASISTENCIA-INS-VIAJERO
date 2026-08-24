@@ -4,13 +4,22 @@ window.VParse = (function () {
   function titleCase(s) { return s.toLowerCase().replace(/\b\p{L}/gu, c => c.toUpperCase()); }
 
   function extractPoliza(t) { const m = t.match(/\b(\d{4}VIA\d{9})\b/); return m ? m[1] : ''; }
+  // Hay DOS plantillas de oferta-constancia y solo cambian en la cabecera:
+  //  · Sucursal Central (serie 0201): "Nombre o Razón Social: X Tipo de Identificación:"
+  //  · Sucursal Virtual (serie 0221): "DATOS DEL RIESGO Nombre: X N° Identificación:"
+  // La segunda quedaba sin nombre ni cédula: con un asegurado por envio casi no se
+  // notaba, pero al cargar nueve de golpe salian tres filas en blanco en el correo.
   function extractCliente(t) {
     const m = t.match(/Nombre o Raz[oó]n Social:\s*(.+?)\s+Tipo de Identifica/i);
-    return m ? m[1].trim() : '';
+    if (m) return m[1].trim();
+    const v = t.match(/\bNombre:\s*(.+?)\s+N[°ºøo]?\s*Identificaci[oó]n:/i);
+    return v ? v[1].trim() : '';
   }
   function extractCedula(t) {
     const m = t.match(/N[uú]mero de Identificaci[oó]n:\s*([0-9A-Za-z-]+)/i);
-    return m ? m[1].trim() : '';
+    if (m) return m[1].trim();
+    const v = t.match(/N[°ºøo]?\s*Identificaci[oó]n:\s*([0-9A-Za-z-]+)/i);
+    return v ? v[1].trim() : '';
   }
   function extractDestino(t) {
     const m = t.match(/Destino \(s\) del Viaje:\s*(.+?)\s+Motivo/i);
@@ -20,10 +29,14 @@ window.VParse = (function () {
     const m = t.match(/Desde:\s*(\d{2}\/\d{2}\/\d{4})\s*Hasta:\s*(\d{2}\/\d{2}\/\d{4})/i);
     return m ? { desde: m[1], hasta: m[2] } : { desde: '', hasta: '' };
   }
+  // 🔴 En la plantilla de Sucursal Virtual "Correo Principal:" viene VACÍO y lo
+  // siguiente en el texto es la etiqueta "Cc:". Sin este filtro, "Cc:" terminaba
+  // cargado como correo del cliente y de ahí pasaba al campo del destinatario.
+  function esCorreo(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(e); }
   function extractCorreo(t) {
     const m = t.match(/Correo Principal:\s*([^\s]+)/i);
     if (!m) return '';
-    const mails = m[1].split(',').map(s => s.trim()).filter(Boolean);
+    const mails = m[1].split(',').map(s => s.trim()).filter(esCorreo);
     return mails.find(e => !/segurosdelins\.com$/i.test(e)) || mails[0] || '';
   }
   function fmtUsd(raw) { const d = (raw || '').replace(/\D/g, ''); return d ? 'US$' + d.replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''; }
@@ -36,10 +49,24 @@ window.VParse = (function () {
     const pila = toks.length > 2 ? toks.slice(2).join(' ') : cliente;
     return pila ? titleCase(pila) : '';
   }
+  // El numero de poliza viene en el nombre de TODOS los archivos que manda el INS
+  // (la poliza y la tarjeta lo llevan de prefijo, y el ZIP tambien): es la llave
+  // que permite repartir un lote de nueve asegurados sin abrir un solo PDF.
+  function polizaDeNombre(filename) {
+    const m = String(filename || '').match(/(\d{4}VIA\d{9})/i);
+    return m ? m[1].toUpperCase() : '';
+  }
   function classifyFile(filename, text) {
-    const f = (filename || '').toLowerCase();
+    // Dentro de un ZIP el nombre puede venir con carpetas adelante.
+    const f = String(filename || '').toLowerCase().split(/[\\/]/).pop();
+    // El ZIP del INS trae las Condiciones Generales (DERSA+CG) en CADA poliza. La
+    // consola ya adjunta su propia copia una sola vez, asi que se reconocen para
+    // no mandarle al cliente nueve veces el mismo documento.
+    if (/dersa|condiciones\s*generales/.test(f)) return 'condiciones';
     if (/tarjeta/.test(f)) return 'tarjeta';
     if (/comprobante/.test(f)) return 'comprobante';
+    // Lamina publicitaria que el INS mete en algunos ZIP: no es documentacion.
+    if (/bienvenida/.test(f)) return 'promo';
     if (/_054_540_|oferta- ?constancia/.test(f) || /Oferta- ?Constancia de Seguro/i.test(text || '')) return 'poliza';
     if (/\d{4}via\d{9}/.test(f)) return 'poliza';
     return 'otro';
@@ -69,5 +96,5 @@ window.VParse = (function () {
     }
     return out;
   }
-  return { normalize, extractAll, classifyFile, readPdfText, sugerirNombrePila };
+  return { normalize, extractAll, classifyFile, polizaDeNombre, readPdfText, sugerirNombrePila };
 })();
