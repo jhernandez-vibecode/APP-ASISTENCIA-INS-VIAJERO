@@ -22,8 +22,20 @@ GASTOS MÉDICOS Y ADICIONALES INCURRIDOS POR ACCIDENTE Gastos Médicos y Adicion
 ASPECTOS RELACIONADOS AL RIESGO Destino (s) del Viaje: EUROPA Motivo (s) del viaje:
 PLAZO DE VIGENCIA Vigencia: Desde: 14/06/2026 Hasta: 13/07/2026
 Creación: 22/06/2026 Sucursal: Juan Carlos Hernández Vargas Correo Principal: Cc: SEGURO INS VIAJERO`;
+// Nombre con tildes (inventado). Es el caso que rompia titleCase: en JavaScript
+// la frontera `\b` se define por [A-Za-z0-9_], asi que una letra acentuada contaba
+// como frontera y metia una mayuscula de mas — "MARIA JOSE" con tildes salia
+// "MarIA JosE" (con las tildes en su lugar) en el saludo del correo y del WhatsApp.
+const SAMPLE_TILDES = `INSTITUTO NACIONAL DE SEGUROS Oferta- Constancia de Seguro Seguro INS Viajero con Asistencia Autoexpedible
+N° Póliza: 0201VIA000000004 Lugar: Sucursal Central Fecha: 25/08/2026
+Nombre o Razón Social: JIMÉNEZ NÚÑEZ MARÍA JOSÉ Tipo de Identificación: Número de Identificación: 1222222222
+GASTOS MÉDICOS Y ADICIONALES INCURRIDOS POR ACCIDENTE Gastos Médicos y Adicionales: $500 000
+Destino (s) del Viaje: ESPAÑA Motivo (s) del viaje:
+Vigencia: Desde: 01/09/2026 Hasta: 15/09/2026
+Correo Principal: cliente.ejemplo2@gmail.com`;
 const r = VParse.extractAll(SAMPLE);
 const VIRT = VParse.extractAll(SAMPLE_VIRTUAL);
+const TIL = VParse.extractAll(SAMPLE_TILDES);
 const checks = [
   ['poliza', r.poliza, '0201VIA000000001'],
   ['cliente', r.cliente, 'PEREZ RAMIREZ CARLOS ANDRES'],
@@ -50,6 +62,10 @@ const checks = [
   ['virtual destino', VIRT.destino, 'EUROPA'],
   ['virtual gastosMedicos', VIRT.gastosMedicos, 'US$250.000'],
   ['virtual correo vacio (no "Cc:")', VIRT.correo, ''],
+  // 🔴 Los dos que prueban el bug de las tildes: con el `\b` viejo daban
+  // "MarÍA JosÉ" y el cliente lo veia asi en el saludo.
+  ['tildes nombrePila', TIL.nombrePila, 'María José'],
+  ['tildes cliente tal cual del PDF', TIL.cliente, 'JIMÉNEZ NÚÑEZ MARÍA JOSÉ'],
 ];
 let pass=0; const lines=checks.map(([n,got,exp])=>{const ok=got===exp;if(ok)pass++;return `${ok?'PASS':'FAIL'}  ${n}: ${JSON.stringify(got)}${ok?'':' != '+JSON.stringify(exp)}`;});
 document.getElementById('out').textContent = lines.join('\n')+`\n\n${pass}/${checks.length} OK`;

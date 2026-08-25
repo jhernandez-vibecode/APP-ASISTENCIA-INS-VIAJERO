@@ -1,7 +1,14 @@
 // agente/parse.js — extracción de campos del PDF de póliza. Puro y testeable.
 window.VParse = (function () {
   function normalize(t) { return (t || '').replace(/ /g, ' ').replace(/\s+/g, ' ').trim(); }
-  function titleCase(s) { return s.toLowerCase().replace(/\b\p{L}/gu, c => c.toUpperCase()); }
+  // 🔴 NO usar `\b` para partir palabras: en JavaScript la frontera se define por
+  // `\w` = [A-Za-z0-9_], así que una letra acentuada CUENTA como frontera y dispara
+  // una mayúscula de más — "MARÍA" salía "MarÍA" y "NÚÑEZ" salía "NÚñEz", y de acá
+  // sale el saludo del correo y de los dos WhatsApp. Se parte por inicio de cadena,
+  // espacio o guion, que es lo que de verdad separa un nombre.
+  function titleCase(s) {
+    return s.toLowerCase().replace(/(^|[\s\-])(\p{L})/gu, (m, sep, letra) => sep + letra.toUpperCase());
+  }
 
   function extractPoliza(t) { const m = t.match(/\b(\d{4}VIA\d{9})\b/); return m ? m[1] : ''; }
   // Hay DOS plantillas de oferta-constancia y solo cambian en la cabecera:
