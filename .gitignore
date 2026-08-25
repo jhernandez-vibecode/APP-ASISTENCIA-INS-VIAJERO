@@ -1,0 +1,5 @@
+# Maquetas de diseño: se arman para que JC las revise en localhost y no se
+# publican. 🔴 Netlify sirve este repo TAL CUAL, sin build: cualquier archivo
+# que entre acá queda accesible desde internet, archivos de prueba incluidos.
+mockups-rediseno/
+mockups-envio/

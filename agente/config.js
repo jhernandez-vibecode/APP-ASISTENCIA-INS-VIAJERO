@@ -12,6 +12,14 @@ window.VCfg = {
   ],
   APP_LINK: 'https://appasistenciainsviajero.netlify.app/',
   COTIZA_LINK: 'https://cotiza.ins-cr.com/frmDatosIncluir.aspx?P=99&A=1101130',
+  // Los dos logos del correo. 🔴 Van con URL ABSOLUTA y hosteados en el propio
+  // sitio: en un correo no sirve ni la ruta relativa, ni el SVG, ni el base64
+  // (Gmail los bloquea). El del INS abre el encabezado — el correo es cara al
+  // cliente — y el de SDI firma el pie, con las cuatro barras a color. Es el
+  // MISMO archivo que usan los tres correos del cotizador de autos: si alguna
+  // vez se regenera, se regenera en los dos repos.
+  LOGO_INS_URL: 'https://appasistenciainsviajero.netlify.app/img/ins-logo.png',
+  LOGO_SDI_URL: 'https://appasistenciainsviajero.netlify.app/img/sdi-logo-email.png',
   // Documentos que van adjuntos en TODO correo, una sola vez (no por viajero).
   // 🔴 assets/condiciones.pdf es el "DERSA+CG Seguro INS Viajero con Asistencia
   // Autoexpedible V5" que el propio INS mete dentro de cada ZIP de póliza.
