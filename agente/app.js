@@ -767,6 +767,32 @@ window.VApp = (function () {
       ${celda('Adjuntos', totalAdjuntos() + ' archivos', `<button onclick="VApp.irA(1)" class="text-[10.5px] text-sdi-azul underline">ver cuáles</button>`)}
     </div>`;
   }
+  // ----- "Qué hay de nuevo" -----
+  // Al abrir la consola tras una actualización, UNA tarjeta cuenta qué cambió
+  // (los textos viven en VCfg.NOVEDADES, una sola fuente). "Entendido" guarda
+  // la versión vista en localStorage y no vuelve a aparecer hasta la próxima.
+  // Si el localStorage se pierde (limpiadores), el aviso reaparece: inofensivo.
+  const LS_NOVEDADES = 'viajero_novedades_visto';
+  function avisoNovedades() {
+    const N = VCfg.NOVEDADES;
+    if (!N || !N.version || !(N.items || []).length) return '';
+    let visto = null; try { visto = localStorage.getItem(LS_NOVEDADES); } catch (e) {}
+    if (visto === N.version) return '';
+    return `<div id="novedades" class="rounded-xl p-4 mb-4 bg-sky-50 border border-sky-200" style="border-top:3px solid #0369A1">
+      <div class="flex items-start justify-between gap-3">
+        <p class="text-[10px] font-bold uppercase tracking-widest text-sdi-azul pt-0.5">✨ Qué hay de nuevo · ${esc(N.fecha || '')}</p>
+        <button onclick="VApp.novedadesVisto()" class="flex-none text-xs font-semibold border border-slate-300 rounded-lg px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-100">Entendido</button>
+      </div>
+      <ul class="text-xs text-slate-600 mt-2 space-y-1.5 list-disc pl-4 leading-relaxed">
+        ${N.items.map(t => `<li>${t}</li>`).join('')}
+      </ul>
+    </div>`;
+  }
+  function novedadesVisto() {
+    try { localStorage.setItem(LS_NOVEDADES, (VCfg.NOVEDADES || {}).version || ''); } catch (e) {}
+    const n = el('novedades'); if (n) n.remove(); // sin render(): solo se va la tarjeta
+  }
+
   // ----- El interruptor GENERAL Sala VIP -----
   // Pedido de JC del 28 ago: el control es a NIVEL GENERAL, no por envío — él
   // lo prende y queda prendido para todos los correos, lo apaga y queda apagado
@@ -871,6 +897,7 @@ window.VApp = (function () {
     const p = state.paso;
     el('console').innerHTML = `
       ${avisoPermiso()}
+      ${avisoNovedades()}
       ${agentePanel()}
       <div class="flex items-center justify-between gap-2 mb-4">
         <h2 class="text-lg font-bold">Envío de pólizas</h2>
@@ -1142,6 +1169,7 @@ window.VApp = (function () {
   function boot() { try { VAuth.init(); } catch (e) {} el('btn-login').addEventListener('click', login); }
   return { boot, login, addViajero, removeViajero, quitarArchivo, setCanal, waSave, waReset, preview, enviar,
     irA, sinPoliza, nuevoEnvio, pedirLimpiar, pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink,
-    elegirArchivos, elegirCarpeta, procesarEntrada, vipToggle, vipEditToggle, vipPeriodoChange, vipPeriodoOficial, vipRepintar, state };
+    elegirArchivos, elegirCarpeta, procesarEntrada, vipToggle, vipEditToggle, vipPeriodoChange, vipPeriodoOficial, vipRepintar,
+    avisoNovedades, novedadesVisto, state };
 })();
 document.addEventListener('DOMContentLoaded', () => VApp.boot());

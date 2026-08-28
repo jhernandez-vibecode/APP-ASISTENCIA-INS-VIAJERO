@@ -50,6 +50,25 @@ window.VCfg = {
     primaMinima: 80          // USD por persona (cada viajero tiene su póliza)
   },
 
+  // Aviso "Qué hay de nuevo" de la consola (patrón pedido por JC el 28 ago 2026,
+  // como en su sistema principal): al abrir la consola después de una
+  // actualización aparece UNA tarjeta con los cambios; "Entendido" la marca
+  // vista (localStorage viajero_novedades_visto = version) y no vuelve a salir
+  // hasta la próxima. En cada release: subir `version` (la fecha del deploy),
+  // reescribir `items` en lenguaje de usuario (voseo, sin tecnicismos) y anotar
+  // la MISMA novedad en el registro de cambios del pie de agente/index.html.
+  // Solo la consola la muestra: la página del cliente no lleva novedades
+  // (decisión de JC del 24 ago 2026).
+  NOVEDADES: {
+    version: '2026-08-28',
+    fecha: '28 ago 2026',
+    items: [
+      '<b>El correo ahora anuncia el beneficio Sala VIP</b> del Aeropuerto Juan Santamaría a los clientes cuya prima llega a US$80 por persona (Circular INS 0388-2026), con una tarjeta dorada antes del centro de asistencia. Al viajero que no llega al monto no se le menciona nada.',
+      '<b>Vos controlás el beneficio con un interruptor general</b> — la tarjeta dorada que aparece debajo de la barra de pasos. Lo apagás y ningún correo lo menciona; lo prendés y vuelve. Con «cambiar período» podés mover las fechas si el INS extiende la promoción; pasada la fecha se apaga solo.',
+      '<b>La ficha de cada asegurado ahora lee la prima del PDF</b> (editable, como los demás datos) y te dice si esa póliza califica, para que sepás qué va a salir en el correo antes de enviarlo.'
+    ]
+  },
+
   // Perfil del agente POR DEFECTO (Juan Carlos). Cada agente puede sobrescribir
   // su propia información desde la consola ("⚙️ Mi información de agente"), que se
   // guarda en localStorage y NO toca este archivo. Para precargar otro agente fijo
