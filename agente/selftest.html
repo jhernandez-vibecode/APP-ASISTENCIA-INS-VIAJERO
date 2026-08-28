@@ -1,11 +1,12 @@
 <!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Selftest VParse</title></head>
 <body style="font-family:monospace;padding:20px">
-<h3>Selftest VParse</h3>
+<h3>Selftest VParse + Sala VIP</h3>
 <!-- 🔴 Netlify publica este archivo tal cual: los datos de las muestras son
      INVENTADOS a proposito. Nunca pegar aca el texto de una poliza real: el nombre,
      la cedula y el correo del cliente quedarian visibles en internet. --><pre id="out"></pre>
 <script src="config.js"></script>
 <script src="parse.js"></script>
+<script src="email.js"></script>
 <script>
 const SAMPLE = `INSTITUTO NACIONAL DE SEGUROS Oferta- Constancia de Seguro Seguro INS Viajero con Asistencia Autoexpedible
 N° Póliza: 0201VIA000000001 Lugar: Sucursal Central Fecha: 23/06/2026
@@ -26,6 +27,7 @@ Creación: 22/06/2026 Sucursal: Juan Carlos Hernández Vargas Correo Principal: 
 // la frontera `\b` se define por [A-Za-z0-9_], asi que una letra acentuada contaba
 // como frontera y metia una mayuscula de mas — "MARIA JOSE" con tildes salia
 // "MarIA JosE" (con las tildes en su lugar) en el saludo del correo y del WhatsApp.
+// Esta muestra ademas NO trae linea "Prima:": prueba que sin dato queda vacio.
 const SAMPLE_TILDES = `INSTITUTO NACIONAL DE SEGUROS Oferta- Constancia de Seguro Seguro INS Viajero con Asistencia Autoexpedible
 N° Póliza: 0201VIA000000004 Lugar: Sucursal Central Fecha: 25/08/2026
 Nombre o Razón Social: JIMÉNEZ NÚÑEZ MARÍA JOSÉ Tipo de Identificación: Número de Identificación: 1222222222
@@ -46,6 +48,10 @@ const checks = [
   ['vigenciaHasta', r.vigenciaHasta, '07/08/2026'],
   ['correo', r.correo, 'cliente.ejemplo@gmail.com'],
   ['nombrePila', r.nombrePila, 'Carlos Andres'],
+  // 🔴 La prima con DECIMALES RESPETADOS: el fmtUsd() de gastos medicos hace
+  // replace(/\D/g,'') y "164.79" saldria "US$16.479" — por eso tiene su propio
+  // formateador (coma decimal, punto de miles, el criterio de US$1.000.000).
+  ['prima Central', r.prima, 'US$164,79'],
   ['classify poliza', VParse.classifyFile('0201VIA000000001_054_540_Seguro_Viajero.pdf',''), 'poliza'],
   ['classify tarjeta', VParse.classifyFile('0201VIA0_Tarjeta_Seguro_Viajero.pdf',''), 'tarjeta'],
   ['classify comprobante', VParse.classifyFile('Comprobante De Pago.pdf',''), 'comprobante'],
@@ -62,11 +68,49 @@ const checks = [
   ['virtual destino', VIRT.destino, 'EUROPA'],
   ['virtual gastosMedicos', VIRT.gastosMedicos, 'US$250.000'],
   ['virtual correo vacio (no "Cc:")', VIRT.correo, ''],
+  // En la Virtual "Prima: $ 159.70 Plan:" — el regex tiene que parar ANTES de
+  // "Plan:" y no confundirse con el Monto Asegurado que viene pegado antes.
+  ['virtual prima (corta antes de Plan:)', VIRT.prima, 'US$159,70'],
+  ['prima ausente queda vacia', TIL.prima, ''],
   // 🔴 Los dos que prueban el bug de las tildes: con el `\b` viejo daban
   // "MarÍA JosÉ" y el cliente lo veia asi en el saludo.
   ['tildes nombrePila', TIL.nombrePila, 'María José'],
   ['tildes cliente tal cual del PDF', TIL.cliente, 'JIMÉNEZ NÚÑEZ MARÍA JOSÉ'],
+  // El parser de la prima acepta lo que venga: del PDF ($ 164.79, punto decimal)
+  // o tecleado por el agente (US$164,79 / 164.79 / US$1.000).
+  ['parsePrima coma decimal', VParse.parsePrimaUsd('US$164,79'), 164.79],
+  ['parsePrima punto decimal', VParse.parsePrimaUsd('164.79'), 164.79],
+  ['parsePrima miles con punto', VParse.parsePrimaUsd('US$1.000'), 1000],
+  ['parsePrima pdf crudo', VParse.parsePrimaUsd('$ 159.70'), 159.7],
 ];
+
+// ----- Sala VIP: las tres llaves del beneficio (Circular INS 0388-2026) -----
+// La llave por FECHA se prueba con dias INYECTADOS contra la config real:
+checks.push(['vip 31 oct (ultimo dia) SI', VEmail.salaVipEnFecha('2026-10-31'), true]);
+checks.push(['vip 1 nov se apaga solo', VEmail.salaVipEnFecha('2026-11-01'), false]);
+checks.push(['vip 23 ago aun no empieza', VEmail.salaVipEnFecha('2026-08-23'), false]);
+// El bloque del correo se prueba con fechas AMPLIAS para no depender del reloj
+// (este selftest tiene que seguir pasando despues del 31 oct 2026):
+const VIP = VCfg.SALA_VIP, VIP0 = { activo: VIP.activo, desde: VIP.desde, hasta: VIP.hasta, primaMinima: VIP.primaMinima };
+VIP.desde = '2000-01-01'; VIP.hasta = '2099-12-31';
+const F = [{ name: '0201VIA000000001_054_540.pdf', vKind: 'poliza' }];
+const vOk = { cliente: 'PEREZ RAMIREZ CARLOS ANDRES', nombrePila: 'Carlos Andres', poliza: '0201VIA000000001', prima: 'US$164,79', files: F };
+const vNo = { cliente: 'SOLANO VEGA ANDREA', nombrePila: 'Andrea', poliza: '0221VIA000000002', prima: 'US$69,55', files: F };
+const html1 = VEmail.buildHtml({ saludo: 'x', viajeros: [vOk] });
+checks.push(['vip bloque presente si califica', html1.includes('Sala VIP'), true]);
+checks.push(['vip bloque ANTES del centro de asistencia', html1.indexOf('Sala VIP') > 0 && html1.indexOf('Sala VIP') < html1.indexOf('Centro de asistencia 24/7'), true]);
+checks.push(['vip fechas reescritas desde config', html1.includes('del 1 de enero de 2000 al 31 de diciembre de 2099'), true]);
+checks.push(['vip toggle del envio en off = silencio', VEmail.buildHtml({ saludo: 'x', viajeros: [vOk], salaVip: false }).includes('Sala VIP'), false]);
+checks.push(['vip no llega al monto = silencio', VEmail.buildHtml({ saludo: 'x', viajeros: [vNo] }).includes('Sala VIP'), false]);
+checks.push(['vip mixto nombra a quien aplica', VEmail.buildHtml({ saludo: 'x', viajeros: [vOk, vNo] }).includes('aplica para'), true]);
+VIP.activo = false;
+checks.push(['vip maestro apagado = silencio', VEmail.buildHtml({ saludo: 'x', viajeros: [vOk] }).includes('Sala VIP'), false]);
+VIP.activo = true; VIP.primaMinima = 0;
+const html0 = VEmail.buildHtml({ saludo: 'x', viajeros: [vNo] });
+checks.push(['vip minimo 0 = aplica a todos', html0.includes('Sala VIP'), true]);
+checks.push(['vip minimo 0 = sin mencion del monto', html0.includes('US$80'), false]);
+VIP.activo = VIP0.activo; VIP.desde = VIP0.desde; VIP.hasta = VIP0.hasta; VIP.primaMinima = VIP0.primaMinima;
+
 let pass=0; const lines=checks.map(([n,got,exp])=>{const ok=got===exp;if(ok)pass++;return `${ok?'PASS':'FAIL'}  ${n}: ${JSON.stringify(got)}${ok?'':' != '+JSON.stringify(exp)}`;});
 document.getElementById('out').textContent = lines.join('\n')+`\n\n${pass}/${checks.length} OK`;
 </script></body></html>

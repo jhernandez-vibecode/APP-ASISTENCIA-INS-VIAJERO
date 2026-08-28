@@ -51,6 +51,33 @@ window.VParse = (function () {
     const m = t.match(/Gastos M[eé]dicos y Adicionales:\s*\$\s*([\d ]+)/i);
     return m ? fmtUsd(m[1]) : '';
   }
+  // La prima viene en la MISMA línea que el nombre en las dos plantillas:
+  //   Central: "... Monto Asegurado: $200 000 Prima: $ 164.79"
+  //   Virtual: "... Monto Asegurado: $50 000 Prima: $ 159.70 Plan: Plan Unificado V4"
+  // El número se ancla en "Prima:" y corta en la primera letra: un patrón glotón
+  // se comería "Plan:" o el texto que siga. 🔴 NO usar fmtUsd() para esto: su
+  // replace(/\D/g,'') borra el punto decimal y $164.79 saldría US$16.479. La
+  // prima se muestra con coma decimal y punto de miles (US$1.164,79), el MISMO
+  // criterio de US$1.000.000 en gastos médicos: en un correo donde el punto ya
+  // significa miles, no puede significar decimales dos renglones más abajo.
+  function parsePrimaUsd(s) {
+    const t = String(s == null ? '' : s).replace(/[^0-9.,]/g, '');
+    if (!t) return NaN;
+    if (t.includes(',')) return parseFloat(t.replace(/\./g, '').replace(',', '.'));
+    const partes = t.split('.');
+    if (partes.length > 1 && partes[partes.length - 1].length === 3) return parseFloat(partes.join(''));
+    return parseFloat(t);
+  }
+  function fmtPrima(raw) {
+    const n = parsePrimaUsd(raw);
+    if (!isFinite(n)) return '';
+    const conDec = Math.round(n * 100) % 100 !== 0;
+    return 'US$' + n.toLocaleString('de-DE', { minimumFractionDigits: conDec ? 2 : 0, maximumFractionDigits: 2 });
+  }
+  function extractPrima(t) {
+    const m = t.match(/Prima:\s*\$?\s*(\d[\d ]*(?:[.,]\d{1,2})?)/i);
+    return m ? fmtPrima(m[1]) : '';
+  }
   function sugerirNombrePila(cliente) {
     const toks = (cliente || '').trim().split(/\s+/);
     const pila = toks.length > 2 ? toks.slice(2).join(' ') : cliente;
@@ -86,6 +113,7 @@ window.VParse = (function () {
       cliente, nombrePila: sugerirNombrePila(cliente),
       poliza: extractPoliza(t), cedula: extractCedula(t),
       destino: extractDestino(t), gastosMedicos: extractGastosMedicos(t),
+      prima: extractPrima(t),
       vigenciaDesde: vig.desde, vigenciaHasta: vig.hasta,
       correo: extractCorreo(t)
     };
@@ -103,5 +131,5 @@ window.VParse = (function () {
     }
     return out;
   }
-  return { normalize, extractAll, classifyFile, polizaDeNombre, readPdfText, sugerirNombrePila };
+  return { normalize, extractAll, classifyFile, polizaDeNombre, readPdfText, sugerirNombrePila, parsePrimaUsd };
 })();

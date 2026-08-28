@@ -34,6 +34,22 @@ window.VCfg = {
   ],
   EMERGENCIA: { usa: '1 844 865 0804', espana: '900 995 484', mundo: '+34 (91) 189-5152', email: 'insinternacional@grupoins.com' },
 
+  // Beneficio Sala VIP del Aeropuerto Juan Santamaría (Circular INS 0388-2026).
+  // Es PROMOCIÓN temporal del INS, no cobertura: por eso vive acá y no en los
+  // textos. El beneficio tiene TRES llaves y las tres deben estar abiertas:
+  //   1. `activo` (este interruptor maestro): false = ni una palabra en ningún lado.
+  //   2. La fecha: fuera de desde/hasta el bloque se apaga SOLO — el 1 nov 2026
+  //      nadie tiene que acordarse de nada. Si el INS extiende, se cambia `hasta`
+  //      y todos los textos visibles se reescriben solos (ninguna fecha va a mano).
+  //   3. El toggle del envío en el paso 3 de la consola (por correo).
+  // `primaMinima` en 0 = califican todos y desaparece la mención del monto.
+  SALA_VIP: {
+    activo: true,
+    desde: '2026-08-24',
+    hasta: '2026-10-31',
+    primaMinima: 80          // USD por persona (cada viajero tiene su póliza)
+  },
+
   // Perfil del agente POR DEFECTO (Juan Carlos). Cada agente puede sobrescribir
   // su propia información desde la consola ("⚙️ Mi información de agente"), que se
   // guarda en localStorage y NO toca este archivo. Para precargar otro agente fijo

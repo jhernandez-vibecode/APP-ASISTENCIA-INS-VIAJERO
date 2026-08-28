@@ -135,6 +135,114 @@ window.VEmail = (function () {
     }).join('<br>');
   }
 
+  // ----- Beneficio Sala VIP (Circular INS 0388-2026) -----
+  // Tres llaves, las tres tienen que estar abiertas: el interruptor maestro de
+  // config.js, la fecha (fuera del período se apaga SOLO, nadie tiene que
+  // acordarse el 1 nov) y el toggle del envío en el paso 3 (envio.salaVip).
+
+  function hoyISO() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  /** ¿El beneficio existe hoy? `hoy` es inyectable solo para el selftest. */
+  function salaVipEnFecha(hoy) {
+    const cfg = VCfg.SALA_VIP;
+    if (!cfg || !cfg.activo) return false;
+    const h = hoy || hoyISO();
+    return h >= cfg.desde && h <= cfg.hasta;
+  }
+  /** Los viajeros cuya prima llega al mínimo. Se mide UNO POR UNO: cada viajero
+   *  tiene su póliza y su prima; nunca se promedia ni se suma. */
+  function salaVipCalifican(viajeros) {
+    const cfg = VCfg.SALA_VIP || {};
+    const min = Number(cfg.primaMinima) || 0;
+    const vs = viajeros || [];
+    if (min === 0) return vs.slice();
+    if (!window.VParse) return [];
+    return vs.filter(v => VParse.parsePrimaUsd(v.prima) >= min);
+  }
+
+  // '2026-08-24' -> partes SIN new Date(iso): un string ISO se parsea como UTC
+  // y en Costa Rica (UTC-6) retrocedería un día.
+  const MESES_LARGOS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'setiembre', 'octubre', 'noviembre', 'diciembre'];
+  function fechaLarga(iso) {
+    const p = String(iso || '').split('-');
+    return { d: parseInt(p[2], 10), mes: MESES_LARGOS[parseInt(p[1], 10) - 1] || '', a: p[0] };
+  }
+  function periodoSalaVip(cfg) {
+    const a = fechaLarga(cfg.desde), b = fechaLarga(cfg.hasta);
+    const desde = a.d + ' de ' + a.mes + (a.a !== b.a ? ' de ' + a.a : '');
+    return 'del ' + desde + ' al ' + b.d + ' de ' + b.mes + ' de ' + b.a;
+  }
+  function unirNombres(arr) {
+    if (arr.length <= 1) return arr.join('');
+    return arr.slice(0, -1).join(', ') + ' y ' + arr[arr.length - 1];
+  }
+
+  /**
+   * La tarjeta del beneficio. Va entre los datos del viaje y el centro de
+   * asistencia: es un beneficio de la póliza y el cliente tiene que VERLO
+   * (pedido de JC del 28 ago — al pie quedaba demasiado oculto). Acento DORADO
+   * #C9A227 (el oro del filete SDI, y "VIP") con la señal arriba como
+   * border-top, el mismo patrón del aviso ámbar. Sin degradados ni emojis.
+   *
+   * Reglas de la circular, ya probadas en el cotizador:
+   *  - Solo se menciona si al menos un viajero califica. Si nadie llega al
+   *    monto, SILENCIO: el cliente ya compró y no puede cambiar de opción.
+   *  - Si unos califican y otros no, se nombra a quién aplica.
+   *  - primaMinima 0 = califican todos y desaparece la mención del monto
+   *    (nombrar un mínimo que ya no existe haría dudar a quien pagó menos).
+   *  - Solo lo que la circular respalda: nada de acompañante, número de
+   *    accesos, regreso ni servicios de la sala. Solo Juan Santamaría.
+   *  - Se atribuye al INS y lleva el período, reescrito desde config.
+   */
+  function bloqueSalaVip(envio) {
+    if (!salaVipEnFecha()) return '';
+    if (envio.salaVip === false) return '';       // el toggle del paso 3
+    const vs = envio.viajeros || [];
+    if (!vs.length) return '';
+    const cfg = VCfg.SALA_VIP;
+    const min = Number(cfg.primaMinima) || 0;
+    const califican = salaVipCalifican(vs);
+    if (!califican.length) return '';
+    const todos = califican.length === vs.length;
+
+    const ORO = '#C9A227', ORO_TXT = '#7c621c', BORDE = '#e8d9a6', FONDO = '#fffdf4';
+    const minTxt = '<b style="color:' + SDI_NAVY + ';">US$' + min + ' por persona</b>';
+    let cuerpo;
+    if (min === 0) {
+      cuerpo = 'El INS otorga a ' + (vs.length > 1 ? 'sus seguros' : 'su seguro') +
+        ' acceso a la Sala VIP del aeropuerto.';
+    } else if (todos) {
+      cuerpo = 'Por tener una prima igual o superior a ' + minTxt + ', el INS otorga a ' +
+        (vs.length > 1 ? 'sus seguros' : 'su seguro') + ' acceso a la Sala VIP del aeropuerto.';
+    } else {
+      const nombres = califican.map(v => (v.nombrePila || v.cliente || 'el viajero').trim());
+      cuerpo = 'El INS otorga acceso a la Sala VIP del aeropuerto a las p&oacute;lizas con prima igual o superior a ' +
+        minTxt + '. En este env&iacute;o, el beneficio aplica para <b style="color:' + SDI_NAVY + ';">' +
+        esc(unirNombres(nombres)) + '</b>.';
+    }
+    // La oferta-constancia ES el PDF de la póliza: si viaja adjunta en este
+    // correo se dice; si el envío se armó sin PDF, se remite al correo del INS.
+    const hayPoliza = vs.some(v => (v.files || []).some(f =>
+      (f.vKind || (window.VParse ? VParse.classifyFile(f.name, '') : 'otro')) === 'poliza'));
+    const constancia = hayPoliza
+      ? '&mdash;el documento de p&oacute;liza adjunto en este correo&mdash;'
+      : '&mdash;que el INS le envi&oacute; al correo registrado en la compra&mdash;';
+
+    return '<tr><td style="padding:22px 32px 0;">' +
+      '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:' + FONDO +
+        ';border:1px solid ' + BORDE + ';border-top:3px solid ' + ORO + ';border-radius:10px;">' +
+      '<tr><td style="padding:16px 18px 15px;">' +
+        '<p style="margin:0 0 3px;font-size:10px;font-weight:700;color:' + ORO_TXT + ';letter-spacing:0.12em;text-transform:uppercase;">Beneficio para su viaje</p>' +
+        '<p style="margin:0 0 8px;font-family:' + FF + ';font-size:16px;font-weight:700;color:' + SDI_NAVY + ';line-height:1.3;">Acceso a la Sala VIP &middot; Aeropuerto Internacional Juan Santamar&iacute;a</p>' +
+        '<p style="margin:0;font-size:13px;color:#334155;line-height:1.7;">' + cuerpo +
+          ' Para ingresar, presente la <b style="color:' + SDI_NAVY + ';">oferta-constancia de seguro</b> ' + constancia +
+          ' con la p&oacute;liza vigente al momento de usar el beneficio.</p>' +
+        '<p style="margin:9px 0 0;font-size:10.5px;color:' + SDI_GRIS + ';line-height:1.5;">Beneficio otorgado por el INS &middot; Vigente ' + periodoSalaVip(cfg) + '.</p>' +
+      '</td></tr></table></td></tr>';
+  }
+
   /**
    * Pie con el logotipo SDI full color y la nota legal completa.
    * Grises: #94a3b8 da 6,16:1 sobre el navy. La licencia SUGESE es dato
@@ -216,6 +324,9 @@ window.VEmail = (function () {
       (total > 1 ? total + ' viajeros amparados' : 'El viaje amparado') + '</h2>' +
     viajeros +
   '</td></tr>' +
+
+  // 3b · Beneficio Sala VIP (si está prendido, en fecha y alguien califica)
+  bloqueSalaVip(envio) +
 
   // 4 · Centro de asistencia
   '<tr><td style="padding:22px 32px 0;">' +
@@ -324,5 +435,5 @@ window.VEmail = (function () {
   async function fileToB64(file) { return abToB64(await file.arrayBuffer()); }
   async function pathToB64(path) { const r = await fetch(path); if (!r.ok) throw new Error('No se pudo cargar ' + path); return abToB64(await r.arrayBuffer()); }
 
-  return { buildHtml, buildAndSend, fileToB64, pathToB64 };
+  return { buildHtml, buildAndSend, fileToB64, pathToB64, salaVipEnFecha, salaVipCalifican };
 })();

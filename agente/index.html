@@ -57,6 +57,16 @@
       .v-spin { animation: none }
       .v-indeterminada { animation: none; width: 100% }
     }
+    /* Interruptor Sala VIP del paso 3: control VISIBLE, con borde y estado
+       inequivoco (verde = va en el correo). */
+    .sw { position: relative; display: inline-block; width: 46px; height: 26px }
+    .sw input { opacity: 0; width: 0; height: 0 }
+    .sw i { position: absolute; inset: 0; background: #cbd5e1; border: 1px solid #94a3b8; border-radius: 99px; transition: .15s; cursor: pointer }
+    .sw i:before { content: ""; position: absolute; height: 20px; width: 20px; left: 2px; top: 2px; background: #fff; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,.35); transition: .15s }
+    .sw input:checked + i { background: #047857; border-color: #065f46 }
+    .sw input:checked + i:before { transform: translateX(20px) }
+    .sw input:focus-visible + i { outline: 2px solid #0369A1; outline-offset: 2px }
+    @media (prefers-reduced-motion: reduce) { .sw i, .sw i:before { transition: none } }
   </style>
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800">
