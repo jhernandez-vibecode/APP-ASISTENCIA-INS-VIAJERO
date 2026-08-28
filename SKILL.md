@@ -261,10 +261,14 @@ cp C:/Users/segur/APP-ASISTENCIA-INS-VIAJERO/SKILL.md \
 ```
 
 ## Pendiente / Fase 2
-- 🧊 **Cooldown hasta ~1 sep 2026.** La jornada del 25 ago tocó el correo que ve el cliente, los cuatro archivos
-  de ícono y el parser, todo en un día y todo con smoke de JC OK. Mientras dure, entra lo de siempre: documentación,
-  cosméticos que no toquen el correo, y scripts de solo lectura. Nada de volver a mover la plantilla del correo ni
-  `parse.js` sin un motivo nuevo.
+- 🧊 **Cooldown hasta ~4 sep 2026.** La jornada del 28 ago (que rompió el cooldown anterior por orden directa de JC)
+  tocó el correo del cliente, `parse.js` y la consola en tres rondas: beneficio Sala VIP + interruptor general con
+  período editable + aviso de novedades. Todo verificado en prod (selftest 51/51) pero **falta el smoke de JC**.
+  Mientras dure, entra lo de siempre: documentación, cosméticos que no toquen el correo, y scripts de solo lectura.
+- **Smoke de JC de la jornada Sala VIP (28 ago 2026):** al entrar a la consola debe ver el aviso "Qué hay de nuevo"
+  (cerrarlo con Entendido y que no vuelva), la tarjeta dorada del interruptor general (apagar → recargar → sigue
+  apagada → prender), y un **envío real** con una póliza de prima ≥ US$80: chip verde en la ficha, bloque dorado en
+  el correo recibido. Rollback en un minuto: tag `pre-salavip-28ago`.
 - **Smoke de JC sobre la carga por ZIP (24 ago 2026)** — verificado en localhost 8960 con sus 9 ZIP, pero el **arrastre de una carpeta desde el explorador** solo lo puede ejercitar él (la prueba automática inyecta los archivos por código). Cooldown sugerido ~31 ago.
 - Registro/estadísticas de envíos (localStorage) en la consola, con seguimiento — como los cotizadores.
 - Subdominio propio tipo `asistencia-viajero.appsegurosdigitales.com` (opcional). 🔴 Si se estrena, actualizar
