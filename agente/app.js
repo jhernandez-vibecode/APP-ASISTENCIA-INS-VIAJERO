@@ -7,9 +7,7 @@ window.VApp = (function () {
   // 21 ago la consola muestra UNA sola por vez (opción A del rediseño): antes
   // todo vivía en el mismo scroll y los tres botones de canal se confundían
   // con los dos de envío.
-  // salaVip es el toggle del envío (la 3ª llave del beneficio Sala VIP): nace
-  // prendido en cada envío nuevo y JC lo puede apagar por correo en el paso 3.
-  const state = { paso: 1, viajeros: [], destinatarios: [], saludo: '', poliza: '', asegurados: [], tel: '', canal: 'correo', sent: false, envio: null, cargando: null, descartes: [], aviso: '', salaVip: true };
+  const state = { paso: 1, viajeros: [], destinatarios: [], saludo: '', poliza: '', asegurados: [], tel: '', canal: 'correo', sent: false, envio: null, cargando: null, descartes: [], aviso: '' };
   let nextId = 1;
   let agentOpen = false;
   let asegManual = false; // el agente editó a mano las pólizas/nombres del mensaje
@@ -535,7 +533,7 @@ window.VApp = (function () {
   // llega al monto no se le menciona nada. Desaparece entero si el beneficio
   // está apagado o fuera de fecha. Se repinta desde wire() al editar la prima.
   function chipSalaVip(v) {
-    if (!VEmail.salaVipEnFecha()) return '';
+    if (!VEmail.salaVipOn() || !VEmail.salaVipEnFecha()) return '';
     const min = Number((VCfg.SALA_VIP || {}).primaMinima) || 0;
     const ok = min === 0 || VParse.parsePrimaUsd(v.prima) >= min;
     if (ok) return `<span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5">
@@ -586,7 +584,6 @@ window.VApp = (function () {
     state.asegurados = []; state.tel = ''; asegManual = false;
     state.canal = 'correo'; state.sent = false; state.envio = null;
     state.cargando = null; state.descartes = []; state.aviso = '';
-    state.salaVip = true; // el toggle Sala VIP vuelve a nacer prendido
     state.paso = 1; // el siguiente cliente arranca por donde se arranca siempre
     // Ya no se deja una tarjeta vacía esperando: la zona de carga del paso 1 es la
     // que arma las tarjetas, una por póliza, apenas caen los ZIP.
@@ -770,42 +767,80 @@ window.VApp = (function () {
       ${celda('Adjuntos', totalAdjuntos() + ' archivos', `<button onclick="VApp.irA(1)" class="text-[10.5px] text-sdi-azul underline">ver cuáles</button>`)}
     </div>`;
   }
-  // ----- El toggle Sala VIP del envío (la 3ª llave del beneficio) -----
-  // Solo canal Correo, solo si el beneficio está en fecha y alguien califica.
-  // Fuera de esas condiciones no hay nada que decidir y la tarjeta no aparece
-  // (el 1 nov desaparece sola: la fecha ya lo apagó por código).
+  // ----- El interruptor GENERAL Sala VIP -----
+  // Pedido de JC del 28 ago: el control es a NIVEL GENERAL, no por envío — él
+  // lo prende y queda prendido para todos los correos, lo apaga y queda apagado
+  // (persiste en localStorage vía VEmail.salaVipOn). La tarjeta vive debajo de
+  // la barra de pasos, visible desde el inicio y en los tres pasos. El período
+  // también es suyo: puede editar desde/hasta (si el INS extiende la promo no
+  // hay que tocar código y el texto del correo se reescribe solo); fuera del
+  // período el bloque no sale aunque el interruptor quede prendido, y la
+  // tarjeta lo dice en vez de callárselo. Solo desaparece entera si el maestro
+  // de config está en false (la promo se retiró del todo, por código).
+  let vipEditOpen = false;
   function fechaCortaVip(iso) {
     const M = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'];
     const p = String(iso || '').split('-');
     return parseInt(p[2], 10) + ' ' + (M[parseInt(p[1], 10) - 1] || '') + ' ' + p[0];
   }
-  function tarjetaSalaVip() {
-    if (state.canal !== 'correo') return '';
-    if (!VEmail.salaVipEnFecha()) return '';
-    const cal = VEmail.salaVipCalifican(state.viajeros);
-    if (!cal.length) return '';
+  function tarjetaVipGeneral() {
     const cfg = VCfg.SALA_VIP;
+    if (!cfg || !cfg.activo) return '';
+    const on = VEmail.salaVipOn();
+    const per = VEmail.salaVipPeriodo();
+    const enFecha = VEmail.salaVipEnFecha();
+    const hoy = new Date();
+    const hoyIso = hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+    const vencida = hoyIso > per.hasta, previa = hoyIso < per.desde;
     const min = Number(cfg.primaMinima) || 0;
-    const on = state.salaVip !== false;
-    const nombres = cal.map(v => (v.nombrePila || v.cliente || 'viajero').trim()).filter(Boolean);
-    const quien = nombres.length ? `<b>${esc(unir(nombres))}</b>${min > 0 ? ' (prima ≥ US$' + min + ')' : ''}` : 'los viajeros del envío';
-    const cajaOro = 'style="background:#fffdf4;border:1px solid #e8d9a6;border-top:3px solid #C9A227"';
-    return `<div class="rounded-xl p-4 flex items-start gap-3 mb-1 ${on ? '' : 'bg-slate-50 border border-slate-200'}" ${on ? cajaOro : ''}>
+    const sale = on && enFecha;
+
+    let estado, sub;
+    if (sale) {
+      estado = 'Activo: sale en los correos';
+      sub = (min > 0 ? `En pólizas con prima ≥ US$${min} por persona` : 'En todas las pólizas') +
+        ` · vigente del <b>${fechaCortaVip(per.desde)}</b> al <b>${fechaCortaVip(per.hasta)}</b>.`;
+    } else if (!on) {
+      estado = 'Apagado: ningún correo lo menciona';
+      sub = 'Prendelo cuando querás volver a incluirlo. Queda así hasta que lo cambiés.';
+    } else if (vencida) {
+      estado = `Venció el ${fechaCortaVip(per.hasta)} — no sale en los correos`;
+      sub = 'Se apagó solo al pasar la fecha. Si el INS extendió la promoción, cambiá el período acá.';
+    } else if (previa) {
+      estado = `Empieza el ${fechaCortaVip(per.desde)}`;
+      sub = 'Hasta esa fecha no sale en los correos.';
+    }
+    const editor = vipEditOpen ? `
+      <div class="flex flex-wrap items-end gap-2 mt-2.5 pt-2.5 border-t ${sale ? 'border-[#e8d9a6]' : 'border-slate-200'}">
+        <label class="block"><span class="text-[10px] text-slate-500">Desde</span>
+          <input id="vip-desde" type="date" value="${esc(per.desde)}" onchange="VApp.vipPeriodoChange()" class="block text-xs border rounded px-2 py-1 bg-white"/></label>
+        <label class="block"><span class="text-[10px] text-slate-500">Hasta</span>
+          <input id="vip-hasta" type="date" value="${esc(per.hasta)}" onchange="VApp.vipPeriodoChange()" class="block text-xs border rounded px-2 py-1 bg-white"/></label>
+        ${per.editado ? `<button onclick="VApp.vipPeriodoOficial()" class="text-[11px] text-sdi-azul underline pb-1.5">Volver al período oficial (${fechaCortaVip(cfg.desde)} – ${fechaCortaVip(cfg.hasta)})</button>` : ''}
+      </div>` : '';
+    return `<div class="rounded-xl p-3.5 sm:p-4 flex items-start gap-3 mb-4 ${sale ? '' : 'bg-slate-50 border border-slate-200'}" ${sale ? 'style="background:#fffdf4;border:1px solid #e8d9a6;border-top:3px solid #C9A227"' : ''}>
       <div class="flex-1 min-w-0">
-        <p class="text-[10px] font-bold uppercase tracking-widest" style="color:${on ? '#7c621c' : '#94a3b8'}">Beneficio Sala VIP · Juan Santamaría</p>
-        <p class="text-sm font-semibold mt-0.5 ${on ? 'text-slate-800' : 'text-slate-500'}">${on ? 'Se incluirá en el correo' : 'No se mencionará en este correo'}</p>
-        <p class="text-xs mt-1 ${on ? 'text-slate-500' : 'text-slate-400'}">${on
-          ? `Califica: ${quien} · Vigente hasta el <b>${fechaCortaVip(cfg.hasta)}</b> — pasado ese día se apaga solo.`
-          : 'El resto del correo sale igual. El próximo envío vuelve a nacer prendido.'}</p>
+        <p class="text-[10px] font-bold uppercase tracking-widest" style="color:${sale ? '#7c621c' : '#94a3b8'}">Beneficio Sala VIP · Juan Santamaría</p>
+        <p class="text-sm font-semibold mt-0.5 ${sale ? 'text-slate-800' : 'text-slate-600'}">${estado}</p>
+        <p class="text-xs mt-1 text-slate-500">${sub}
+          <button onclick="VApp.vipEditToggle()" class="text-sdi-azul underline">${vipEditOpen ? 'cerrar' : (per.editado ? 'período (editado)' : 'cambiar período')}</button></p>
+        ${editor}
       </div>
-      <label class="sw flex-none" title="Incluir el beneficio en este correo"><input type="checkbox" ${on ? 'checked' : ''} onchange="VApp.toggleSalaVip(this.checked)"><i></i></label>
+      <label class="sw flex-none mt-1" title="Incluir el beneficio Sala VIP en los correos"><input type="checkbox" ${on ? 'checked' : ''} onchange="VApp.vipToggle(this.checked)"><i></i></label>
     </div>`;
   }
-  // Repinta SOLO la tarjeta, sin render(): el patrón de pintarTel().
-  function toggleSalaVip(on) {
-    state.salaVip = !!on;
-    const c = el('vip-envio'); if (c) c.innerHTML = tarjetaSalaVip();
+  // El interruptor y el período cambian cosas en más de una pantalla (los chips
+  // de la ficha, el correo): un render() completo mantiene todo coherente. Son
+  // clics, no tecleo — no hay foco de texto que perder.
+  function vipToggle(on) { VEmail.salaVipSetOn(!!on); render(); }
+  function vipEditToggle() { vipEditOpen = !vipEditOpen; vipRepintar(); }
+  function vipPeriodoChange() {
+    const d = el('vip-desde'), h = el('vip-hasta');
+    VEmail.salaVipSetPeriodo(d && d.value, h && h.value);
+    render();
   }
+  function vipPeriodoOficial() { VEmail.salaVipSetPeriodo(null, null); render(); }
+  function vipRepintar() { const c = el('vip-general'); if (c) c.innerHTML = tarjetaVipGeneral(); }
 
   function pantalla3() {
     const esWa = state.canal !== 'correo';
@@ -826,7 +861,6 @@ window.VApp = (function () {
       <div id="canalbox" class="mt-3"></div>
       ${exito ? bannerExito() : ''}
       ${esWa ? '' : resumenCorreo()}
-      ${esWa ? '' : `<div id="vip-envio">${tarjetaSalaVip()}</div>`}
       <button onclick="VApp.enviar()" id="btn-enviar" ${listo ? '' : 'disabled'} class="w-full text-white text-sm font-semibold rounded-xl px-4 py-3.5 mt-3 shadow-sm transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 active:translate-y-0 active:shadow-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-sm" style="background:${(esWa && listo) ? 'linear-gradient(135deg,#16a34a 0%,#15803d 100%)' : 'linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)'}">${texto}</button>
       ${esWa ? '' : '<div class="text-center"><button onclick="VApp.preview()" class="text-xs text-sdi-azul underline underline-offset-2 mt-2.5 hover:text-sdi-azulD">Ver primero cómo le va a llegar →</button></div>'}`;
   }
@@ -843,6 +877,7 @@ window.VApp = (function () {
         ${hayAlgoQueLimpiar() ? '<button onclick="VApp.pedirLimpiar()" class="text-sm font-medium border rounded-lg px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-50 whitespace-nowrap flex-none">🧹 Limpiar</button>' : ''}
       </div>
       ${rail()}
+      <div id="vip-general">${tarjetaVipGeneral()}</div>
       ${p === 1 ? pantalla1() : p === 2 ? pantalla2() : pantalla3()}
       <p id="status" class="text-sm mt-3"></p>`;
     wire();
@@ -1107,6 +1142,6 @@ window.VApp = (function () {
   function boot() { try { VAuth.init(); } catch (e) {} el('btn-login').addEventListener('click', login); }
   return { boot, login, addViajero, removeViajero, quitarArchivo, setCanal, waSave, waReset, preview, enviar,
     irA, sinPoliza, nuevoEnvio, pedirLimpiar, pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink,
-    elegirArchivos, elegirCarpeta, procesarEntrada, toggleSalaVip, state };
+    elegirArchivos, elegirCarpeta, procesarEntrada, vipToggle, vipEditToggle, vipPeriodoChange, vipPeriodoOficial, vipRepintar, state };
 })();
 document.addEventListener('DOMContentLoaded', () => VApp.boot());

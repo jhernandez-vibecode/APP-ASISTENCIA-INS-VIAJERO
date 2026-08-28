@@ -85,10 +85,22 @@ const checks = [
 ];
 
 // ----- Sala VIP: las tres llaves del beneficio (Circular INS 0388-2026) -----
+// 🔴 Este selftest corre en el MISMO origen que la consola: lo que el agente
+// configuro (interruptor general y periodo, en localStorage) se guarda ANTES
+// de las pruebas y se restaura EXACTO al final — pisarlo seria un bug del test.
+const LS_ON = 'viajero_vip_on', LS_D = 'viajero_vip_desde', LS_H = 'viajero_vip_hasta';
+const ls0 = { on: localStorage.getItem(LS_ON), d: localStorage.getItem(LS_D), h: localStorage.getItem(LS_H) };
+localStorage.removeItem(LS_D); localStorage.removeItem(LS_H); localStorage.setItem(LS_ON, '1');
 // La llave por FECHA se prueba con dias INYECTADOS contra la config real:
 checks.push(['vip 31 oct (ultimo dia) SI', VEmail.salaVipEnFecha('2026-10-31'), true]);
 checks.push(['vip 1 nov se apaga solo', VEmail.salaVipEnFecha('2026-11-01'), false]);
 checks.push(['vip 23 ago aun no empieza', VEmail.salaVipEnFecha('2026-08-23'), false]);
+// El periodo es EDITABLE por el agente (localStorage) y manda sobre config:
+VEmail.salaVipSetPeriodo('2026-08-24', '2026-12-15');
+checks.push(['vip periodo editado: 1 nov ahora SI', VEmail.salaVipEnFecha('2026-11-01'), true]);
+checks.push(['vip periodo editado marca editado', VEmail.salaVipPeriodo().editado, true]);
+VEmail.salaVipSetPeriodo(null, null);
+checks.push(['vip volver al oficial: 1 nov NO', VEmail.salaVipEnFecha('2026-11-01'), false]);
 // El bloque del correo se prueba con fechas AMPLIAS para no depender del reloj
 // (este selftest tiene que seguir pasando despues del 31 oct 2026):
 const VIP = VCfg.SALA_VIP, VIP0 = { activo: VIP.activo, desde: VIP.desde, hasta: VIP.hasta, primaMinima: VIP.primaMinima };
@@ -100,7 +112,16 @@ const html1 = VEmail.buildHtml({ saludo: 'x', viajeros: [vOk] });
 checks.push(['vip bloque presente si califica', html1.includes('Sala VIP'), true]);
 checks.push(['vip bloque ANTES del centro de asistencia', html1.indexOf('Sala VIP') > 0 && html1.indexOf('Sala VIP') < html1.indexOf('Centro de asistencia 24/7'), true]);
 checks.push(['vip fechas reescritas desde config', html1.includes('del 1 de enero de 2000 al 31 de diciembre de 2099'), true]);
-checks.push(['vip toggle del envio en off = silencio', VEmail.buildHtml({ saludo: 'x', viajeros: [vOk], salaVip: false }).includes('Sala VIP'), false]);
+// El interruptor GENERAL del agente (28 ago): apaga TODOS los correos y persiste.
+VEmail.salaVipSetOn(false);
+checks.push(['vip interruptor general OFF = silencio', VEmail.buildHtml({ saludo: 'x', viajeros: [vOk] }).includes('Sala VIP'), false]);
+checks.push(['vip OFF persiste (lectura nueva)', VEmail.salaVipOn(), false]);
+VEmail.salaVipSetOn(true);
+checks.push(['vip ON de nuevo = vuelve el bloque', VEmail.buildHtml({ saludo: 'x', viajeros: [vOk] }).includes('Sala VIP'), true]);
+// El texto del correo imprime el periodo EFECTIVO (el editado, si lo hay):
+VEmail.salaVipSetPeriodo('2000-01-01', '2026-12-15');
+checks.push(['vip correo imprime el periodo editado', VEmail.buildHtml({ saludo: 'x', viajeros: [vOk] }).includes('al 15 de diciembre de 2026'), true]);
+VEmail.salaVipSetPeriodo(null, null);
 checks.push(['vip no llega al monto = silencio', VEmail.buildHtml({ saludo: 'x', viajeros: [vNo] }).includes('Sala VIP'), false]);
 checks.push(['vip mixto nombra a quien aplica', VEmail.buildHtml({ saludo: 'x', viajeros: [vOk, vNo] }).includes('aplica para'), true]);
 VIP.activo = false;
@@ -110,6 +131,10 @@ const html0 = VEmail.buildHtml({ saludo: 'x', viajeros: [vNo] });
 checks.push(['vip minimo 0 = aplica a todos', html0.includes('Sala VIP'), true]);
 checks.push(['vip minimo 0 = sin mencion del monto', html0.includes('US$80'), false]);
 VIP.activo = VIP0.activo; VIP.desde = VIP0.desde; VIP.hasta = VIP0.hasta; VIP.primaMinima = VIP0.primaMinima;
+// Restaurar EXACTO lo que el agente tenia configurado:
+ls0.on === null ? localStorage.removeItem(LS_ON) : localStorage.setItem(LS_ON, ls0.on);
+ls0.d === null ? localStorage.removeItem(LS_D) : localStorage.setItem(LS_D, ls0.d);
+ls0.h === null ? localStorage.removeItem(LS_H) : localStorage.setItem(LS_H, ls0.h);
 
 let pass=0; const lines=checks.map(([n,got,exp])=>{const ok=got===exp;if(ok)pass++;return `${ok?'PASS':'FAIL'}  ${n}: ${JSON.stringify(got)}${ok?'':' != '+JSON.stringify(exp)}`;});
 document.getElementById('out').textContent = lines.join('\n')+`\n\n${pass}/${checks.length} OK`;

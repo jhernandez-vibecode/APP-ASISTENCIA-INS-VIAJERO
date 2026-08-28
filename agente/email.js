@@ -136,20 +136,52 @@ window.VEmail = (function () {
   }
 
   // ----- Beneficio Sala VIP (Circular INS 0388-2026) -----
-  // Tres llaves, las tres tienen que estar abiertas: el interruptor maestro de
-  // config.js, la fecha (fuera del período se apaga SOLO, nadie tiene que
-  // acordarse el 1 nov) y el toggle del envío en el paso 3 (envio.salaVip).
+  // Tres llaves, las tres tienen que estar abiertas:
+  //   1. VCfg.SALA_VIP.activo — el maestro por código (retira la función entera).
+  //   2. El interruptor GENERAL del agente (pedido de JC del 28 ago: "yo activo
+  //      y se mantiene activo, lo desactivo cuando quiera, a nivel general"):
+  //      persiste en localStorage y manda sobre TODOS los correos, no por envío.
+  //   3. El PERÍODO: fuera de él el bloque se apaga SOLO — el 1 nov nadie tiene
+  //      que acordarse de nada. El período también es del agente: puede editar
+  //      desde/hasta en la consola (si el INS extiende la promo no hay que tocar
+  //      código, y el texto del correo se reescribe con lo que él puso). Si el
+  //      localStorage se pierde (limpiadores de disco), todo vuelve a los valores
+  //      de config.js: la circular sigue siendo la fuente de verdad.
+
+  const VIP_LS = { on: 'viajero_vip_on', desde: 'viajero_vip_desde', hasta: 'viajero_vip_hasta' };
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
+  const esISO = s => /^\d{4}-\d{2}-\d{2}$/.test(String(s || ''));
 
   function hoyISO() {
     const d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
+  /** El interruptor general del agente. Nace prendido; lo que él elija persiste. */
+  function salaVipOn() { return lsGet(VIP_LS.on) !== '0'; }
+  function salaVipSetOn(v) { lsSet(VIP_LS.on, v ? '1' : '0'); }
+  /** El período EFECTIVO: el que el agente editó, o el oficial de config.js. */
+  function salaVipPeriodo() {
+    const cfg = VCfg.SALA_VIP || {};
+    const d = lsGet(VIP_LS.desde), h = lsGet(VIP_LS.hasta);
+    return {
+      desde: esISO(d) ? d : cfg.desde,
+      hasta: esISO(h) ? h : cfg.hasta,
+      editado: (esISO(d) && d !== cfg.desde) || (esISO(h) && h !== cfg.hasta)
+    };
+  }
+  /** Guarda el período del agente; null/inválido en un campo = volver al oficial. */
+  function salaVipSetPeriodo(desde, hasta) {
+    lsSet(VIP_LS.desde, esISO(desde) ? desde : null);
+    lsSet(VIP_LS.hasta, esISO(hasta) ? hasta : null);
+  }
   /** ¿El beneficio existe hoy? `hoy` es inyectable solo para el selftest. */
   function salaVipEnFecha(hoy) {
     const cfg = VCfg.SALA_VIP;
     if (!cfg || !cfg.activo) return false;
+    const p = salaVipPeriodo();
     const h = hoy || hoyISO();
-    return h >= cfg.desde && h <= cfg.hasta;
+    return h >= p.desde && h <= p.hasta;
   }
   /** Los viajeros cuya prima llega al mínimo. Se mide UNO POR UNO: cada viajero
    *  tiene su póliza y su prima; nunca se promedia ni se suma. */
@@ -169,8 +201,10 @@ window.VEmail = (function () {
     const p = String(iso || '').split('-');
     return { d: parseInt(p[2], 10), mes: MESES_LARGOS[parseInt(p[1], 10) - 1] || '', a: p[0] };
   }
-  function periodoSalaVip(cfg) {
-    const a = fechaLarga(cfg.desde), b = fechaLarga(cfg.hasta);
+  // El texto de vigencia sale del período EFECTIVO (el del agente si lo editó):
+  // así el correo nunca imprime una fecha distinta de la que rige de verdad.
+  function periodoSalaVip(per) {
+    const a = fechaLarga(per.desde), b = fechaLarga(per.hasta);
     const desde = a.d + ' de ' + a.mes + (a.a !== b.a ? ' de ' + a.a : '');
     return 'del ' + desde + ' al ' + b.d + ' de ' + b.mes + ' de ' + b.a;
   }
@@ -197,8 +231,8 @@ window.VEmail = (function () {
    *  - Se atribuye al INS y lleva el período, reescrito desde config.
    */
   function bloqueSalaVip(envio) {
+    if (!salaVipOn()) return '';                  // el interruptor general del agente
     if (!salaVipEnFecha()) return '';
-    if (envio.salaVip === false) return '';       // el toggle del paso 3
     const vs = envio.viajeros || [];
     if (!vs.length) return '';
     const cfg = VCfg.SALA_VIP;
@@ -239,7 +273,7 @@ window.VEmail = (function () {
         '<p style="margin:0;font-size:13px;color:#334155;line-height:1.7;">' + cuerpo +
           ' Para ingresar, presente la <b style="color:' + SDI_NAVY + ';">oferta-constancia de seguro</b> ' + constancia +
           ' con la p&oacute;liza vigente al momento de usar el beneficio.</p>' +
-        '<p style="margin:9px 0 0;font-size:10.5px;color:' + SDI_GRIS + ';line-height:1.5;">Beneficio otorgado por el INS &middot; Vigente ' + periodoSalaVip(cfg) + '.</p>' +
+        '<p style="margin:9px 0 0;font-size:10.5px;color:' + SDI_GRIS + ';line-height:1.5;">Beneficio otorgado por el INS &middot; Vigente ' + periodoSalaVip(salaVipPeriodo()) + '.</p>' +
       '</td></tr></table></td></tr>';
   }
 
@@ -435,5 +469,6 @@ window.VEmail = (function () {
   async function fileToB64(file) { return abToB64(await file.arrayBuffer()); }
   async function pathToB64(path) { const r = await fetch(path); if (!r.ok) throw new Error('No se pudo cargar ' + path); return abToB64(await r.arrayBuffer()); }
 
-  return { buildHtml, buildAndSend, fileToB64, pathToB64, salaVipEnFecha, salaVipCalifican };
+  return { buildHtml, buildAndSend, fileToB64, pathToB64, salaVipEnFecha, salaVipCalifican,
+    salaVipOn, salaVipSetOn, salaVipPeriodo, salaVipSetPeriodo };
 })();
