@@ -60,12 +60,12 @@ window.VCfg = {
   // Solo la consola la muestra: la página del cliente no lleva novedades
   // (decisión de JC del 24 ago 2026).
   NOVEDADES: {
-    version: '2026-08-28',
-    fecha: '28 ago 2026',
+    version: '2026-08-29',
+    fecha: '29 ago 2026',
     items: [
-      '<b>El correo ahora anuncia el beneficio Sala VIP</b> del Aeropuerto Juan Santamaría a los clientes cuya prima llega a US$80 por persona (Circular INS 0388-2026), con una tarjeta dorada antes del centro de asistencia. Al viajero que no llega al monto no se le menciona nada.',
-      '<b>Vos controlás el beneficio con un interruptor general</b> — la tarjeta dorada que aparece debajo de la barra de pasos. Lo apagás y ningún correo lo menciona; lo prendés y vuelve. Con «cambiar período» podés mover las fechas si el INS extiende la promoción; pasada la fecha se apaga solo.',
-      '<b>La ficha de cada asegurado ahora lee la prima del PDF</b> (editable, como los demás datos) y te dice si esa póliza califica, para que sepás qué va a salir en el correo antes de enviarlo.'
+      '<b>La página de tus clientes estrena look claro</b>, con el mismo lenguaje visual de la app Asistencia Autos: fondo blanco, encabezado azul del INS y tarjetas con sombra suave. Se siente como app de teléfono: los botones responden al instante del toque y la barra de abajo es translúcida con un indicador que se desliza solo.',
+      '<b>Nada del contenido cambió</b>: contactos, trámites, coberturas, tu link personalizado y la instalación como app siguen exactamente igual. La consola y el correo tampoco se tocaron.',
+      '<b>Sigue pendiente tu prueba del beneficio Sala VIP</b> (del 28 ago): el aviso de novedades, el interruptor dorado y un envío real con prima ≥ US$80.'
     ]
   },
 

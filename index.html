@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Asistencia INS Viajero</title>
 <meta name="description" content="Guía de asistencia del Seguro INS Viajero con Asistencia: contactos de emergencia, reclamos, coberturas y Wi-Fi Call.">
-<meta name="theme-color" content="#0A1626">
+<meta name="theme-color" content="#0c2340">
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -19,11 +19,16 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/lucide@latest"></script>
 <script>
+/* Paleta CLARA estilo Asistencia Autos (29 ago 2026). Los nombres se conservan
+   (el markup los usa por rol semántico); cambian los valores:
+   noche = navy INS (header/hero/scrims) · panel = card blanca · hielo = tinta
+   principal · bruma = texto secundario · cielo/verde/ambar/rojo = acentos
+   oscuros legibles sobre fondo claro. */
 tailwind.config = {
   theme: { extend: {
     colors: {
-      noche:'#0A1626', panel:'#101F35', panel2:'#16283F', linea:'rgba(148,180,220,.14)',
-      hielo:'#E4EDF7', bruma:'#8CA3BF', cielo:'#4CB8F5', verde:'#3DDB97', ambar:'#F5B84C', rojo:'#F26D6D', rojofix:'#D64545'
+      noche:'#0c2340', panel:'#ffffff', panel2:'#f3f5f8', linea:'#e9ebef',
+      hielo:'#1a2230', bruma:'#5b6675', cielo:'#0369a1', verde:'#157347', ambar:'#b4690e', rojo:'#c2342f', rojofix:'#c2342f'
     },
     fontFamily: {
       display:['Poppins','system-ui','sans-serif'],
@@ -34,14 +39,14 @@ tailwind.config = {
 }
 </script>
 <style>
-  body{background:#0A1626;color:#E4EDF7;
-    background-image:linear-gradient(rgba(148,180,220,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(148,180,220,.045) 1px,transparent 1px);
-    background-size:44px 44px;}
+  /* Tema claro estilo Asistencia Autos + física Apple (29 ago 2026) */
+  *{-webkit-tap-highlight-color:transparent}
+  body{background:#fbfbfa;color:#1a2230}
   .tab-content{display:none}
   .tab-content.active{display:block;animation:fadeUp .45s cubic-bezier(.16,1,.3,1)}
   @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  .card{background:#101F35;border:1px solid rgba(148,180,220,.14);border-radius:16px}
-  .card-in{box-shadow:inset 0 1px 0 rgba(228,237,247,.06)}
+  .card{background:#ffffff;border:1px solid #e9ebef;border-radius:16px;box-shadow:0 14px 30px -20px rgba(12,35,64,.18)}
+  .card-in{box-shadow:0 14px 30px -20px rgba(12,35,64,.18)}
   .glow-dot{position:relative}
   .glow-dot::after{content:'';position:absolute;inset:-4px;border-radius:9999px;background:currentColor;opacity:.25;animation:pulse 2.2s ease-in-out infinite}
   @keyframes pulse{0%,100%{transform:scale(.8);opacity:.25}50%{transform:scale(1.4);opacity:.06}}
@@ -50,33 +55,55 @@ tailwind.config = {
   details.acc summary::-webkit-details-marker{display:none}
   details.acc[open] .chev{transform:rotate(90deg)}
   .chev{transition:transform .3s cubic-bezier(.16,1,.3,1)}
-  .lift{transition:transform .25s cubic-bezier(.16,1,.3,1),border-color .25s,background .25s}
-  .lift:hover{transform:translateY(-2px);border-color:rgba(148,180,220,.35)}
-  .lift:active{transform:translateY(0) scale(.985)}
-  .scan{position:relative;overflow:hidden}
-  .scan::before{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 40%,rgba(228,237,247,.045) 50%,transparent 60%);transform:translateX(-100%);animation:scan 5.5s ease-in-out infinite}
-  @keyframes scan{0%,60%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+  /* Feedback en el pointer-down, instantáneo — el rasgo Apple de la casa */
+  .lift{transition:transform 90ms ease-out,border-color .25s,background .25s,box-shadow .2s}
+  .lift:hover{transform:translateY(-2px);border-color:#d5dbe3}
+  .lift:active{transform:scale(.97)}
+  section .card > button:active,section .card a:active,#more-items button:active{background:#eef0f3;transition:background 90ms ease-out}
+  section .card > button,section .card a{transition:background 90ms ease-out}
+
+  /* Hero navy — el mismo bloque de bienvenida de Asistencia Autos */
+  .hero-navy{background:linear-gradient(178deg,#0c2138 0%,#0e2745 88%,#10294a 100%);color:#fff;border:0;border-radius:24px;box-shadow:0 16px 32px -14px rgba(12,35,64,.4)}
+  .hero-navy .t-eyebrow{color:#7fb0db}
+  .hero-navy .t-sub{color:#b9c8da}
+
+  /* Barra inferior y hoja "Más": material translúcido con el contenido debajo */
+  .glassbar{background:rgba(255,255,255,.82);-webkit-backdrop-filter:blur(18px) saturate(170%);backdrop-filter:blur(18px) saturate(170%);border-top:1px solid rgba(12,35,64,.08);box-shadow:0 -8px 24px -18px rgba(12,35,64,.35)}
+  .glasssheet{background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);box-shadow:0 -12px 44px rgba(12,35,64,.25)}
+  #more-panel{transition:transform .38s cubic-bezier(.32,.72,0,1)}
+  #more-bd{transition:opacity .3s ease}
+
+  /* Indicador de pestaña activa con resorte (se mueve por JS con SDIPhysics) */
+  #bnav{position:relative}
+  #bn-pill{position:absolute;top:8px;bottom:8px;border-radius:14px;background:rgba(3,105,161,.1);border:1px solid rgba(3,105,161,.22);pointer-events:none;opacity:0;will-change:transform,width}
+
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media (prefers-reduced-transparency:reduce){
+    .glassbar{background:#ffffff;-webkit-backdrop-filter:none;backdrop-filter:none}
+    .glasssheet{background:#ffffff;-webkit-backdrop-filter:none;backdrop-filter:none}
+    header.sticky{background:#0c2340!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+  }
 </style>
 </head>
 <body class="min-h-[100dvh] font-body antialiased pb-24 md:pb-0">
 
 <!-- ===== HEADER ===== -->
-<header class="sticky top-0 z-50 bg-noche/90 backdrop-blur border-b border-linea">
+<header class="sticky top-0 z-50 bg-noche/90 backdrop-blur border-b border-white/10 text-white">
   <div class="max-w-6xl mx-auto px-4 sm:px-8 h-16 flex items-center justify-between">
     <div class="flex items-center gap-3 min-w-0">
       <img src="INS BLANCO.png" alt="INS" class="h-7 sm:h-9 w-auto object-contain shrink-0">
-      <div class="h-7 border-l border-linea"></div>
+      <div class="h-7 border-l border-white/15"></div>
       <div class="min-w-0">
         <p class="font-display font-bold text-lg sm:text-xl leading-none tracking-tight truncate">Asistencia Viajero</p>
-        <p class="board text-[9px] text-bruma uppercase mt-1 truncate">Centro de asistencia · 24/7</p>
+        <p class="board text-[9px] text-[#9fb4c9] uppercase mt-1 truncate">Centro de asistencia · 24/7</p>
       </div>
     </div>
     <div class="flex items-center gap-3">
-      <span class="hidden sm:inline-flex items-center gap-2 text-[11px] board uppercase text-verde">
-        <span class="glow-dot w-2 h-2 rounded-full bg-verde inline-block"></span> Operativo
+      <span class="hidden sm:inline-flex items-center gap-2 text-[11px] board uppercase text-[#3ddb97]">
+        <span class="glow-dot w-2 h-2 rounded-full bg-[#3ddb97] inline-block"></span> Operativo
       </span>
-      <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="hidden md:inline-flex items-center gap-2 bg-verde/15 border border-verde/40 text-verde hover:bg-verde/25 text-sm font-semibold px-4 py-2 rounded-full transition">
+      <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="hidden md:inline-flex items-center gap-2 bg-[#3ddb97]/15 border border-[#3ddb97]/40 text-[#3ddb97] hover:bg-[#3ddb97]/25 text-sm font-semibold px-4 py-2 rounded-full transition">
         <i data-lucide="message-circle" class="w-4 h-4"></i> Wi-Fi Call
       </a>
     </div>
@@ -109,16 +136,16 @@ tailwind.config = {
     <!-- ============ INICIO ============ -->
     <section id="home" class="tab-content active space-y-6">
 
-      <!-- Tablero hero -->
-      <div class="card card-in scan p-6 sm:p-10 relative overflow-hidden">
-        <p class="board text-[10px] sm:text-[11px] uppercase text-bruma tracking-[.22em] mb-4">Seguro INS Viajero con Asistencia</p>
+      <!-- Hero navy (mismo lenguaje del hero de Asistencia Autos) -->
+      <div class="hero-navy p-6 sm:p-10 relative overflow-hidden">
+        <p class="board t-eyebrow text-[10px] sm:text-[11px] uppercase tracking-[.22em] mb-4">Seguro INS Viajero con Asistencia</p>
         <h1 class="font-display font-bold text-3xl sm:text-5xl leading-[1.03] tracking-tight max-w-lg">Ayuda inmediata,<br>en cualquier huso horario.</h1>
-        <p class="mt-4 text-bruma max-w-md leading-relaxed text-sm sm:text-base">A quién llamar, cómo reclamar y qué cubre su <strong class="text-hielo">Seguro INS Viajero con Asistencia</strong>.</p>
+        <p class="t-sub mt-4 max-w-md leading-relaxed text-sm sm:text-base">A quién llamar, cómo reclamar y qué cubre su <strong class="text-white">Seguro INS Viajero con Asistencia</strong>.</p>
         <div class="mt-6 flex flex-col sm:flex-row justify-center gap-3 max-w-lg mx-auto">
-          <button onclick="go('contacts')" class="lift flex-1 flex items-center justify-center gap-2 bg-rojofix text-white font-semibold px-5 py-3.5 rounded-xl text-sm">
+          <button onclick="go('contacts')" class="lift flex-1 flex items-center justify-center gap-2 bg-rojofix text-white font-semibold px-5 py-3.5 rounded-xl text-sm shadow-lg shadow-red-900/30">
             <i data-lucide="phone-call" class="w-4 h-4"></i> Tengo una emergencia
           </button>
-          <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="lift flex-1 flex items-center justify-center gap-2 bg-verde text-noche font-semibold px-5 py-3.5 rounded-xl text-sm">
+          <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="lift flex-1 flex items-center justify-center gap-2 bg-[#1da851] text-white font-semibold px-5 py-3.5 rounded-xl text-sm shadow-lg shadow-green-900/30">
             <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp asistencia
           </a>
         </div>
@@ -229,7 +256,7 @@ tailwind.config = {
           <p class="text-bruma text-sm mt-1">La vía más rápida con internet. Funciona desde cualquier país.</p>
           <p class="font-mono font-bold text-xl sm:text-2xl mt-3 text-hielo tracking-tight">+54 9 11 6750 2557</p>
         </div>
-        <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="lift bg-verde text-noche font-bold px-6 py-3.5 rounded-xl text-center text-sm">Iniciar chat</a>
+        <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="lift bg-[#1da851] text-white font-bold px-6 py-3.5 rounded-xl text-center text-sm">Iniciar chat</a>
       </div>
 
       <!-- Tablero de líneas -->
@@ -423,7 +450,7 @@ tailwind.config = {
           <h2 class="font-display font-bold text-3xl tracking-tight">Asistencia por WhatsApp</h2>
           <p class="text-bruma mt-2 text-sm">Cómo pedir ayuda con el bot de Universal Assistance desde el exterior.</p>
         </div>
-        <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="lift bg-verde text-noche font-bold px-5 py-3 rounded-xl text-sm inline-flex items-center gap-2 self-start"><i data-lucide="message-circle" class="w-4 h-4"></i> Abrir WhatsApp</a>
+        <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="lift bg-[#1da851] text-white font-bold px-5 py-3 rounded-xl text-sm inline-flex items-center gap-2 self-start"><i data-lucide="message-circle" class="w-4 h-4"></i> Abrir WhatsApp</a>
       </div>
 
       <div class="card card-in divide-y divide-linea overflow-hidden">
@@ -582,7 +609,7 @@ tailwind.config = {
         <p class="board text-[10px] uppercase text-verde mb-4">Embarque abierto · Cotización en menos de 1 minuto</p>
         <h3 class="font-display font-bold text-2xl sm:text-4xl leading-tight max-w-md">¿Ya está planeando la próxima salida?</h3>
         <p class="text-bruma text-sm mt-3 max-w-md leading-relaxed">Viaje de nuevo con gastos médicos, equipaje, cancelación y asistencia 24/7. Cotice su nueva póliza en segundos.</p>
-        <a data-ag="sales-link" href="https://www.segurosdelins.com/seguros-de-viaje" target="_blank" rel="noopener noreferrer" class="lift inline-flex items-center gap-2 bg-ambar text-noche font-bold px-6 py-3.5 rounded-xl mt-6 text-sm">
+        <a data-ag="sales-link" href="https://www.segurosdelins.com/seguros-de-viaje" target="_blank" rel="noopener noreferrer" class="lift inline-flex items-center gap-2 bg-ambar text-white font-bold px-6 py-3.5 rounded-xl mt-6 text-sm">
           <i data-lucide="plane" class="w-4 h-4"></i> Cotizar mi próximo viaje
         </a>
       </div>
@@ -628,7 +655,7 @@ tailwind.config = {
   <div class="max-w-6xl mx-auto px-4 sm:px-8 py-8 text-center">
     <div class="flex flex-col items-center gap-2.5">
       <p class="text-xs text-bruma">Una aplicación de</p>
-      <div class="bg-hielo rounded-lg px-3.5 py-2"><img src="sdi-logo.svg" alt="Seguros Digitales SDI" class="h-8 w-auto"></div>
+      <div class="bg-white border border-linea rounded-lg px-3.5 py-2"><img src="sdi-logo.svg" alt="Seguros Digitales SDI" class="h-8 w-auto"></div>
       <p class="text-xs text-bruma mt-1">Visítenos en <a data-ag="web-link" href="https://www.segurosdelins.com" target="_blank" rel="noopener noreferrer" class="font-semibold text-cielo hover:text-hielo transition">www.segurosdelins.com</a></p>
     </div>
     <div class="mt-6 pt-5 border-t border-linea text-[11px] text-bruma/60 max-w-3xl mx-auto leading-relaxed">
@@ -639,19 +666,19 @@ tailwind.config = {
 </footer>
 
 <!-- FAB WhatsApp móvil -->
-<a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="md:hidden fixed bottom-[4.7rem] right-4 z-50 bg-verde text-noche p-3.5 rounded-full shadow-xl shadow-verde/20 flex items-center justify-center active:scale-95 transition">
+<a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="md:hidden fixed bottom-[4.7rem] right-4 z-50 bg-[#1da851] text-white p-3.5 rounded-full shadow-xl shadow-[#1da851]/30 flex items-center justify-center active:scale-95 transition">
   <i data-lucide="message-circle" class="w-6 h-6"></i>
 </a>
 
 <!-- Bottom nav móvil -->
-<nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-panel border-t border-linea" style="padding-bottom:env(safe-area-inset-bottom)">
+<nav class="md:hidden fixed bottom-0 inset-x-0 z-40 glassbar" style="padding-bottom:env(safe-area-inset-bottom)">
   <div class="flex h-16" id="bnav"></div>
 </nav>
 
 <!-- Sheet "Más" -->
 <div id="more-bd" class="md:hidden fixed inset-0 z-[45] bg-noche/70 opacity-0 pointer-events-none transition-opacity duration-300" onclick="closeMore()"></div>
-<div id="more-panel" class="md:hidden fixed inset-x-0 bottom-0 z-[46] bg-panel border-t border-linea rounded-t-2xl shadow-2xl translate-y-full transition-transform duration-300" style="padding-bottom:calc(env(safe-area-inset-bottom) + 4.2rem)">
-  <div class="flex justify-center pt-3 pb-1"><div class="w-10 h-1 rounded-full" style="background:rgba(148,180,220,.3)"></div></div>
+<div id="more-panel" class="md:hidden fixed inset-x-0 bottom-0 z-[46] glasssheet rounded-t-2xl translate-y-full" style="padding-bottom:calc(env(safe-area-inset-bottom) + 4.2rem)">
+  <div class="flex justify-center pt-3 pb-1"><div class="w-10 h-1.5 rounded-full" style="background:#c9cdd4"></div></div>
   <p class="board text-[10px] uppercase text-bruma px-5 pt-2 pb-3">Más secciones</p>
   <div class="px-3 pb-3 space-y-1" id="more-items"></div>
 </div>
@@ -806,7 +833,7 @@ function showToast(msg) {
   if (!t) {
     t = document.createElement('div');
     t.id = 'sdi-toast';
-    t.className = 'fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-hielo text-noche text-sm font-medium px-4 py-2.5 rounded-full shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none';
+    t.className = 'fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[60] bg-noche text-white text-sm font-medium px-4 py-2.5 rounded-full shadow-lg opacity-0 transition-opacity duration-300 pointer-events-none';
     document.body.appendChild(t);
   }
   t.textContent = '✓  ' + msg;
@@ -852,6 +879,50 @@ moreB.innerHTML = '<i data-lucide="more-horizontal" class="w-5 h-5 pointer-event
 moreB.onclick = openMore;
 bnav.appendChild(moreB);
 
+/* Indicador de pestaña activa: una pastilla que viaja entre botones con física
+   de resorte (damping .85, response .32 — parámetros estilo Apple). */
+var pill = document.createElement('span');
+pill.id = 'bn-pill';
+bnav.prepend(pill);
+var pillX = 0, pillV = 0, pillRaf = 0, pillOn = false;
+var REDUCED = false;
+try { REDUCED = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+function springStep(x, v, target, dt) {
+  var w = 2 * Math.PI / 0.32, k = w * w, c = 2 * 0.85 * w;
+  v += (-k * (x - target) - c * v) * dt; x += v * dt; return [x, v];
+}
+function movePill(id) {
+  var sec = null;
+  SECTIONS.forEach(function (s) { if (s.id === id) sec = s; });
+  var btn = document.getElementById(sec && sec.more ? 'bn-more' : 'bn-' + id);
+  if (!btn || !btn.offsetWidth) return;
+  var t = { x: btn.offsetLeft + 6, w: btn.offsetWidth - 12 };
+  pill.style.width = t.w + 'px';
+  if (!pillOn || REDUCED) {
+    pillOn = true; pillX = t.x; pillV = 0;
+    pill.style.opacity = '1';
+    pill.style.transform = 'translateX(' + pillX + 'px)';
+    return;
+  }
+  cancelAnimationFrame(pillRaf);
+  var last = performance.now();
+  (function loop(now) {
+    var dt = Math.min(0.032, (now - last) / 1000); last = now;
+    var r = springStep(pillX, pillV, t.x, dt); pillX = r[0]; pillV = r[1];
+    pill.style.transform = 'translateX(' + pillX + 'px)';
+    if (Math.abs(pillX - t.x) < 0.4 && Math.abs(pillV) < 6) {
+      pillX = t.x; pillV = 0;
+      pill.style.transform = 'translateX(' + pillX + 'px)';
+      return;
+    }
+    pillRaf = requestAnimationFrame(loop);
+  })(last);
+}
+window.addEventListener('resize', function () {
+  var cur = document.querySelector('.tab-content.active');
+  if (cur) { pillOn = false; movePill(cur.id); }
+});
+
 var mi = document.getElementById('more-items');
 SECTIONS.filter(function (s) { return s.more; }).forEach(function (s) {
   var b = document.createElement('button');
@@ -881,6 +952,7 @@ function go(id, accId) {
   var sec = null;
   SECTIONS.forEach(function (s) { if (s.id === id) sec = s; });
   document.getElementById('bn-more').className = 'flex-1 flex flex-col items-center justify-center gap-1 transition ' + (sec && sec.more ? 'text-cielo' : 'text-bruma/60');
+  movePill(id);
   window.scrollTo({ top: 0 });
   if (accId) {
     var d = document.getElementById(accId);
