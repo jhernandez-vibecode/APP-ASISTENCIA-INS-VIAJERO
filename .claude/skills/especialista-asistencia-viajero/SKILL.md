@@ -284,4 +284,4 @@ cp C:/Users/segur/APP-ASISTENCIA-INS-VIAJERO/SKILL.md \
 
 ---
 
-> **Ubicaciones canon (desde el 7 sep 2026, decisión 10-C):** `jhernandez-vibecode/APP-ASISTENCIA-INS-VIAJERO` → `.claude/skills/especialista-asistencia-viajero/SKILL.md` y `C:\Users\segur\.claude\skills\especialista-asistencia-viajero\SKILL.md`, byte-idénticas. Se edita en el repo, se commitea y se copia al user-level (o al revés, pero siempre las dos en el mismo día).
+> **Ubicaciones canon (desde el 6 sep 2026, decisión 10-C):** `jhernandez-vibecode/APP-ASISTENCIA-INS-VIAJERO` → `.claude/skills/especialista-asistencia-viajero/SKILL.md` y `C:\Users\segur\.claude\skills\especialista-asistencia-viajero\SKILL.md`, byte-idénticas. Se edita en el repo, se commitea y se copia al user-level (o al revés, pero siempre las dos en el mismo día).
