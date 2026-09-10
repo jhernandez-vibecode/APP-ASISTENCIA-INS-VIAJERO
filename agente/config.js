@@ -63,10 +63,9 @@ window.VCfg = {
     version: '2026-09-10',
     fecha: '10 sep 2026',
     items: [
-      '<b>La consola estrena la imagen de Seguros Digitales SDI</b>, la misma del cotizador de autos: fondo claro, el logotipo a color arriba con tu correo al lado, botones redondos azules y tarjetas blancas con borde fino. Se fueron el encabezado azul oscuro, los emojis y las cajas de color.',
+      '<b>La consola de envíos cambió de imagen: estrena la de Seguros Digitales SDI</b>, la misma del cotizador de autos: fondo claro, el logotipo a color arriba con tu correo al lado, botones redondos azules y tarjetas blancas.',
       '<b>Los avisos ahora se distinguen por un punto de color</b>, no por cajas: el beneficio Sala VIP lleva un punto dorado cuando sale en los correos, y el teléfono del cliente se pone verde cuando ya lo escribiste. El interruptor de Sala VIP se ve azul cuando está prendido.',
-      '<b>Todo funciona igual</b>: los tres pasos, la carga de ZIP, el correo, los WhatsApp y tu información de agente no cambiaron. La página de tus clientes tampoco.',
-      '<b>Sigue pendiente tu prueba del beneficio Sala VIP</b> (del 28 ago): un envío real con prima ≥ US$80 para ver el bloque dorado en el correo.'
+      '<b>Todo funciona igual</b>: los tres pasos, la carga de ZIP, el correo, los WhatsApp y tu información de agente no cambiaron. La página de tus clientes tampoco.'
     ]
   },
 
