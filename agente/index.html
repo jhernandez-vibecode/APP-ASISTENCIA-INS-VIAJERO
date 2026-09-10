@@ -8,21 +8,22 @@
        distinguirlas con varias pestañas abiertas. El favicon del kit SDI es para
        avatares y redes de la empresa, no para las pestañas de las apps. -->
   <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-  <!-- Tipografía SDI, tres roles (Questrial, el cuarto, va vectorizada DENTRO del
-       logo y no se descarga). Solo los pesos que se usan. -->
+  <!-- Tipografía SDI v1.3 (10 sep 2026): Google Sans Flex en títulos y texto, Google
+       Sans Code en cifras y pólizas. Inter va SOLO para prestar el glifo ₡, que Flex no
+       trae: no quitarla. Questrial, la del logo, va vectorizada dentro del SVG. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,400..700&family=Google+Sans+Code:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Inter pasa a ser la letra de toda la interfaz y JetBrains Mono la de las
-    // cifras (font-mono ya está puesto en el N° de póliza). Los colores de marca
-    // quedan como clases: bg-sdi-azul, text-sdi-azul, border-sdi-azul.
+    // Google Sans Flex es la letra de toda la interfaz y Google Sans Code la de
+    // las cifras (font-mono ya está puesto en el N° de póliza). Los colores de
+    // marca quedan como clases: bg-sdi-azul, text-sdi-azul, border-sdi-azul.
     tailwind.config = {
       theme: { extend: {
         fontFamily: {
-          sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-          mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'monospace']
+          sans: ['Google Sans Flex', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+          mono: ['Google Sans Code', 'ui-monospace', 'SFMono-Regular', 'monospace']
         },
         colors: { sdi: {
           azul: '#0369A1', azulD: '#075985',
@@ -34,11 +35,11 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://accounts.google.com/gsi/client" async></script>
   <style>
-    /* Poppins en los títulos: es la hermana con pesos de la letra del logotipo,
-       así el logo y los títulos se leen como una sola cosa. */
+    /* Los títulos van en la misma Google Sans Flex, en peso medio (500): la
+       línea clara no usa negritas en titulares. */
     h1, h2, h3, h4, .t-display {
-      font-family: 'Poppins', 'Inter', ui-sans-serif, sans-serif;
-      letter-spacing: -.01em;
+      font-family: 'Google Sans Flex', 'Inter', ui-sans-serif, sans-serif;
+      letter-spacing: -.02em;
     }
     /* Confirmación de envío: el check se dibuja y el panel entra desde abajo. */
     @keyframes v-draw { to { stroke-dashoffset: 0 } }
@@ -68,6 +69,9 @@
     .sw input:focus-visible + i { outline: 2px solid #0369A1; outline-offset: 2px }
     @media (prefers-reduced-motion: reduce) { .sw i, .sw i:before { transition: none } }
   </style>
+  <!-- LÍNEA CLARA (10 sep 2026): hoja de sobreescritura de la cara. Va de última en
+       el head a propósito: pisa el <style> de arriba y las utilidades de Tailwind. -->
+  <link rel="stylesheet" href="linea-clara-consola.css">
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800">
   <!-- IDENTIDAD SDI (8 ago 2026). La consola es la herramienta del agente: acá manda
@@ -79,10 +83,19 @@
        el archivo canónico está en C:/Users/segur/SDI-BRAND-KIT.
        El fondo se queda en el navy de siempre: el azul institucional ya se probó en el
        Cotizador y JC lo descartó por verse demasiado claro. -->
-  <header class="text-white" style="background:linear-gradient(135deg,#0b2545 0%,#13477e 55%,#1c6fb8 100%)">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-      <svg class="h-8 w-auto flex-none" viewBox="0 0 184 90" role="img" aria-label="Seguros Digitales SDI">
-        <path d="M36.076 74.656Q28.04 74.656 23.038 72.483Q18.036 70.31 15.535 66.456Q13.034 62.602000000000004 12.624 57.763999999999996H19.02Q19.266 61.7 21.644 64.119Q24.022 66.538 27.917 67.686Q31.812 68.834 36.486000000000004 68.834Q43.374 68.834 47.392 66.415Q51.410000000000004 63.996 51.410000000000004 59.24Q51.410000000000004 56.370000000000005 49.401 54.607Q47.392 52.843999999999994 44.071 51.696Q40.75 50.548 36.814 49.605000000000004Q32.878 48.662 28.901 47.596000000000004Q24.924 46.53 21.603 44.89Q18.282 43.25 16.273 40.667Q14.264 38.083999999999996 14.264 34.065999999999995Q14.264 27.424 19.389000000000003 23.241999999999997Q24.514000000000003 19.059999999999995 34.682 19.059999999999995Q41.897999999999996 19.059999999999995 46.572 21.232999999999997Q51.246 23.406 53.583 26.932Q55.92 30.458 56.166000000000004 34.558H49.852000000000004Q49.36 30.458 45.751999999999995 27.628999999999998Q42.144 24.799999999999997 34.682 24.799999999999997Q30.09 24.799999999999997 27.22 25.701999999999998Q24.35 26.604 22.833000000000002 28.038999999999998Q21.316000000000003 29.473999999999997 20.783 31.031999999999996Q20.25 32.589999999999996 20.25 33.984Q20.25 36.69 22.259 38.370999999999995Q24.268 40.052 27.589 41.159Q30.91 42.266 34.928 43.168Q38.946 44.07 42.923 45.177Q46.9 46.284 50.221000000000004 47.965Q53.542 49.646 55.551 52.269999999999996Q57.56 54.894 57.56 58.994Q57.56 66.538 51.82 70.59700000000001Q46.08 74.656 36.076 74.656ZM64.572 74.0V19.716H87.45Q92.28800000000001 19.716 96.757 21.561Q101.226 23.406 104.752 26.932Q108.27799999999999 30.458 110.328 35.459999999999994Q112.378 40.461999999999996 112.378 46.858000000000004Q112.378 53.254 110.328 58.256Q108.27799999999999 63.257999999999996 104.752 66.78399999999999Q101.226 70.31 96.757 72.155Q92.28800000000001 74.0 87.45 74.0ZM70.722 68.178H87.20400000000001Q93.02600000000001 68.178 97.29 65.226Q101.554 62.274 103.891 57.436Q106.22800000000001 52.598 106.22800000000001 46.858000000000004Q106.22800000000001 41.036 103.891 36.198Q101.554 31.36 97.29 28.448999999999998Q93.02600000000001 25.537999999999997 87.20400000000001 25.537999999999997H70.722ZM119.71799999999999 74.0V19.716H125.868V74.0Z" fill="#FFFFFF"/>
+  <!-- IDENTIDAD SDI · LÍNEA CLARA (10 sep 2026). La consola es la herramienta del
+       agente: acá manda Seguros Digitales SDI y el INS no entra. Al revés de
+       index.html (la página del cliente), donde el logo del INS va arriba y SDI al pie.
+       Barra en dos niveles (regla 3 de la línea clara): arriba el logotipo SDI a color
+       (02-sdi-logo-compacto del kit, INLINE y VECTORIZADO: las letras son curvas) y el
+       agente conectado; abajo el nombre del producto y la única acción del encabezado.
+       El filete 60/25/10/5 se queda debajo: es la firma SDI. Mismos ids de siempre:
+       #who lo escribe app.js al entrar y #btn-agente lo revela showConsole(). -->
+  <header class="lc-hdr">
+    <div class="lc-top">
+      <div class="lc-wrap">
+        <svg class="brand-mark" viewBox="0 0 184 90" role="img" aria-label="Seguros Digitales SDI">
+        <path d="M36.076 74.656Q28.04 74.656 23.038 72.483Q18.036 70.31 15.535 66.456Q13.034 62.602000000000004 12.624 57.763999999999996H19.02Q19.266 61.7 21.644 64.119Q24.022 66.538 27.917 67.686Q31.812 68.834 36.486000000000004 68.834Q43.374 68.834 47.392 66.415Q51.410000000000004 63.996 51.410000000000004 59.24Q51.410000000000004 56.370000000000005 49.401 54.607Q47.392 52.843999999999994 44.071 51.696Q40.75 50.548 36.814 49.605000000000004Q32.878 48.662 28.901 47.596000000000004Q24.924 46.53 21.603 44.89Q18.282 43.25 16.273 40.667Q14.264 38.083999999999996 14.264 34.065999999999995Q14.264 27.424 19.389000000000003 23.241999999999997Q24.514000000000003 19.059999999999995 34.682 19.059999999999995Q41.897999999999996 19.059999999999995 46.572 21.232999999999997Q51.246 23.406 53.583 26.932Q55.92 30.458 56.166000000000004 34.558H49.852000000000004Q49.36 30.458 45.751999999999995 27.628999999999998Q42.144 24.799999999999997 34.682 24.799999999999997Q30.09 24.799999999999997 27.22 25.701999999999998Q24.35 26.604 22.833000000000002 28.038999999999998Q21.316000000000003 29.473999999999997 20.783 31.031999999999996Q20.25 32.589999999999996 20.25 33.984Q20.25 36.69 22.259 38.370999999999995Q24.268 40.052 27.589 41.159Q30.91 42.266 34.928 43.168Q38.946 44.07 42.923 45.177Q46.9 46.284 50.221000000000004 47.965Q53.542 49.646 55.551 52.269999999999996Q57.56 54.894 57.56 58.994Q57.56 66.538 51.82 70.59700000000001Q46.08 74.656 36.076 74.656ZM64.572 74.0V19.716H87.45Q92.28800000000001 19.716 96.757 21.561Q101.226 23.406 104.752 26.932Q108.27799999999999 30.458 110.328 35.459999999999994Q112.378 40.461999999999996 112.378 46.858000000000004Q112.378 53.254 110.328 58.256Q108.27799999999999 63.257999999999996 104.752 66.78399999999999Q101.226 70.31 96.757 72.155Q92.28800000000001 74.0 87.45 74.0ZM70.722 68.178H87.20400000000001Q93.02600000000001 68.178 97.29 65.226Q101.554 62.274 103.891 57.436Q106.22800000000001 52.598 106.22800000000001 46.858000000000004Q106.22800000000001 41.036 103.891 36.198Q101.554 31.36 97.29 28.448999999999998Q93.02600000000001 25.537999999999997 87.20400000000001 25.537999999999997H70.722ZM119.71799999999999 74.0V19.716H125.868V74.0Z" fill="#0369A1"/>
         <g transform="translate(143.87, 19.06)">
           <rect x="0" y="0.0" width="30.0" height="6.15" rx="1.5" fill="#0369A1"/>
           <rect x="0" y="16.48" width="30.0" height="6.15" rx="1.5" fill="#0D9488"/>
@@ -90,36 +103,29 @@
           <rect x="0" y="49.45" width="30.0" height="6.15" rx="1.5" fill="#C9A227"/>
         </g>
       </svg>
-      <div class="w-px h-8 flex-none" style="background:rgba(255,255,255,.3)"></div>
-      <!-- whitespace-nowrap + truncate en el correo: al entrar, #who deja de decir "uso
-           interno" y pasa a mostrar el correo del agente, que es largo. Sin esto, en
-           celular el flex comprimía este bloque, el subtítulo se partía en tres líneas
-           y el encabezado se estiraba de 61 a 126 px. -->
-      <div class="whitespace-nowrap">
-        <div class="t-display font-bold text-[15px] leading-tight">Consola de envíos</div>
-        <div class="text-[11px] leading-tight mt-px" style="color:rgba(255,255,255,.75)">Seguro Viajero con Asistencia</div>
-      </div>
-      <!-- El panel "Mi información de agente" se llena una vez y no se vuelve a
-           tocar: por eso vive acá arriba y no encima del trabajo del día. En
-           celular queda solo el engranaje, para no estirar el encabezado. -->
-      <div class="ml-auto flex items-center gap-2 min-w-0 max-w-[62%] justify-end">
-        <button id="btn-agente" onclick="VApp.agentToggle()" title="Mi información de agente"
-          class="hidden flex-none rounded-lg px-2 py-1 text-[11px] font-medium leading-none transition-colors hover:bg-white/25"
-          style="background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22)">⚙️<span class="hidden sm:inline ml-1">Mi información</span></button>
-        <!-- En celular el correo se comprimía a ~44 px ("jhe…"), que no dice nada:
-             ahí queda solo el engranaje. El encabezado se queda en 61 px, medido
-             con el correo de producción y no con el "uso interno" del arranque. -->
-        <span class="hidden sm:inline text-xs text-blue-200 truncate text-right" id="who">uso interno</span>
+        <!-- #who pasa de "uso interno" al correo del agente al entrar (app.js). En
+             celular el nivel de arriba esconde el meta entero: queda el logo. -->
+        <div class="meta">Agente: <b id="who">uso interno</b></div>
       </div>
     </div>
-    <!-- Filete de marca: la proporción 60/25/10/5 del manual hecha línea. Es lo único
-         que mete el dorado, la firma de SDI. -->
-    <div style="height:4px;background:linear-gradient(to right,#0369A1 0 60%,#0D9488 60% 85%,#EA580C 85% 95%,#C9A227 95% 100%)"></div>
+    <div class="lc-nav">
+      <div class="lc-wrap">
+        <div class="l">
+          <span class="prod">Consola de envíos</span>
+          <span class="sub">Seguro Viajero con Asistencia</span>
+        </div>
+        <!-- El panel "Mi información de agente" se llena una vez y no se vuelve a
+             tocar: por eso vive acá arriba y no encima del trabajo del día. -->
+        <button id="btn-agente" onclick="VApp.agentToggle()" title="Mi información de agente"
+          class="hidden lc-pill lc-pill-out lc-pill-sm">Mi información</button>
+      </div>
+    </div>
+    <div class="lc-filete"></div>
   </header>
   <main class="max-w-5xl mx-auto px-4 py-6">
     <div id="gate" class="text-center py-16">
       <!-- Logo en color (02-sdi-logo-compacto del kit) para fondo claro. -->
-      <svg class="h-10 w-auto mx-auto mb-5" viewBox="0 0 184 90" role="img" aria-label="Seguros Digitales SDI">
+      <svg class="brand-mark" viewBox="0 0 184 90" role="img" aria-label="Seguros Digitales SDI">
         <path d="M36.076 74.656Q28.04 74.656 23.038 72.483Q18.036 70.31 15.535 66.456Q13.034 62.602000000000004 12.624 57.763999999999996H19.02Q19.266 61.7 21.644 64.119Q24.022 66.538 27.917 67.686Q31.812 68.834 36.486000000000004 68.834Q43.374 68.834 47.392 66.415Q51.410000000000004 63.996 51.410000000000004 59.24Q51.410000000000004 56.370000000000005 49.401 54.607Q47.392 52.843999999999994 44.071 51.696Q40.75 50.548 36.814 49.605000000000004Q32.878 48.662 28.901 47.596000000000004Q24.924 46.53 21.603 44.89Q18.282 43.25 16.273 40.667Q14.264 38.083999999999996 14.264 34.065999999999995Q14.264 27.424 19.389000000000003 23.241999999999997Q24.514000000000003 19.059999999999995 34.682 19.059999999999995Q41.897999999999996 19.059999999999995 46.572 21.232999999999997Q51.246 23.406 53.583 26.932Q55.92 30.458 56.166000000000004 34.558H49.852000000000004Q49.36 30.458 45.751999999999995 27.628999999999998Q42.144 24.799999999999997 34.682 24.799999999999997Q30.09 24.799999999999997 27.22 25.701999999999998Q24.35 26.604 22.833000000000002 28.038999999999998Q21.316000000000003 29.473999999999997 20.783 31.031999999999996Q20.25 32.589999999999996 20.25 33.984Q20.25 36.69 22.259 38.370999999999995Q24.268 40.052 27.589 41.159Q30.91 42.266 34.928 43.168Q38.946 44.07 42.923 45.177Q46.9 46.284 50.221000000000004 47.965Q53.542 49.646 55.551 52.269999999999996Q57.56 54.894 57.56 58.994Q57.56 66.538 51.82 70.59700000000001Q46.08 74.656 36.076 74.656ZM64.572 74.0V19.716H87.45Q92.28800000000001 19.716 96.757 21.561Q101.226 23.406 104.752 26.932Q108.27799999999999 30.458 110.328 35.459999999999994Q112.378 40.461999999999996 112.378 46.858000000000004Q112.378 53.254 110.328 58.256Q108.27799999999999 63.257999999999996 104.752 66.78399999999999Q101.226 70.31 96.757 72.155Q92.28800000000001 74.0 87.45 74.0ZM70.722 68.178H87.20400000000001Q93.02600000000001 68.178 97.29 65.226Q101.554 62.274 103.891 57.436Q106.22800000000001 52.598 106.22800000000001 46.858000000000004Q106.22800000000001 41.036 103.891 36.198Q101.554 31.36 97.29 28.448999999999998Q93.02600000000001 25.537999999999997 87.20400000000001 25.537999999999997H70.722ZM119.71799999999999 74.0V19.716H125.868V74.0Z" fill="#0369A1"/>
         <g transform="translate(143.87, 19.06)">
           <rect x="0" y="0.0" width="30.0" height="6.15" rx="1.5" fill="#0369A1"/>
@@ -141,9 +147,10 @@
   <footer class="max-w-5xl mx-auto px-4 pb-10 pt-4">
     <details class="text-[11px] text-slate-400 border-t pt-3">
       <summary class="cursor-pointer select-none hover:text-slate-600">
-        Última actualización: <b class="font-semibold">29 ago 2026</b> — la página del cliente estrena look claro, igual al de Asistencia Autos
+        Última actualización: <b class="font-semibold">10 sep 2026</b> — la consola estrena la imagen de Seguros Digitales SDI, la misma del cotizador de autos
       </summary>
       <ul class="mt-2 space-y-1.5 leading-relaxed">
+        <li><b class="font-semibold text-slate-500">10 sep 2026</b> — <b>La consola pasó a la imagen de Seguros Digitales SDI</b>, la misma que ya tiene el cotizador de autos: fondo claro, el logotipo a color arriba con tu correo al lado y el nombre del producto debajo, botones redondos en un solo azul, tarjetas blancas con borde fino y la letra nueva de la empresa (Google Sans). Se fueron el encabezado azul oscuro, los emojis y las cajas de color: lo que importa se marca con un punto de color al lado del texto —dorado en el beneficio Sala VIP cuando sale en los correos, verde en el teléfono del cliente cuando ya está— y el interruptor de Sala VIP se ve azul al estar prendido. Solo cambia cómo se ve: los tres pasos, la carga de ZIP, el correo, los WhatsApp y tu información de agente funcionan igual, y la página del cliente no se tocó.</li>
         <li><b class="font-semibold text-slate-500">29 ago 2026</b> — <b>La página del cliente pasó del modo nocturno a un look claro con fondo blanco</b>, el mismo lenguaje visual de la app Asistencia Autos: encabezado azul del INS, tarjeta de bienvenida azul con esquinas redondeadas y tarjetas blancas con sombra suave. Todo con la respuesta al toque de las apps de teléfono: los botones se hunden en el instante en que se tocan, la barra de abajo es translúcida (el contenido pasa por debajo) y el indicador de la pestaña activa se desliza con física de resorte. Nada del contenido cambió: los contactos, los trámites, las coberturas, el link personalizado por agente y la app instalable son los mismos — y quien pida «reducir transparencia» o «reducir movimiento» en su teléfono ve la versión sólida y sin animaciones. La consola, el correo y los WhatsApp no se tocaron.</li>
         <li><b class="font-semibold text-slate-500">28 ago 2026</b> — <b>El correo de pólizas ahora anuncia el beneficio Sala VIP del Aeropuerto Juan Santamaría</b> (Circular INS 0388-2026): a los clientes cuya prima llega a <b>US$80 por persona</b> les aparece una tarjeta dorada —después de los datos del viaje— que dice cómo ingresar (presentando la oferta-constancia adjunta, con la póliza vigente) y hasta cuándo rige. Al viajero que no llega al monto no se le menciona nada, y en un grupo se mide uno por uno y se nombra solo a quien le aplica. <b>Vos lo controlás con un interruptor general</b> debajo de la barra de pasos: lo apagás y ningún correo lo menciona, lo prendés y vuelve, y con «cambiar período» podés mover las fechas si el INS extiende la promoción — pasada la fecha se apaga solo, aunque el interruptor quede prendido. Para lograrlo, <b>la consola ahora lee la prima de cada póliza del PDF</b> y la muestra en la ficha del asegurado, editable y con un aviso de si califica. También estrena este cartel de novedades: aparece una vez por actualización y se cierra con «Entendido».</li>
         <li><b class="font-semibold text-slate-500">25 ago 2026</b> — <b>El correo de envío de pólizas ahora se ve igual que el aviso de cobro y las cotizaciones de autos.</b> Los datos del viaje dejaron de ser pastillitas de colores apiladas: cada viajero muestra su destino, su vigencia y <b>el monto de gastos médicos como la cifra grande que es</b>, y el número de póliza va dibujado como el sello del documento, con el rótulo «Número Póliza INS». Arriba entra el logo del INS y la línea de colores de la marca; abajo, el logotipo de Seguros Digitales SDI a todo color con la nota legal. Se fueron los emojis y las barras de color a la izquierda. <b>El ícono de la app también cambió</b>: se quitó el punto verde y en su lugar va el INS al pie del avión, para que se reconozca de una vez en la pantalla del teléfono. Ojo: a quien ya tenga la app instalada le queda el ícono viejo hasta que la vuelva a agregar a la pantalla de inicio. <b>Y se corrigió el saludo de los nombres con tilde</b>: a una clienta María el correo y los WhatsApp la saludaban como «MarÍA», y un Núñez salía «NÚñEz». Los adjuntos y el resto de la lectura de los PDF no se tocaron.</li>

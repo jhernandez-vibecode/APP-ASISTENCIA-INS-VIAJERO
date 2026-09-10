@@ -1,0 +1,281 @@
+/* =====================================================================
+   LÍNEA CLARA · consola de envíos /agente/ (SDI v1.3, 10 sep 2026)
+   Referencia: business.google.com/en-all/google-ads (skill imagen-de-marca-sdi).
+   Es una hoja de SOBREESCRITURA: se carga al FINAL del <head>, después
+   del <style> propio y de Tailwind. Solo la cara: mismos ids y enganches
+   de JS (app.js pinta las mismas clases de Tailwind de siempre).
+   Cómo gana: Tailwind emite selectores de UNA clase (.bg-white); acá todo
+   va anclado a #console / #gate / #v-modal / .lc-hdr / footer, que pesan
+   más, así que da igual en qué orden inyecte el CDN su <style>.
+   Los !important van SOLO contra estilos EN LÍNEA que escribe app.js, y
+   cada uno dice cuál.
+   Cara AGENTE: manda SDI (logo a color arriba); el INS no aparece.
+   ===================================================================== */
+:root{
+  --lc-blue:#0369A1; --lc-blue-ink:#02557F; --lc-blue-soft:#E8F1F8;
+  --lc-band:#EEF4F9; --lc-line:#DADCE0; --lc-line-btn:#8A939C; --lc-line-soft:#EDEFF2;
+  --lc-ink:#1B1F23; --lc-ink-2:#5A6570; --lc-ink-3:#6B7681;
+  --lc-ok-bg:#E9F5F0; --lc-ok-tx:#037D61; --lc-warn-tx:#B26A00;
+  --lc-prod:#0369A1;                         /* el color del producto: solo la regla corta y el chip */
+  --lc-shadow:0 1px 2px rgba(27,31,35,.05); --lc-ease:cubic-bezier(.22,.61,.36,1);
+  /* tintes pálidos para lo semántico (los mismos del cotizador de autos) */
+  --t-azul-bg:#E8F1F8;  --t-azul-tx:#0369A1;
+  --t-verde-bg:#E6F4EE; --t-verde-tx:#1E7A55;
+  --t-rosa-bg:#FCECEE;  --t-rosa-tx:#B03A48;
+  --t-oro-bg:#FBF3DF;   --t-oro-tx:#8A5B00;
+  /* tipografía SDI v1.3: Inter solo presta el ₡ */
+  --font-display:'Google Sans Flex','Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-body:'Google Sans Flex','Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-mono:'Google Sans Code',ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace;
+}
+
+/* ---------- base ---------------------------------------------------- */
+html{background:#fff}
+body{background:var(--lc-band);color:var(--lc-ink);font-family:var(--font-body);font-size:14px;line-height:1.5;
+  font-optical-sizing:auto;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+h1,h2,h3,h4,.t-display{font-family:var(--font-display);font-weight:500;letter-spacing:-.025em;color:var(--lc-ink)}
+.font-mono,#console .font-mono{font-family:var(--font-mono);font-variant-numeric:tabular-nums lining-nums}
+/* .hidden es de Tailwind (una clase): las píldoras de acá pesan más y la pisarían */
+.hidden{display:none!important}
+b,strong{font-weight:600}
+
+/* ---------- R3 · barra en dos niveles: SDI a color + agente / producto + acción ---------- */
+.lc-hdr{background:#fff;color:var(--lc-ink)}
+.lc-top{background:#F8F9FA;height:52px}
+.lc-wrap{max-width:1040px;margin:0 auto;padding:0 24px;height:100%;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.lc-top .brand-mark{height:30px;width:auto;display:block;flex:none}
+.lc-top .meta{font-size:12.5px;color:var(--lc-ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.lc-top .meta b{color:var(--lc-ink);font-weight:600}
+.lc-nav{height:64px;border-bottom:1px solid var(--lc-line-soft)}
+.lc-nav .l{display:flex;align-items:baseline;gap:12px;min-width:0}
+.lc-nav .prod{font-family:var(--font-display);font-size:19px;font-weight:600;letter-spacing:-.025em;white-space:nowrap;color:var(--lc-ink)}
+.lc-nav .sub{font-size:13px;color:var(--lc-ink-3);white-space:nowrap}
+.lc-filete{height:3px;background:linear-gradient(to right,#0369A1 0 60%,#0D9488 60% 85%,#EA580C 85% 95%,#C9A227 95% 100%)}   /* la firma SDI se queda */
+
+/* ---------- R7 · píldoras: 44 px, un solo acento, borde ≥3:1 ---------- */
+.lc-pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 22px;border-radius:999px;
+  font-family:var(--font-body);font-size:14.5px;font-weight:600;letter-spacing:-.005em;cursor:pointer;text-decoration:none;
+  border:1px solid transparent;white-space:nowrap;line-height:1;transition:background .15s ease,border-color .15s ease,color .15s ease}
+.lc-pill-fill{background:var(--lc-blue);color:#fff;border-color:var(--lc-blue)}
+.lc-pill-fill:hover{background:var(--lc-blue-ink);border-color:var(--lc-blue-ink)}
+.lc-pill-out{background:#fff;color:var(--lc-blue);border-color:var(--lc-blue)}
+.lc-pill-out:hover{background:var(--lc-blue-soft)}
+.lc-pill-ghost{background:#fff;color:var(--lc-ink-2);border-color:var(--lc-line-btn)}
+.lc-pill-ghost:hover{border-color:var(--lc-blue);color:var(--lc-blue);background:var(--lc-blue-soft)}
+.lc-pill-sm{min-height:38px;padding:0 18px;font-size:13.5px}
+.lc-pill:focus-visible{outline:3px solid rgba(3,105,161,.35);outline-offset:2px}
+
+/* ---------- el panel: #gate y #console, blancos r32 sobre la banda ---------- */
+main{max-width:1040px;margin:0 auto;padding:28px 24px 8px}
+#gate,#console{background:#fff;border:1px solid var(--lc-line);border-radius:32px;padding:38px 40px 34px;box-shadow:var(--lc-shadow)}
+#gate{padding:64px 24px 60px;text-align:center}
+#gate .brand-mark{height:36px;width:auto;margin:0 auto 26px;display:block}
+#gate h1{font-size:34px;line-height:1.1;letter-spacing:-.025em;text-wrap:balance;margin-bottom:10px}
+#gate p{font-size:16px;color:var(--lc-ink-2);margin-bottom:26px}
+#gate #btn-login{box-shadow:none!important;border-radius:999px;min-height:44px;padding:0 24px;font-size:14.5px;font-weight:600;background:var(--lc-blue);border:1px solid var(--lc-blue)}   /* la sombra azul venía en línea */
+#gate #btn-login:hover{background:var(--lc-blue-ink)}
+#gate #gate-err{color:var(--t-rosa-tx);font-size:13px;margin-top:18px}
+
+/* ---------- textos de la consola ---------- */
+#console{font-size:14px}
+#console h2{font-size:24px;line-height:1.2;margin:0}
+#console h2::before{content:"";display:block;width:28px;height:3px;border-radius:2px;background:var(--lc-prod);margin-bottom:12px}   /* R6 · regla corta */
+#console h3{font-size:19px;font-weight:600;letter-spacing:-.02em;margin-bottom:4px}
+#console h3+p{font-size:13.5px;color:var(--lc-ink-2);margin-bottom:22px}
+#console .text-slate-400,#console .text-slate-500{color:var(--lc-ink-3)}
+#console .text-slate-600,#console .text-slate-700{color:var(--lc-ink-2)}
+#console .text-slate-800{color:var(--lc-ink)}
+#console .text-sdi-azul{color:var(--lc-blue)}
+/* rótulos en versalitas → kicker de la línea clara (sin mayúsculas ni tracking) */
+#console .uppercase{text-transform:none;letter-spacing:.01em;font-size:12px;font-weight:600;color:var(--lc-ink-3)}
+/* las etiquetas de los campos vienen con color EN LÍNEA (#94a3b8) */
+#console label>span[style*="color"]{color:var(--lc-ink-3)!important;font-weight:600;font-size:12px;letter-spacing:.01em}
+#console .font-bold{font-weight:600}
+#console #status{font-size:13.5px;color:var(--lc-ink-2);margin-top:14px}
+
+/* ---------- la barra de pasos ---------- */
+#console .rounded-full.w-7{width:26px;height:26px;font-family:var(--font-mono);font-size:11.5px;font-weight:600;
+  background:#fff;border:1px solid var(--lc-line-btn);color:var(--lc-ink-2);box-shadow:none!important}   /* el anillo azul del paso activo iba en línea */
+#console .rounded-full.w-7.bg-sdi-azul{background:var(--lc-blue);border-color:var(--lc-blue);color:#fff}
+#console .rounded-full.w-7.bg-green-600{background:var(--lc-ok-tx);border-color:var(--lc-ok-tx);color:#fff}
+#console .h-0\.5{height:1px;background:var(--lc-line)}
+#console .h-0\.5.bg-green-600{background:var(--lc-ok-tx)}
+#console button.rounded-lg.px-1\.5 span.text-sm{font-size:13.5px;font-weight:500}
+#console button.rounded-lg.px-1\.5:hover{background:var(--lc-blue-soft)}
+
+/* ---------- tarjetas: r20 con hairline, sin sombra, tinte solo al pasar ---------- */
+#console .rounded-xl.bg-white,#console .rounded-xl.p-4.bg-white,#console .border.rounded-xl,#console .border-2.rounded-xl{
+  border:1px solid var(--lc-line);border-radius:20px;background:#fff;box-shadow:none;padding:20px 22px}
+#console .border-2.border-sdi-azul.rounded-xl.p-4{border-color:var(--lc-line)}      /* panel del agente: sin borde azul */
+#console .rounded-xl.bg-white>div>b.text-sm,#console .rounded-xl.bg-white>b.text-sm{font-family:var(--font-display);font-size:15px;font-weight:600;letter-spacing:-.01em}
+#console .rounded-xl.bg-white b.text-sm.truncate{font-family:var(--font-display);font-size:15px;font-weight:600}
+#console .text-red-500{color:var(--lc-ink-3)}
+#console .text-red-500:hover{color:var(--t-rosa-tx)}
+
+/* ---------- notas y avisos: tinte pálido, sin borde, radio 20 ---------- */
+#console #novedades{background:var(--lc-band)!important;border:0!important;border-radius:20px;padding:18px 20px}   /* traía border-top azul en línea */
+#console #novedades ul{color:var(--lc-ink-2);font-size:13.5px}
+#console .bg-amber-50{background:var(--t-oro-bg);border:0;border-radius:20px;padding:16px 20px}
+#console .bg-amber-50 .text-amber-900,#console .bg-amber-50 .text-amber-800{color:var(--lc-ink)}
+#console .bg-amber-50 p.text-xs,#console .bg-amber-50 div.text-xs{font-size:13px;color:var(--lc-ink-2)}
+#console .bg-amber-50 .text-sm.font-semibold{font-size:15px;font-weight:600;color:var(--lc-ink)}
+#console .bg-amber-50 .text-sm.font-semibold::before,#console .bg-amber-50 .text-xs.text-amber-900::before{
+  content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--t-oro-tx);margin-right:9px;vertical-align:.05em}
+#console .bg-amber-50 span.text-lg{display:none}                       /* el ⚠️ de la caja de aviso */
+#console details.border.bg-slate-50{background:var(--lc-band);border:0;border-radius:16px;padding:12px 18px}
+#console details.bg-slate-50 summary{font-size:12.5px;color:var(--lc-ink-2)}
+#console details.bg-slate-50 summary:hover{color:var(--lc-blue)}
+/* barra de progreso de la carga */
+#console #carga .bg-blue-50{background:var(--lc-band);border:0;border-radius:20px;padding:16px 20px}
+#console #carga .bg-white{background:var(--lc-line-soft)}
+#console #carga .border-sdi-azul{border-color:var(--lc-blue)}
+
+/* ---------- Sala VIP: la única tarjeta de su zona; el oro va en un punto de 8 px ---------- */
+#vip-general>div{background:#fff!important;border:1px solid var(--lc-line)!important;border-radius:20px;padding:18px 22px}   /* estado "sale" traía fondo crema y border-top dorado en línea */
+#vip-general p[style*="color"]{color:var(--lc-ink-3)!important;text-transform:none;letter-spacing:.01em;font-size:12px;font-weight:600}   /* el rótulo traía su color en línea */
+#vip-general p[style*="color"]::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--lc-line-btn);margin-right:8px;vertical-align:.05em}
+#vip-general p[style*="#7c621c"]::before{background:#C9A227}          /* prendido y vigente: punto dorado */
+#vip-general p.text-sm{font-family:var(--font-display);font-size:16px;font-weight:600;letter-spacing:-.01em;color:var(--lc-ink)}
+#vip-general p.text-xs{font-size:13px;color:var(--lc-ink-2)}
+#vip-general .border-t{border-top-color:var(--lc-line-soft)!important}
+#vip-general input[type=date]{border:1px solid var(--lc-line-btn);border-radius:10px;padding:8px 10px;font-size:13px;font-family:var(--font-mono)}
+.sw i{background:var(--lc-line-btn);border-color:var(--lc-line-btn)}
+.sw input:checked+i{background:var(--lc-blue);border-color:var(--lc-blue)}
+.sw i:before{box-shadow:0 1px 2px rgba(27,31,35,.25)}
+.sw input:focus-visible+i{outline:3px solid rgba(3,105,161,.35)}
+
+/* ---------- paso 1: la zona de arrastre ---------- */
+#console #zona-lote{border:1px dashed var(--lc-line-btn);border-radius:20px;background:var(--lc-band);padding:44px 24px 34px;transition:border-color .15s,background .15s}
+#console #zona-lote:hover{border-color:var(--lc-blue);background:var(--lc-blue-soft)}
+#console #zona-lote>.text-3xl{font-size:0;width:40px;height:40px;margin:0 auto 14px;background:no-repeat center/40px
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230369A1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E")}
+#console #zona-lote .text-sm.font-bold{font-family:var(--font-display);font-size:18px;font-weight:600;letter-spacing:-.02em}
+#console #zona-lote p.text-xs{font-size:13.5px;color:var(--lc-ink-2)}
+#console #zona-lote p.text-\[11px\]{font-size:12px;color:var(--lc-ink-3);margin-top:16px}
+#console .dropzone{border:1px dashed var(--lc-line-btn);border-radius:14px;padding:14px;font-size:13px;color:var(--lc-ink-2);transition:background .15s,border-color .15s}
+#console .dropzone:hover,#console .dropzone.bg-blue-50{background:var(--lc-blue-soft);border-color:var(--lc-blue)}
+/* chips de archivo */
+#console .bg-emerald-50{background:var(--t-verde-bg);color:var(--t-verde-tx);border-radius:10px;font-size:12px;padding:6px 10px}
+#console .bg-emerald-50 b{font-family:var(--font-mono);font-weight:600}
+#console .bg-slate-100.text-slate-600{background:var(--lc-band);color:var(--lc-ink-2);border-radius:10px;font-size:12px;padding:6px 10px}
+#console .bg-blue-50.text-sdi-azul.rounded{background:var(--t-azul-bg);color:var(--t-azul-tx);border-radius:999px;padding:3px 10px;font-size:11.5px;font-weight:600}   /* chip del N° de póliza */
+/* "+ Agregar otro asegurado": píldora punteada */
+#console button.border-dashed{border:1px dashed var(--lc-line-btn);border-radius:999px;min-height:44px;padding:0 22px;color:var(--lc-blue);font-size:14px;font-weight:600;background:#fff}
+#console button.border-dashed:hover{background:var(--lc-blue-soft);border-color:var(--lc-blue)}
+#console .border-t{border-top-color:var(--lc-line-soft)}
+
+/* ---------- formularios ---------- */
+#console input.border,#console textarea.border,#console input.border-2,#console input[type=date]{
+  border:1px solid var(--lc-line-btn);border-radius:10px;padding:9px 12px;font-size:13.5px;font-family:var(--font-body);color:var(--lc-ink);background:#fff}
+#console input:focus,#console textarea:focus{outline:none;border-color:var(--lc-blue);box-shadow:0 0 0 3px var(--lc-blue-soft)}
+#console input[readonly]{background:var(--lc-band);color:var(--lc-ink-2);border-color:var(--lc-line)}
+#console input.font-mono,#console #watel{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+#console #ag-link.ring-2{border-color:var(--lc-ok-tx);box-shadow:0 0 0 3px var(--lc-ok-bg)}
+#console .grid.grid-cols-2{gap:12px 14px}
+
+/* ---------- botones: todo lo que app.js pinta se vuelve píldora ---------- */
+/* los principales traen el degradado navy EN LÍNEA (botonSiguiente, zona, agente, permiso) */
+#console button[style*="linear-gradient"],#console #btn-enviar{background:var(--lc-blue)!important;color:#fff;border:1px solid var(--lc-blue);border-radius:999px;
+  min-height:44px;padding:0 22px;font-size:14.5px;font-weight:600;box-shadow:none!important;transform:none!important;transition:background .15s ease}
+#console button[style*="linear-gradient"]:hover,#console #btn-enviar:hover:not(:disabled){background:var(--lc-blue-ink)!important;border-color:var(--lc-blue-ink);box-shadow:none!important}
+#console button.w-full[style*="linear-gradient"],#console #btn-enviar{min-height:48px;font-size:15px;border-radius:999px}
+#console #btn-enviar:disabled{opacity:.45}
+#console button.text-xs[style*="linear-gradient"]{min-height:38px;padding:0 18px;font-size:13.5px}
+/* secundarios: los "border rounded(-lg)" de app.js → píldora de contorno */
+#console button.border.rounded-lg,#console button.border.rounded,#console button.border.border-slate-300{
+  border:1px solid var(--lc-line-btn);border-radius:999px;min-height:38px;padding:0 18px;font-size:13.5px;font-weight:600;color:var(--lc-ink-2);background:#fff;transition:background .15s ease,border-color .15s ease}
+#console button.border.rounded-lg:hover,#console button.border.rounded:hover,#console button.border.border-slate-300:hover{border-color:var(--lc-blue);color:var(--lc-blue);background:var(--lc-blue-soft)}
+#console button:focus-visible{outline:3px solid rgba(3,105,161,.35);outline-offset:2px}
+/* "← Volver" y "cambiar": enlaces azules */
+#console button.text-slate-500.mb-3{color:var(--lc-blue);font-size:13.5px;font-weight:500;margin-bottom:14px}
+#console button.underline{color:var(--lc-blue)}
+#console #paso-sub{font-size:12.5px;color:var(--lc-ink-3);margin-top:10px}
+
+/* ---------- paso 2: el chip "Califica para Sala VIP" como píldora de estado ---------- */
+#console .text-emerald-800.bg-emerald-50{background:var(--lc-ok-bg);color:var(--lc-ok-tx);border:0;border-radius:999px;padding:7px 15px;font-size:12.5px;font-weight:600}
+#console .text-emerald-800.bg-emerald-50 svg{display:none}
+#console .text-emerald-800.bg-emerald-50::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
+#console .text-slate-500.bg-slate-50.border{background:var(--lc-band);color:var(--lc-ink-3);border:0;border-radius:999px;padding:7px 15px;font-size:12.5px;font-weight:600}
+#console .text-slate-500.bg-slate-50.border::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--lc-line-btn);margin-right:8px;flex:none}
+
+/* ---------- paso 3: canales como tarjetas, resumen, WhatsApp, éxito ---------- */
+#console button.w-full.text-left.rounded-xl{border:1px solid var(--lc-line);border-radius:20px;background:#fff;padding:16px 18px;margin-bottom:10px;transition:background .2s var(--lc-ease),border-color .2s var(--lc-ease)}
+#console button.w-full.text-left.rounded-xl:hover{background:var(--lc-blue-soft)}
+#console button.w-full.text-left.rounded-xl.border-2{border:1px solid var(--lc-blue);background:var(--lc-blue-soft)}
+#console button.w-full.text-left.rounded-xl>span.w-9{font-size:0;width:10px;height:10px;border-radius:50%;background:var(--lc-line-btn);margin-top:6px}   /* el emoji del canal → punto */
+#console button.w-full.text-left.rounded-xl.border-2>span.w-9{background:var(--lc-blue)}
+#console button.w-full.text-left.rounded-xl .text-sm.font-bold{font-family:var(--font-display);font-size:15px;font-weight:600;letter-spacing:-.01em}
+#console button.w-full.text-left.rounded-xl .text-\[11px\]{font-size:13px;color:var(--lc-ink-2)}
+#console .bg-sdi-azul.text-white.rounded-full{background:var(--t-azul-bg);color:var(--t-azul-tx);text-transform:none;letter-spacing:.01em;font-size:11px;font-weight:600;padding:3px 9px;white-space:nowrap}   /* "lo normal" */
+#console .bg-sdi-azul.text-white.rounded-full.uppercase{color:var(--t-azul-tx);font-size:11px}
+/* resumen del correo */
+#console .flex-wrap.bg-slate-50.border.rounded-xl{background:var(--lc-band);border:0;border-radius:20px;padding:16px 8px}
+#console .flex-wrap.bg-slate-50 .border-r{border-right-color:var(--lc-line)}
+#console .flex-wrap.bg-slate-50 .text-\[12\.5px\]{font-size:14px}
+#console .flex-wrap.bg-slate-50 .text-red-500{color:var(--t-rosa-tx)}
+/* teléfono del cliente: el estado va en el tinte y en el punto, no en el borde */
+#console #tel-box{border:0!important;border-radius:20px;padding:16px 18px}
+#console #tel-box.bg-amber-50{background:var(--t-oro-bg)}
+#console #tel-box.bg-green-50{background:var(--t-verde-bg)}
+#console #tel-ic{font-size:0;width:10px;height:10px;border-radius:50%;margin-top:7px}
+#console #tel-ic.bg-amber-100{background:var(--t-oro-tx)}
+#console #tel-ic.bg-green-100{background:var(--t-verde-tx)}
+#console #tel-tit{font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--lc-ink)}
+#console #tel-pie{font-size:13px;color:var(--lc-ink-2)}
+#console #watel{border:1px solid var(--lc-line-btn);border-radius:10px;font-size:16px;padding:10px 12px}
+#console .bg-blue-100.text-sdi-azul.rounded-full{background:var(--t-azul-bg);color:var(--t-azul-tx);font-size:11px;font-weight:600;padding:3px 9px;white-space:nowrap}   /* "tomado del PDF" */
+#console code{font-family:var(--font-mono);font-size:12px;background:var(--lc-band);border-radius:6px;padding:1px 6px}
+/* correo enviado: panel blanco, check en verde, cifras en tinta y mono */
+#console .border-green-300.rounded-2xl{background:#fff!important;border:1px solid var(--lc-line);border-radius:24px;padding:34px 28px}   /* traía degradado verde en línea */
+#console .border-green-300.rounded-2xl>div.rounded-full{background:var(--t-verde-tx)!important;box-shadow:none!important;width:64px;height:64px}   /* degradado + halo en línea */
+#console .border-green-300.rounded-2xl h3[style]{color:var(--lc-ink)!important;font-size:26px;font-weight:500}
+#console .border-green-300.rounded-2xl p[style]{color:var(--lc-ink-2)!important;font-size:14px}
+#console .border-green-300.rounded-2xl .border-green-100{border-top-color:var(--lc-line-soft)}
+#console .border-green-300.rounded-2xl .text-base.font-bold[style]{color:var(--lc-ink)!important;font-family:var(--font-mono);font-size:18px;white-space:nowrap;font-weight:500;font-variant-numeric:tabular-nums}
+#console .border-green-300.rounded-2xl .uppercase[style]{color:var(--lc-ink-3)!important}
+#console .bg-green-50.border-l-4{background:var(--t-verde-bg);border:0;border-radius:20px;padding:14px 18px}
+#console .bg-green-50.border-l-4 .bg-green-600{background:var(--t-verde-tx)}
+#console .bg-green-50.border-l-4 div[style]{color:var(--lc-ink)!important}
+#console .bg-green-50.border-l-4 .text-xs[style]{color:var(--lc-ink-2)!important}
+
+/* ---------- ventana de confirmación (cuelga del body) ---------- */
+#v-modal{background:rgba(27,31,35,.5)!important}    /* fondo en línea */
+#v-modal>div{border-radius:24px;border:1px solid var(--lc-line);box-shadow:none;padding:30px 28px;font-family:var(--font-body)}
+#v-modal>div>div.rounded-full{display:none}         /* el emoji de la ventana */
+#v-modal h4{color:var(--lc-ink)!important;font-size:19px;font-weight:600;letter-spacing:-.02em}   /* color navy en línea */
+#v-modal p{font-size:13.5px;color:var(--lc-ink-2)}
+#v-modal .bg-slate-50.border{background:var(--lc-band);border:0;border-radius:14px;padding:12px 16px;font-size:12.5px;color:var(--lc-ink-2)}
+#v-modal .bg-slate-50.border b{color:var(--lc-ink)!important;font-size:12.5px}
+#v-modal #v-no{border:1px solid var(--lc-blue);border-radius:999px;min-height:44px;color:var(--lc-blue);font-size:14px;font-weight:600;background:#fff}
+#v-modal #v-no:hover{background:var(--lc-blue-soft)}
+#v-modal #v-si{background:var(--lc-blue)!important;border-radius:999px;min-height:44px;font-size:14px;font-weight:600;box-shadow:none!important;transform:none!important}   /* degradado en línea */
+#v-modal #v-si:hover{background:var(--lc-blue-ink)!important}
+
+/* ---------- pie: registro de cambios ---------- */
+footer{max-width:1040px;padding:18px 24px 40px}
+footer details{border-top:0;color:var(--lc-ink-3);font-size:12px}
+footer summary{color:var(--lc-ink-2)}
+footer summary:hover{color:var(--lc-blue)}
+footer b{color:var(--lc-ink)}
+footer .text-slate-500{color:var(--lc-ink-2)}
+
+/* ---------- movimiento: entrada suave, sin rebote ---------- */
+.v-pop{animation-timing-function:var(--lc-ease);animation-duration:.5s}
+@media (prefers-reduced-motion:reduce){ .lc-pill,#console button,#console .dropzone,#console input{transition:none} }
+
+/* ---------- angosto ---------- */
+@media (max-width:640px){
+  .lc-wrap{padding:0 16px}
+  .lc-top .meta{display:none}
+  .lc-nav{height:58px}
+  .lc-nav .sub{display:none}
+  .lc-nav .prod{font-size:17px}
+  main{padding:16px 12px 8px}
+  #gate,#console{padding:26px 18px 22px;border-radius:24px}
+  #gate{padding:44px 18px 40px}
+  #gate h1{font-size:28px}
+  #console h2{font-size:22px}
+  #console #zona-lote{padding:32px 16px 26px}
+  #console .grid.grid-cols-2{grid-template-columns:1fr}
+  footer{padding:14px 16px 32px}
+}

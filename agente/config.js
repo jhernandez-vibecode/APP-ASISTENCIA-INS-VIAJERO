@@ -60,12 +60,13 @@ window.VCfg = {
   // Solo la consola la muestra: la página del cliente no lleva novedades
   // (decisión de JC del 24 ago 2026).
   NOVEDADES: {
-    version: '2026-08-29',
-    fecha: '29 ago 2026',
+    version: '2026-09-10',
+    fecha: '10 sep 2026',
     items: [
-      '<b>La página de tus clientes estrena look claro</b>, con el mismo lenguaje visual de la app Asistencia Autos: fondo blanco, encabezado azul del INS y tarjetas con sombra suave. Se siente como app de teléfono: los botones responden al instante del toque y la barra de abajo es translúcida con un indicador que se desliza solo.',
-      '<b>Nada del contenido cambió</b>: contactos, trámites, coberturas, tu link personalizado y la instalación como app siguen exactamente igual. La consola y el correo tampoco se tocaron.',
-      '<b>Sigue pendiente tu prueba del beneficio Sala VIP</b> (del 28 ago): el aviso de novedades, el interruptor dorado y un envío real con prima ≥ US$80.'
+      '<b>La consola estrena la imagen de Seguros Digitales SDI</b>, la misma del cotizador de autos: fondo claro, el logotipo a color arriba con tu correo al lado, botones redondos azules y tarjetas blancas con borde fino. Se fueron el encabezado azul oscuro, los emojis y las cajas de color.',
+      '<b>Los avisos ahora se distinguen por un punto de color</b>, no por cajas: el beneficio Sala VIP lleva un punto dorado cuando sale en los correos, y el teléfono del cliente se pone verde cuando ya lo escribiste. El interruptor de Sala VIP se ve azul cuando está prendido.',
+      '<b>Todo funciona igual</b>: los tres pasos, la carga de ZIP, el correo, los WhatsApp y tu información de agente no cambiaron. La página de tus clientes tampoco.',
+      '<b>Sigue pendiente tu prueba del beneficio Sala VIP</b> (del 28 ago): un envío real con prima ≥ US$80 para ver el bloque dorado en el correo.'
     ]
   },
 

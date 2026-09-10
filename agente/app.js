@@ -61,7 +61,7 @@ window.VApp = (function () {
       </div>`;
     return `<div class="v-pop border-2 border-sdi-azul rounded-xl p-4 bg-white mb-4">
       <div class="flex items-center justify-between gap-2">
-        <span class="text-sm font-semibold text-slate-700">⚙️ Mi información de agente</span>
+        <span class="text-sm font-semibold text-slate-700">Mi información de agente</span>
         <button onclick="VApp.agentToggle()" class="text-xs border rounded-lg px-3 py-1.5 whitespace-nowrap hover:bg-slate-50">Cerrar ✕</button>
       </div>
       <p class="text-[11px] text-slate-400 mt-1">${esc(a.nombre)} · esto se guarda en este navegador y no hace falta volver a tocarlo.</p>
@@ -81,7 +81,7 @@ window.VApp = (function () {
   function avisoPermiso() {
     if (!window.VAuth || VAuth.canSend()) return '';
     return `<div class="border-2 border-amber-300 bg-amber-50 rounded-xl p-4 mb-4">
-      <div class="text-sm font-semibold text-amber-900">⚠️ Falta el permiso para enviar correos</div>
+      <div class="text-sm font-semibold text-amber-900">Falta el permiso para enviar correos</div>
       <p class="text-xs text-amber-800 mt-1 leading-relaxed">Google no recibió el permiso de envío, así que el correo va a fallar. Hacé clic en el botón y, en la pantalla de Google, <b>marcá la casilla “Enviar correo electrónico en tu nombre”</b> antes de continuar.</p>
       <button onclick="VApp.pedirPermiso()" class="mt-2 text-white text-xs font-medium rounded-lg px-3 py-1.5" style="background:linear-gradient(135deg,#d97706 0%,#b45309 100%)">Conceder permiso de envío</button>
     </div>`;
@@ -515,7 +515,7 @@ window.VApp = (function () {
   function viajeroCard(v, idx) {
     const titulo = (v.cliente || '').trim() || `Asegurado ${idx + 1}`;
     return `<div class="border rounded-xl p-4 mb-3 bg-white">
-      <div class="flex items-center justify-between mb-3"><b class="text-sm" id="tit-v${v.id}">👤 ${esc(titulo)}</b>
+      <div class="flex items-center justify-between mb-3"><b class="text-sm" id="tit-v${v.id}">${esc(titulo)}</b>
         ${state.viajeros.length > 1 ? `<button onclick="VApp.removeViajero(${v.id})" class="text-red-500 text-xs">Quitar</button>` : ''}</div>
       ${listaArchivos(v)}
       <div class="grid grid-cols-2 gap-2">
@@ -696,7 +696,7 @@ window.VApp = (function () {
     const tieneComprobante = v.files.some(f => kindOf(f) === 'comprobante');
     return `<div class="border rounded-xl p-4 mb-3 bg-white">
       <div class="flex items-center justify-between gap-2 mb-3">
-        <b class="text-sm truncate">👤 ${esc(titulo)}</b>
+        <b class="text-sm truncate">${esc(titulo)}</b>
         <span class="flex items-center gap-2 flex-none">${chipPol}
         <button onclick="VApp.removeViajero(${v.id})" class="text-red-500 text-xs">Quitar</button></span>
       </div>
@@ -780,7 +780,7 @@ window.VApp = (function () {
     if (visto === N.version) return '';
     return `<div id="novedades" class="rounded-xl p-4 mb-4 bg-sky-50 border border-sky-200" style="border-top:3px solid #0369A1">
       <div class="flex items-start justify-between gap-3">
-        <p class="text-[10px] font-bold uppercase tracking-widest text-sdi-azul pt-0.5">✨ Qué hay de nuevo · ${esc(N.fecha || '')}</p>
+        <p class="text-[10px] font-bold uppercase tracking-widest text-sdi-azul pt-0.5">Qué hay de nuevo · ${esc(N.fecha || '')}</p>
         <button onclick="VApp.novedadesVisto()" class="flex-none text-xs font-semibold border border-slate-300 rounded-lg px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-100">Entendido</button>
       </div>
       <ul class="text-xs text-slate-600 mt-2 space-y-1.5 list-disc pl-4 leading-relaxed">
@@ -901,7 +901,7 @@ window.VApp = (function () {
       ${agentePanel()}
       <div class="flex items-center justify-between gap-2 mb-4">
         <h2 class="text-lg font-bold">Envío de pólizas</h2>
-        ${hayAlgoQueLimpiar() ? '<button onclick="VApp.pedirLimpiar()" class="text-sm font-medium border rounded-lg px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-50 whitespace-nowrap flex-none">🧹 Limpiar</button>' : ''}
+        ${hayAlgoQueLimpiar() ? '<button onclick="VApp.pedirLimpiar()" class="text-sm font-medium border rounded-lg px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-50 whitespace-nowrap flex-none">Limpiar</button>' : ''}
       </div>
       ${rail()}
       <div id="vip-general">${tarjetaVipGeneral()}</div>
@@ -939,7 +939,7 @@ window.VApp = (function () {
       // el siguiente redibujado y no se sabe cuál es cuál.
       if (v && e.target.dataset.key === 'cliente') {
         const t = el('tit-v' + v.id);
-        if (t) t.textContent = '👤 ' + ((v.cliente || '').trim() || ('Asegurado ' + (state.viajeros.indexOf(v) + 1)));
+        if (t) t.textContent = ((v.cliente || '').trim() || ('Asegurado ' + (state.viajeros.indexOf(v) + 1)));
       }
       // El chip "Califica para Sala VIP" es texto DERIVADO de la prima: tiene
       // que SEGUIR al campo mientras se escribe (lección del 21 ago), sin
