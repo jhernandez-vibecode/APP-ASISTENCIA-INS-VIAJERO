@@ -1,6 +1,10 @@
 ---
 name: especialista-asistencia-viajero
 description: ESPECIALISTA APP ASISTENCIA VIAJERO INS — App de asistencia post-venta para clientes del Seguro INS Viajero con Asistencia Autoexpedible (registro SUGESE P19-57-A01-972 V5), marca Seguros Digitales SDI. Stack HTML + Tailwind CDN + Lucide, single-file vanilla (NO React, sin build, sin npm). Dos caras en el MISMO repo/sitio: (1) `index.html` pública = portal del cliente (contactos de emergencia, paso a paso de reclamos, Wi-Fi Call, coberturas, vigencia/prórroga, cross-sell Comprá/Recomendá); (2) `/agente/` privada = consola del agente (login Google + whitelist) que arrastra o carga el PDF de la póliza, extrae datos con pdf.js, arma y envía el correo al cliente por Gmail API (multi-viajero, encabezado navy solo-texto, monto de gastos médicos por viajero, CTA "Comprar de nuevo" al form INS) y genera 2 plantillas de WhatsApp editables vía web.whatsapp.com/send. EN PROD appasistenciainsviajero.netlify.app (auto-deploy desde main). Repo jhernandez-vibecode/APP-ASISTENCIA-INS-VIAJERO. Usar este skill cuando JC pida cualquier cambio, bug o mejora a la app de asistencia viajero, ya sea la página del cliente o la consola del agente.
+## Los botones de WhatsApp de la consola son verdes (21 sep 2026, `0ea4a39`) — EN PROD
+
+Pedido de JC: **deroga** la decisión del 10 sep de llevar "Abrir WhatsApp" al azul. En `agente/linea-clara-consola.css`, después de `#btn-enviar:disabled`: los botones cuyo estilo en línea trae el degradado verde de `app.js` van en `#047857` (hover `#065f46`). 🔴 El selector cubre las DOS formas del mismo estilo — `[style*="16a34a"]` (como lo escribe el template) y `[style*="22, 163, 74"]` (como lo serializa el navegador cuando `pintarBoton()` hace `b.style.background=`) — y lleva `#btn-enviar` delante porque la regla azul `#console #btn-enviar` pesa (2,0,0). `app.js` NO se tocó. `NOVEDADES` 2026-09-21 + registro al pie. Verificado en localhost con `getComputedStyle` (WA inline, WA repintado por JS, correo azul) y en prod por contenido.
+
 ---
 
 # Especialista App Asistencia Viajero INS
