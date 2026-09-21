@@ -60,12 +60,11 @@ window.VCfg = {
   // Solo la consola la muestra: la página del cliente no lleva novedades
   // (decisión de JC del 24 ago 2026).
   NOVEDADES: {
-    version: '2026-09-10',
-    fecha: '10 sep 2026',
+    version: '2026-09-21',
+    fecha: '21 sep 2026',
     items: [
-      '<b>La consola de envíos cambió de imagen: estrena la de Seguros Digitales SDI</b>, la misma del cotizador de autos: fondo claro, el logotipo a color arriba con tu correo al lado, botones redondos azules y tarjetas blancas.',
-      '<b>Los avisos ahora se distinguen por un punto de color</b>, no por cajas: el beneficio Sala VIP lleva un punto dorado cuando sale en los correos, y el teléfono del cliente se pone verde cuando ya lo escribiste. El interruptor de Sala VIP se ve azul cuando está prendido.',
-      '<b>Todo funciona igual</b>: los tres pasos, la carga de ZIP, el correo, los WhatsApp y tu información de agente no cambiaron. La página de tus clientes tampoco.'
+      '<b>Los botones de WhatsApp ahora son verdes</b>: "Abrir WhatsApp" y "Seguir por WhatsApp" se distinguen de un vistazo del botón azul de enviar el correo.',
+      '<b>Todo funciona igual</b>: los tres pasos, el correo y los mensajes no cambiaron.'
     ]
   },
 

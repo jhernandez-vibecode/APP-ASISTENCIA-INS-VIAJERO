@@ -180,6 +180,10 @@ main{max-width:1040px;margin:0 auto;padding:28px 24px 8px}
 #console button[style*="linear-gradient"]:hover,#console #btn-enviar:hover:not(:disabled){background:var(--lc-blue-ink)!important;border-color:var(--lc-blue-ink);box-shadow:none!important}
 #console button.w-full[style*="linear-gradient"],#console #btn-enviar{min-height:48px;font-size:15px;border-radius:999px}
 #console #btn-enviar:disabled{opacity:.45}
+/* WhatsApp es el unico boton verde (JC, 21 sep 2026). app.js escribe el degradado verde en linea:
+   al pintar sale "#16a34a" y al repintar por JS el navegador lo serializa "rgb(22, 163, 74)". #047857 + blanco = 5,48:1 */
+#console #btn-enviar[style*="16a34a"],#console #btn-enviar[style*="22, 163, 74"],#console button[style*="16a34a"],#console button[style*="22, 163, 74"]{background:#047857!important;border-color:#047857}
+#console #btn-enviar[style*="16a34a"]:hover:not(:disabled),#console #btn-enviar[style*="22, 163, 74"]:hover:not(:disabled),#console button[style*="16a34a"]:hover:not(:disabled),#console button[style*="22, 163, 74"]:hover:not(:disabled){background:#065f46!important;border-color:#065f46}
 #console button.text-xs[style*="linear-gradient"]{min-height:38px;padding:0 18px;font-size:13.5px}
 /* secundarios: los "border rounded(-lg)" de app.js → píldora de contorno */
 #console button.border.rounded-lg,#console button.border.rounded,#console button.border.border-slate-300{
