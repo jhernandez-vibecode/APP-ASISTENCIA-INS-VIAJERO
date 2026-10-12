@@ -19,7 +19,7 @@ window.VCfg = {
   // MISMO archivo que usan los tres correos del cotizador de autos: si alguna
   // vez se regenera, se regenera en los dos repos.
   LOGO_INS_URL: 'https://appasistenciainsviajero.netlify.app/img/ins-logo.png',
-  LOGO_SDI_URL: 'https://appasistenciainsviajero.netlify.app/img/sdi-logo-email.png',
+  LOGO_SDI_URL: 'https://appasistenciainsviajero.netlify.app/img/sdi-logo-email-ins.png',
   // Documentos que van adjuntos en TODO correo, una sola vez (no por viajero).
   // 🔴 assets/condiciones.pdf es el "DERSA+CG Seguro INS Viajero con Asistencia
   // Autoexpedible V5" que el propio INS mete dentro de cada ZIP de póliza.
@@ -60,11 +60,11 @@ window.VCfg = {
   // Solo la consola la muestra: la página del cliente no lleva novedades
   // (decisión de JC del 24 ago 2026).
   NOVEDADES: {
-    version: '2026-09-21',
-    fecha: '21 sep 2026',
+    version: '2026-10-12',
+    fecha: '12 oct 2026',
     items: [
-      '<b>Los botones de WhatsApp ahora son verdes</b>: "Abrir WhatsApp" y "Seguir por WhatsApp" se distinguen de un vistazo del botón azul de enviar el correo.',
-      '<b>Todo funciona igual</b>: los tres pasos, el correo y los mensajes no cambiaron.'
+      '<b>La plataforma pasa a llamarse SDI Seguros Digitales INS</b>: el pie del correo que reciben tus clientes lleva el logotipo con la leyenda nueva y el texto «SDI Seguros Digitales INS».',
+      '<b>Todo lo demás funciona igual</b>: los tres pasos, los adjuntos y los mensajes de WhatsApp no cambiaron.'
     ]
   },
 

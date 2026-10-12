@@ -4,7 +4,7 @@
    - Sin internet: sirve la última copia buena — la guía de emergencia
      tiene que abrir aunque el roaming falle.
    Al cambiar la versión del caché, el activate borra los viejos. */
-var CACHE = 'viajero-v2';   // v2: iconos nuevos (25 ago 2026)
+var CACHE = 'viajero-v3';   // v3: sdi-logo.svg del kit v1.4 (12 oct 2026) · v2: iconos nuevos (25 ago 2026)
 var CORE = [
   './',
   './index.html',

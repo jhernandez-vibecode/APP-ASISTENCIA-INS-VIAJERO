@@ -288,8 +288,9 @@ window.VEmail = (function () {
     };
     const web = String(A.web || '').replace(/^https?:\/\//i, '').trim();
     return '<tr><td bgcolor="' + SDI_NAVY + '" style="background:' + SDI_NAVY + ';color:#cbd5e1;padding:30px 32px 26px;text-align:center;">' +
-      // 120 px sobre un correo de 600: el pie firma, no compite con el contenido.
-      '<img src="' + esc(logo) + '" alt="Seguros Digitales SDI" width="120" style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;width:120px;height:auto;" />' +
+      // 146 px sobre un correo de 600 (~51 px de alto, la misma altura que tenía el
+      // logo anterior a 120 px): el pie firma, no compite con el contenido.
+      '<img src="' + esc(logo) + '" alt="SDI Seguros Digitales INS" width="146" style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;width:146px;height:auto;" />' +
       '<p style="margin:18px 0 0;font-size:12px;">' +
         '<a href="mailto:' + esc(A.correo) + '" style="color:#7dd3fc;text-decoration:none;font-weight:600;">' + esc(A.correo) + '</a>' +
         (web ? ' &middot; <a href="https://' + esc(web) + '" style="color:#7dd3fc;text-decoration:none;font-weight:600;">' + esc(web) + '</a>' : '') +
@@ -298,7 +299,7 @@ window.VEmail = (function () {
       '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px;"><tr>' +
         '<td style="border-top:1px solid #1e3a5f;height:1px;line-height:1px;font-size:0;">&nbsp;</td></tr></table>' +
       linea('&copy; Propiedad intelectual de ' + esc(A.nombre), 14) +
-      linea('Seguros Digitales SDI &mdash; Todos los derechos reservados', 3) +
+      linea('SDI Seguros Digitales INS &mdash; Todos los derechos reservados', 3) +
       linea('Agente exclusivo INS &middot; Licencia SUGESE ' + esc(A.licencia), 3) +
       '</td></tr>';
   }
