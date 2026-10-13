@@ -60,11 +60,11 @@ window.VCfg = {
   // Solo la consola la muestra: la página del cliente no lleva novedades
   // (decisión de JC del 24 ago 2026).
   NOVEDADES: {
-    version: '2026-10-12',
-    fecha: '12 oct 2026',
+    version: '2026-10-13',
+    fecha: '13 oct 2026',
     items: [
-      '<b>La plataforma pasa a llamarse SDI Seguros Digitales INS</b>: el pie del correo que reciben tus clientes lleva el logotipo con la leyenda nueva y el texto «SDI Seguros Digitales INS».',
-      '<b>Todo lo demás funciona igual</b>: los tres pasos, los adjuntos y los mensajes de WhatsApp no cambiaron.'
+      '<b>El WhatsApp de «póliza emitida» acomodó sus íconos</b>: el avión va ahora después del nombre del seguro y el check al final de «¡Su póliza está lista!». El resto del mensaje no cambió.',
+      '<b>Si guardaste tu propia versión de ese mensaje</b> con «Guardar como predeterminado», te sigue saliendo la tuya: dale «Restaurar» para tomar la nueva.'
     ]
   },
 
