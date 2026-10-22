@@ -8,7 +8,8 @@ window.VCfg = {
   WHITELIST: [
     'jhernandez@segurosdelins.com',
     'tramites@segurosdelins.com',
-    'chernandez@seguros-ins.com'
+    'chernandez@seguros-ins.com',
+    'fhernandez@segurosdelins.com'
   ],
   APP_LINK: 'https://appasistenciainsviajero.netlify.app/',
   COTIZA_LINK: 'https://cotiza.ins-cr.com/frmDatosIncluir.aspx?P=99&A=1101130',
