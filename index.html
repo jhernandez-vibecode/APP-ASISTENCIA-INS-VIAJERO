@@ -448,9 +448,14 @@ tailwind.config = {
         <div>
           <p class="board text-[10px] uppercase text-verde mb-1">Canal Wi-Fi Call</p>
           <h2 class="font-display font-bold text-3xl tracking-tight">Asistencia por WhatsApp</h2>
-          <p class="text-bruma mt-2 text-sm">Cómo pedir ayuda con el bot de Universal Assistance desde el exterior.</p>
+          <p class="text-bruma mt-2 text-sm">Llame por internet (Wi-Fi o datos) a la Unidad de Asistencia, sin costo de llamada internacional, o abra el chat con el bot de Universal Assistance y siga estos pasos.</p>
+          <p class="text-bruma mt-1.5 text-xs">Al tocar «Llamar por Wi-Fi» se abre la página de Universal Assistance y la llamada arranca sola: permita el micrófono cuando el teléfono lo pida.</p>
         </div>
-        <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="lift bg-[#1da851] text-white font-bold px-5 py-3 rounded-xl text-sm inline-flex items-center gap-2 self-start"><i data-lucide="message-circle" class="w-4 h-4"></i> Abrir WhatsApp</a>
+        <div class="flex flex-wrap gap-2 self-start shrink-0 whitespace-nowrap">
+          <!-- Página INS de Universal Assistance (la que manda el bot); ?wificall_auto=1 arranca la llamada al abrir -->
+          <a href="https://www.universal-assistance.com/ar/asistencia-ins?wificall_auto=1" target="_blank" rel="noopener noreferrer" class="lift bg-[#1da851] text-white font-bold px-5 py-3 rounded-xl text-sm inline-flex items-center gap-2"><i data-lucide="phone-call" class="w-4 h-4"></i> Llamar por Wi-Fi</a>
+          <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="lift bg-white border border-[#1da851] text-verde font-bold px-5 py-3 rounded-xl text-sm inline-flex items-center gap-2"><i data-lucide="message-circle" class="w-4 h-4"></i> Abrir el chat</a>
+        </div>
       </div>
 
       <div class="card card-in divide-y divide-linea overflow-hidden">
