@@ -64,7 +64,7 @@ window.VCfg = {
     version: '2026-10-26',
     fecha: '26 oct 2026',
     items: [
-      '<b>Tus clientes ya pueden llamar a la asistencia con un toque</b>: en la pestaña «Wi-Fi Call» de su guía, el botón «Llamar por Wi-Fi» abre la página de Universal Assistance y la llamada por internet arranca sola, sin costo de llamada internacional. Solo tienen que permitir el micrófono.',
+      '<b>Tus clientes ya pueden llamar a la asistencia con un toque</b>: en «Contactos de emergencia» y en la pestaña «Wi-Fi Call» de su guía, el botón «Llamar por Wi-Fi» abre la página de Universal Assistance y la llamada por internet arranca sola, sin costo de llamada internacional. Solo tienen que permitir el micrófono.',
       '<b>El chat con el bot sigue al lado</b>, con los mismos pasos de siempre.'
     ]
   },
