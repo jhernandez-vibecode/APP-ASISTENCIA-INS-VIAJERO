@@ -78,6 +78,11 @@ tailwind.config = {
   #bnav{position:relative}
   #bn-pill{position:absolute;top:8px;bottom:8px;border-radius:14px;background:rgba(3,105,161,.1);border:1px solid rgba(3,105,161,.22);pointer-events:none;opacity:0;will-change:transform,width}
 
+  /* El enlace wa.me/call/ no funciona en WhatsApp de computadora (doc de Meta):
+     solo se muestra en pantallas táctiles. !important porque el inline-flex
+     de Tailwind CDN se inyecta después de este <style>. */
+  @media (hover:hover) and (pointer:fine){.solo-tactil{display:none!important}}
+
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
   @media (prefers-reduced-transparency:reduce){
     .glassbar{background:#ffffff;-webkit-backdrop-filter:none;backdrop-filter:none}
@@ -448,9 +453,12 @@ tailwind.config = {
         <div>
           <p class="board text-[10px] uppercase text-verde mb-1">Canal Wi-Fi Call</p>
           <h2 class="font-display font-bold text-3xl tracking-tight">Asistencia por WhatsApp</h2>
-          <p class="text-bruma mt-2 text-sm">Cómo pedir ayuda con el bot de Universal Assistance desde el exterior.</p>
+          <p class="text-bruma mt-2 text-sm">Llame por WhatsApp con internet, sin costo de llamada internacional, o abra el chat con el bot de Universal Assistance y siga estos pasos.</p>
         </div>
-        <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="lift bg-[#1da851] text-white font-bold px-5 py-3 rounded-xl text-sm inline-flex items-center gap-2 self-start"><i data-lucide="message-circle" class="w-4 h-4"></i> Abrir WhatsApp</a>
+        <div class="flex flex-wrap gap-2 self-start shrink-0 whitespace-nowrap">
+          <a href="https://wa.me/call/5491167502557" target="_blank" rel="noopener noreferrer" class="solo-tactil lift bg-[#1da851] text-white font-bold px-5 py-3 rounded-xl text-sm inline-flex items-center gap-2"><i data-lucide="phone-call" class="w-4 h-4"></i> Llamar por WhatsApp</a>
+          <a href="https://wa.me/5491167502557" target="_blank" rel="noopener noreferrer" class="lift bg-white border border-[#1da851] text-verde font-bold px-5 py-3 rounded-xl text-sm inline-flex items-center gap-2"><i data-lucide="message-circle" class="w-4 h-4"></i> Abrir el chat</a>
+        </div>
       </div>
 
       <div class="card card-in divide-y divide-linea overflow-hidden">

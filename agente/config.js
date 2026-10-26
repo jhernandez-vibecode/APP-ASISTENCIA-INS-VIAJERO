@@ -61,11 +61,11 @@ window.VCfg = {
   // Solo la consola la muestra: la página del cliente no lleva novedades
   // (decisión de JC del 24 ago 2026).
   NOVEDADES: {
-    version: '2026-10-13',
-    fecha: '13 oct 2026',
+    version: '2026-10-26',
+    fecha: '26 oct 2026',
     items: [
-      '<b>El WhatsApp de «póliza emitida» acomodó sus íconos</b>: el avión va ahora después del nombre del seguro y el check al final de «¡Su póliza está lista!». El resto del mensaje no cambió.',
-      '<b>Si guardaste tu propia versión de ese mensaje</b> con «Guardar como predeterminado», te sigue saliendo la tuya: dale «Restaurar» para tomar la nueva.'
+      '<b>Tus clientes ya pueden llamar a la asistencia con un toque</b>: en la pestaña «Wi-Fi Call» de su guía, el botón «Llamar por WhatsApp» arranca la llamada de voz a Universal Assistance por internet, sin costo de llamada internacional.',
+      '<b>El chat con el bot sigue al lado</b>, con los mismos pasos de siempre. En computadora solo aparece el chat, porque WhatsApp de escritorio no abre llamadas desde un enlace.'
     ]
   },
 
