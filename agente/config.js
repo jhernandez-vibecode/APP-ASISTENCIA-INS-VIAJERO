@@ -35,7 +35,10 @@ window.VCfg = {
   ],
   EMERGENCIA: { usa: '1 844 865 0804', espana: '900 995 484', mundo: '+34 (91) 189-5152', email: 'insinternacional@grupoins.com' },
 
-  // Beneficio Sala VIP del Aeropuerto Juan Santamaría (Circular INS 0388-2026).
+  // Beneficio Sala VIP del Aeropuerto Juan Santamaría. Primera ronda: Circular
+  // INS 0388-2026 (24 ago–31 oct 2026, prima ≥ US$80). Renovado por el INS en el
+  // comunicado «Somos Socios» de nov 2026: prima ≥ US$127,88 por persona, de
+  // noviembre 2026 a noviembre 2027 (el INS no dio día: se toma el mes entero).
   // Es PROMOCIÓN temporal del INS, no cobertura: por eso vive acá y no en los
   // textos. El beneficio tiene TRES llaves y las tres deben estar abiertas:
   //   1. `activo` (este interruptor maestro): false = ni una palabra en ningún lado.
@@ -46,9 +49,9 @@ window.VCfg = {
   // `primaMinima` en 0 = califican todos y desaparece la mención del monto.
   SALA_VIP: {
     activo: true,
-    desde: '2026-08-24',
-    hasta: '2026-10-31',
-    primaMinima: 80          // USD por persona (cada viajero tiene su póliza)
+    desde: '2026-11-01',
+    hasta: '2027-11-30',
+    primaMinima: 127.88      // USD por persona (cada viajero tiene su póliza)
   },
 
   // Aviso "Qué hay de nuevo" de la consola (patrón pedido por JC el 28 ago 2026,
@@ -61,11 +64,12 @@ window.VCfg = {
   // Solo la consola la muestra: la página del cliente no lleva novedades
   // (decisión de JC del 24 ago 2026).
   NOVEDADES: {
-    version: '2026-10-26',
-    fecha: '26 oct 2026',
+    version: '2026-11-02',
+    fecha: '2 nov 2026',
     items: [
-      '<b>Tus clientes ya pueden llamar a la asistencia con un toque</b>: en «Contactos de emergencia» y en la pestaña «Wi-Fi Call» de su guía, el botón «Llamar por Wi-Fi» abre la página de Universal Assistance y la llamada por internet arranca sola, sin costo de llamada internacional. Solo tienen que permitir el micrófono.',
-      '<b>El chat con el bot sigue al lado</b>, con los mismos pasos de siempre.'
+      '<b>El INS renovó el beneficio Sala VIP del Aeropuerto Juan Santamaría</b>, de noviembre 2026 a noviembre 2027: el correo de pólizas lo vuelve a anunciar solo.',
+      '<b>El monto mínimo subió a US$127,88 por persona</b> (antes US$80). A quien no llega no se le menciona nada, igual que antes.',
+      'Si habías cambiado el período a mano, tocá «Volver al período oficial» en la tarjeta de Sala VIP.'
     ]
   },
 

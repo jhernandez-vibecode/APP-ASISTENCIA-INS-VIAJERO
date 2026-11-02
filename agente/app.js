@@ -538,7 +538,7 @@ window.VApp = (function () {
     const ok = min === 0 || VParse.parsePrimaUsd(v.prima) >= min;
     if (ok) return `<span class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5">
       <svg viewBox="0 0 24 24" class="w-3.5 h-3.5" fill="none" stroke="#047857" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-10"/></svg>
-      Califica para Sala VIP${min > 0 ? ' · prima ≥ US$' + min : ''}</span>`;
+      Califica para Sala VIP${min > 0 ? ' · prima ≥ ' + VEmail.salaVipMinTxt() : ''}</span>`;
     return `<span class="inline-flex items-center text-[11px] font-medium text-slate-500 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5">Sala VIP: no llega al mínimo · el correo no lo menciona</span>`;
   }
 
@@ -824,7 +824,7 @@ window.VApp = (function () {
     let estado, sub;
     if (sale) {
       estado = 'Activo: sale en los correos';
-      sub = (min > 0 ? `En pólizas con prima ≥ US$${min} por persona` : 'En todas las pólizas') +
+      sub = (min > 0 ? `En pólizas con prima ≥ ${VEmail.salaVipMinTxt()} por persona` : 'En todas las pólizas') +
         ` · vigente del <b>${fechaCortaVip(per.desde)}</b> al <b>${fechaCortaVip(per.hasta)}</b>.`;
     } else if (!on) {
       estado = 'Apagado: ningún correo lo menciona';

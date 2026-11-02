@@ -131,5 +131,5 @@ window.VParse = (function () {
     }
     return out;
   }
-  return { normalize, extractAll, classifyFile, polizaDeNombre, readPdfText, sugerirNombrePila, parsePrimaUsd };
+  return { normalize, extractAll, classifyFile, polizaDeNombre, readPdfText, sugerirNombrePila, parsePrimaUsd, fmtPrima };
 })();

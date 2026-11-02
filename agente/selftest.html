@@ -92,15 +92,17 @@ const LS_ON = 'viajero_vip_on', LS_D = 'viajero_vip_desde', LS_H = 'viajero_vip_
 const ls0 = { on: localStorage.getItem(LS_ON), d: localStorage.getItem(LS_D), h: localStorage.getItem(LS_H) };
 localStorage.removeItem(LS_D); localStorage.removeItem(LS_H); localStorage.setItem(LS_ON, '1');
 // La llave por FECHA se prueba con dias INYECTADOS contra la config real:
-checks.push(['vip 31 oct (ultimo dia) SI', VEmail.salaVipEnFecha('2026-10-31'), true]);
-checks.push(['vip 1 nov se apaga solo', VEmail.salaVipEnFecha('2026-11-01'), false]);
-checks.push(['vip 23 ago aun no empieza', VEmail.salaVipEnFecha('2026-08-23'), false]);
+// (renovacion INS de nov 2026: del 1 nov 2026 al 30 nov 2027)
+checks.push(['vip 1 nov 2026 (primer dia) SI', VEmail.salaVipEnFecha('2026-11-01'), true]);
+checks.push(['vip 30 nov 2027 (ultimo dia) SI', VEmail.salaVipEnFecha('2027-11-30'), true]);
+checks.push(['vip 1 dic 2027 se apaga solo', VEmail.salaVipEnFecha('2027-12-01'), false]);
+checks.push(['vip 31 oct 2026 aun no empieza', VEmail.salaVipEnFecha('2026-10-31'), false]);
 // El periodo es EDITABLE por el agente (localStorage) y manda sobre config:
-VEmail.salaVipSetPeriodo('2026-08-24', '2026-12-15');
-checks.push(['vip periodo editado: 1 nov ahora SI', VEmail.salaVipEnFecha('2026-11-01'), true]);
+VEmail.salaVipSetPeriodo('2026-11-01', '2027-12-15');
+checks.push(['vip periodo editado: 1 dic 2027 ahora SI', VEmail.salaVipEnFecha('2027-12-01'), true]);
 checks.push(['vip periodo editado marca editado', VEmail.salaVipPeriodo().editado, true]);
 VEmail.salaVipSetPeriodo(null, null);
-checks.push(['vip volver al oficial: 1 nov NO', VEmail.salaVipEnFecha('2026-11-01'), false]);
+checks.push(['vip volver al oficial: 1 dic 2027 NO', VEmail.salaVipEnFecha('2027-12-01'), false]);
 // El bloque del correo se prueba con fechas AMPLIAS para no depender del reloj
 // (este selftest tiene que seguir pasando despues del 31 oct 2026):
 const VIP = VCfg.SALA_VIP, VIP0 = { activo: VIP.activo, desde: VIP.desde, hasta: VIP.hasta, primaMinima: VIP.primaMinima };
@@ -123,13 +125,18 @@ VEmail.salaVipSetPeriodo('2000-01-01', '2026-12-15');
 checks.push(['vip correo imprime el periodo editado', VEmail.buildHtml({ saludo: 'x', viajeros: [vOk] }).includes('al 15 de diciembre de 2026'), true]);
 VEmail.salaVipSetPeriodo(null, null);
 checks.push(['vip no llega al monto = silencio', VEmail.buildHtml({ saludo: 'x', viajeros: [vNo] }).includes('Sala VIP'), false]);
+// El minimo con centimos (127,88): se mide exacto y se escribe con coma decimal.
+checks.push(['vip minimo escrito US$127,88', VEmail.salaVipMinTxt(), 'US$127,88']);
+checks.push(['vip correo dice US$127,88 por persona', html1.includes('US$127,88 por persona'), true]);
+checks.push(['vip prima 127,88 justa califica', VEmail.salaVipCalifican([{ prima: 'US$127,88' }]).length, 1]);
+checks.push(['vip prima 127,87 no llega', VEmail.salaVipCalifican([{ prima: 'US$127,87' }]).length, 0]);
 checks.push(['vip mixto nombra a quien aplica', VEmail.buildHtml({ saludo: 'x', viajeros: [vOk, vNo] }).includes('aplica para'), true]);
 VIP.activo = false;
 checks.push(['vip maestro apagado = silencio', VEmail.buildHtml({ saludo: 'x', viajeros: [vOk] }).includes('Sala VIP'), false]);
 VIP.activo = true; VIP.primaMinima = 0;
 const html0 = VEmail.buildHtml({ saludo: 'x', viajeros: [vNo] });
 checks.push(['vip minimo 0 = aplica a todos', html0.includes('Sala VIP'), true]);
-checks.push(['vip minimo 0 = sin mencion del monto', html0.includes('US$80'), false]);
+checks.push(['vip minimo 0 = sin mencion del monto', html0.includes('US$127'), false]);
 VIP.activo = VIP0.activo; VIP.desde = VIP0.desde; VIP.hasta = VIP0.hasta; VIP.primaMinima = VIP0.primaMinima;
 // Restaurar EXACTO lo que el agente tenia configurado:
 ls0.on === null ? localStorage.removeItem(LS_ON) : localStorage.setItem(LS_ON, ls0.on);

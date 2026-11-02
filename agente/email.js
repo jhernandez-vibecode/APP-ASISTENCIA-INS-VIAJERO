@@ -135,7 +135,7 @@ window.VEmail = (function () {
     }).join('<br>');
   }
 
-  // ----- Beneficio Sala VIP (Circular INS 0388-2026) -----
+  // ----- Beneficio Sala VIP (Circular INS 0388-2026, renovado nov 2026) -----
   // Tres llaves, las tres tienen que estar abiertas:
   //   1. VCfg.SALA_VIP.activo — el maestro por código (retira la función entera).
   //   2. El interruptor GENERAL del agente (pedido de JC del 28 ago: "yo activo
@@ -185,6 +185,11 @@ window.VEmail = (function () {
   }
   /** Los viajeros cuya prima llega al mínimo. Se mide UNO POR UNO: cada viajero
    *  tiene su póliza y su prima; nunca se promedia ni se suma. */
+  /** El mínimo como se lee en Costa Rica: US$127,88 (US$80 si no trae céntimos). */
+  function salaVipMinTxt() {
+    const min = Number((VCfg.SALA_VIP || {}).primaMinima) || 0;
+    return window.VParse && VParse.fmtPrima ? VParse.fmtPrima(String(min)) : 'US$' + min;
+  }
   function salaVipCalifican(viajeros) {
     const cfg = VCfg.SALA_VIP || {};
     const min = Number(cfg.primaMinima) || 0;
@@ -242,7 +247,7 @@ window.VEmail = (function () {
     const todos = califican.length === vs.length;
 
     const ORO = '#C9A227', ORO_TXT = '#7c621c', BORDE = '#e8d9a6', FONDO = '#fffdf4';
-    const minTxt = '<b style="color:' + SDI_NAVY + ';">US$' + min + ' por persona</b>';
+    const minTxt = '<b style="color:' + SDI_NAVY + ';">' + salaVipMinTxt() + ' por persona</b>';
     let cuerpo;
     if (min === 0) {
       cuerpo = 'El INS otorga a ' + (vs.length > 1 ? 'sus seguros' : 'su seguro') +
@@ -470,6 +475,6 @@ window.VEmail = (function () {
   async function fileToB64(file) { return abToB64(await file.arrayBuffer()); }
   async function pathToB64(path) { const r = await fetch(path); if (!r.ok) throw new Error('No se pudo cargar ' + path); return abToB64(await r.arrayBuffer()); }
 
-  return { buildHtml, buildAndSend, fileToB64, pathToB64, salaVipEnFecha, salaVipCalifican,
+  return { buildHtml, buildAndSend, fileToB64, pathToB64, salaVipEnFecha, salaVipCalifican, salaVipMinTxt,
     salaVipOn, salaVipSetOn, salaVipPeriodo, salaVipSetPeriodo };
 })();
