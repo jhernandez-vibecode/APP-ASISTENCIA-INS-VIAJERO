@@ -972,7 +972,10 @@ window.VApp = (function () {
   async function revisarFicha() {
     state.ficha = { estado: 'cargando', datos: null, email: '' };
     try { state.ficha = Object.assign({ datos: null, email: '' }, await llamarFicha({ leer: true })); }
-    catch (e) { state.ficha = { estado: 'error', datos: null, email: '' }; }
+    catch (e) { console.warn('[ficha] leer', e); state.ficha = { estado: 'error', datos: null, email: '', motivo: String(e && e.message || e) }; }
+    // Sin datos publicados todavía: se publican solos con «Mi información», para
+    // que los botones no queden apagados esperando un clic que nadie ve (JC, 9 nov).
+    if (state.ficha.estado === 'falta' && (VAgent.get().nombre || '').trim().length >= 4) return publicarFicha();
     if (state.tarea === 'solicitud') render();
   }
   async function publicarFicha() {
@@ -982,7 +985,8 @@ window.VApp = (function () {
       state.ficha = Object.assign({ datos: null, email: '' }, r);
       if (st) st.textContent = r.estado === 'ok' ? '✅ Tus datos quedaron publicados para la solicitud de emisión.' : '';
     } catch (e) {
-      state.ficha = { estado: 'error', datos: null, email: '' };
+      console.warn('[ficha] publicar', e);
+      state.ficha = { estado: 'error', datos: null, email: '', motivo: String(e && e.message || e) };
       if (st) st.textContent = '❌ No se pudieron publicar tus datos para la solicitud. Intentá de nuevo.';
     }
     if (state.tarea === 'solicitud') render();
@@ -999,7 +1003,7 @@ window.VApp = (function () {
     const btn = (t) => `<button onclick="VApp.publicarFicha()" class="text-white text-xs font-semibold rounded-lg px-3 py-1.5 mt-2" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">${t}</button>`;
     if (f.estado === '' || f.estado === 'cargando') return caja('border-slate-200 bg-slate-50 text-slate-600', 'Revisando tus datos para la solicitud…');
     if (f.estado === 'no_autorizado') return caja('border-amber-300 bg-amber-50 text-amber-900', 'Tu cuenta no está habilitada para recibir solicitudes. Pedile a Juan Carlos que la agregue.');
-    if (f.estado === 'error') return caja('border-amber-300 bg-amber-50 text-amber-900', 'No se pudo revisar tus datos para la solicitud.<br>' + btn('Intentar de nuevo'));
+    if (f.estado === 'error') return caja('border-amber-300 bg-amber-50 text-amber-900', 'No se pudo revisar tus datos para la solicitud' + (f.motivo ? ' <span class="text-[11px] text-amber-700">(' + esc(f.motivo) + ')</span>' : '') + '.<br>' + btn('Intentar de nuevo'));
     if (f.estado === 'falta') return caja('border-amber-300 bg-amber-50 text-amber-900',
       'Para activar la solicitud, publicá tus datos de «Mi información» (<b>' + esc(A.nombre || '—') + '</b>). Con eso la página y los correos salen a tu nombre, y las solicitudes te llegan a <b>' + esc(VAuth.getEmail() || '') + '</b>.<br>' + btn('Publicar mis datos'));
     const d = f.datos || {};
