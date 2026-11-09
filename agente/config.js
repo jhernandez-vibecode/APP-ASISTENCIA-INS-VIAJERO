@@ -68,7 +68,7 @@ window.VCfg = {
   // AGENTES_SOLICITUD en el Code.gs y de AGENTES en solicitud/index.html). Un
   // agente que no esté acá ve la pantalla con los botones apagados y el aviso.
   SOLICITUD_URL: 'https://seguros-viajero.appsegurosdigitales.com/solicitud/',
-  SOLICITUD_AGENTES: ['jc'],
+  SOLICITUD_AGENTES: ['jc', 'fh'],   // fh = Luis Fernando Hernández (lo opera José desde tramites@; las solicitudes llegan ahí)
 
   NOVEDADES: {
     version: '2026-11-09',
