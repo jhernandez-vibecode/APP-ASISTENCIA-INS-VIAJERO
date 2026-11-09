@@ -63,12 +63,15 @@ window.VCfg = {
   // la MISMA novedad en el registro de cambios del pie de agente/index.html.
   // Solo la consola la muestra: la página del cliente no lleva novedades
   // (decisión de JC del 24 ago 2026).
-  // Solicitud de emisión (9 nov 2026): la página vive en el sitio del cotizador
-  // y su Code.gs solo acepta los códigos de esta lista (la misma de
-  // AGENTES_SOLICITUD en el Code.gs y de AGENTES en solicitud/index.html). Un
-  // agente que no esté acá ve la pantalla con los botones apagados y el aviso.
+  // Solicitud de emisión (9 nov 2026, mismo modelo que la cita de autos): la
+  // página vive en el sitio del cotizador. Cada agente PUBLICA su «Mi
+  // información» a la función de Netlify (verificada con su sesión de Google) y
+  // el enlace lleva ?ae=<su correo>. Los correos salen por Resend desde
+  // solicitudes@appsegurosdigitales.com con el nombre del agente. Quién puede
+  // recibir: AUTORIZADOS en netlify/functions/lib/solicitud-core.mjs del
+  // cotizador = la WHITELIST de arriba.
   SOLICITUD_URL: 'https://seguros-viajero.appsegurosdigitales.com/solicitud/',
-  SOLICITUD_AGENTES: ['jc', 'fh'],   // fh = Luis Fernando Hernández (lo opera José desde tramites@; las solicitudes llegan ahí)
+  SOLICITUD_API: 'https://seguros-viajero.appsegurosdigitales.com/api/solicitud',   // función de Netlify del cotizador: fichas + correos por Resend
 
   NOVEDADES: {
     version: '2026-11-09',

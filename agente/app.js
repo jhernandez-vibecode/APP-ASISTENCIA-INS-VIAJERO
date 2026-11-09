@@ -940,14 +940,73 @@ window.VApp = (function () {
     return `<p class="text-xs text-slate-500 mb-2">¿Qué le vas a mandar al cliente?</p>
       <div class="tareas">${TAREAS.map(card).join('')}</div>`;
   }
-  function setTarea(t) { state.tarea = t; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  function setTarea(t) {
+    state.tarea = t; render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (t === 'solicitud' && (state.ficha.estado === '' || state.ficha.estado === 'error')) revisarFicha();
+  }
 
   // Teléfono: 8 dígitos = Costa Rica (se le pone el 506); 10 a 15 = ya trae código.
   function telValido(v) { const d = String(v || '').replace(/\D/g, ''); return d.length === 8 || (d.length >= 10 && d.length <= 15); }
   function telMostrar(v) { let d = String(v || '').replace(/\D/g, ''); if (d.length === 8) d = '506' + d; return '+' + d; }
   function correoValido(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim()); }
-  function solicitudLink(A) { return (VCfg.SOLICITUD_URL || '') + '?a=' + encodeURIComponent(String(A.id || '').toLowerCase()); }
-  function solicitudHabilitada(A) { return (VCfg.SOLICITUD_AGENTES || []).indexOf(String(A.id || '').toLowerCase()) >= 0; }
+  // ===== La ficha del agente en el servidor (9 nov 2026, igual que autos) =====
+  // La página de la solicitud y sus correos (aviso al agente y confirmación al
+  // cliente, por Resend desde solicitudes@appsegurosdigitales.com) usan los
+  // datos que cada agente PUBLICA desde «Mi información», verificados con su
+  // sesión de Google. El aviso le llega a la cuenta con la que entró.
+  // estado: '' (sin revisar) · 'cargando' · 'ok' · 'falta' · 'no_autorizado' · 'error'
+  state.ficha = { estado: '', datos: null, email: '' };
+  function solicitudLink() { return (VCfg.SOLICITUD_URL || '') + '?ae=' + encodeURIComponent(VAuth.getEmail() || ''); }
+  function solicitudHabilitada() { return state.ficha.estado === 'ok'; }
+  function fichaDesdePerfil(A) {
+    return { nombre: A.nombre || '', licencia: A.licencia || '', whatsapp: A.whatsapp || A.tel || '', telefono: A.tel || '', codigo: A.codigo || '', rol: A.rol || '' };
+  }
+  async function llamarFicha(cuerpo) {
+    const token = await VAuth.ensureToken();
+    const r = await fetch(VCfg.SOLICITUD_API + '/ficha', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.assign({ token }, cuerpo)) });
+    const j = await r.json().catch(() => ({}));
+    if (r.status === 403 && j.error === 'no_autorizado') return { estado: 'no_autorizado' };
+    if (!r.ok) throw new Error('ficha ' + r.status);
+    return { estado: j.ficha ? 'ok' : 'falta', datos: j.ficha, email: j.email };
+  }
+  async function revisarFicha() {
+    state.ficha = { estado: 'cargando', datos: null, email: '' };
+    try { state.ficha = Object.assign({ datos: null, email: '' }, await llamarFicha({ leer: true })); }
+    catch (e) { state.ficha = { estado: 'error', datos: null, email: '' }; }
+    if (state.tarea === 'solicitud') render();
+  }
+  async function publicarFicha() {
+    const st = el('status');
+    try {
+      const r = await llamarFicha({ ficha: fichaDesdePerfil(VAgent.get()) });
+      state.ficha = Object.assign({ datos: null, email: '' }, r);
+      if (st) st.textContent = r.estado === 'ok' ? '✅ Tus datos quedaron publicados para la solicitud de emisión.' : '';
+    } catch (e) {
+      state.ficha = { estado: 'error', datos: null, email: '' };
+      if (st) st.textContent = '❌ No se pudieron publicar tus datos para la solicitud. Intentá de nuevo.';
+    }
+    if (state.tarea === 'solicitud') render();
+  }
+  // ¿Lo publicado coincide con «Mi información»? Si no, se ofrece actualizar.
+  function fichaAlDia(A) {
+    const d = state.ficha.datos || {}, p = fichaDesdePerfil(A);
+    const dig = v => String(v || '').replace(/\D/g, '');
+    return d.nombre === p.nombre.trim() && String(d.licencia || '') === String(p.licencia).replace(/^SUGESE\s*/i, '').trim() && dig(d.whatsapp) === dig(p.whatsapp) && String(d.codigo || '') === String(p.codigo).trim();
+  }
+  function avisoFicha(A) {
+    const f = state.ficha;
+    const caja = (cls, html) => `<div class="rounded-xl border ${cls} text-[13px] px-4 py-3 mb-4">${html}</div>`;
+    const btn = (t) => `<button onclick="VApp.publicarFicha()" class="text-white text-xs font-semibold rounded-lg px-3 py-1.5 mt-2" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">${t}</button>`;
+    if (f.estado === '' || f.estado === 'cargando') return caja('border-slate-200 bg-slate-50 text-slate-600', 'Revisando tus datos para la solicitud…');
+    if (f.estado === 'no_autorizado') return caja('border-amber-300 bg-amber-50 text-amber-900', 'Tu cuenta no está habilitada para recibir solicitudes. Pedile a Juan Carlos que la agregue.');
+    if (f.estado === 'error') return caja('border-amber-300 bg-amber-50 text-amber-900', 'No se pudo revisar tus datos para la solicitud.<br>' + btn('Intentar de nuevo'));
+    if (f.estado === 'falta') return caja('border-amber-300 bg-amber-50 text-amber-900',
+      'Para activar la solicitud, publicá tus datos de «Mi información» (<b>' + esc(A.nombre || '—') + '</b>). Con eso la página y los correos salen a tu nombre, y las solicitudes te llegan a <b>' + esc(VAuth.getEmail() || '') + '</b>.<br>' + btn('Publicar mis datos'));
+    const d = f.datos || {};
+    return caja('border-slate-200 bg-white text-slate-700',
+      'La solicitud sale a nombre de <b>' + esc(d.nombre) + '</b>' + (d.licencia ? ' · Lic. ' + esc(d.licencia) : '') + ' y te llega a <b>' + esc(f.email) + '</b>.' +
+      (fichaAlDia(A) ? '' : '<br><span class="text-amber-700">Tus datos de «Mi información» cambiaron.</span> ' + btn('Actualizar en la solicitud')));
+  }
   // *negrita* de WhatsApp y los enlaces, para la vista previa.
   function waHtml(t) {
     return esc(t).replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/(https?:\/\/[^\s<]+)/g, '<span class="wa-link">$1</span>');
@@ -957,7 +1016,7 @@ window.VApp = (function () {
     if (tipo === 'solicitud') {
       const s = state.sol;
       const tpl = s.tpl != null ? s.tpl : VWa.getTemplate('solicitud');
-      return VWa.fillText(tpl, s.nombre.trim(), A.nombre, '', [], solicitudLink(A));
+      return VWa.fillText(tpl, s.nombre.trim(), A.nombre, '', [], solicitudLink());
     }
     const g = state.guia;
     const tpl = g.tpl != null ? g.tpl : VWa.getTemplate('directa');
@@ -1019,10 +1078,8 @@ window.VApp = (function () {
 
   function pantallaSolicitud() {
     const s = state.sol, A = VAgent.get();
-    const ok = solicitudHabilitada(A);
     const tpl = s.tpl != null ? s.tpl : VWa.getTemplate('solicitud');
-    const aviso = ok ? '' : `<div class="rounded-xl border border-amber-300 bg-amber-50 text-amber-900 text-[13px] px-4 py-3 mb-4">
-      La solicitud todavía no está activada para tu código de agente (<b>${esc(A.id || '—')}</b>). Pedile a Juan Carlos que la active: así las solicitudes de tus clientes te llegan a vos.</div>`;
+    const aviso = avisoFicha(A);
     return `<div class="tarea-panel"><div class="tarea-cols">
       <div>
         ${cabeceraTarea('solicitud', 'Mandale la solicitud de emisión')}
@@ -1031,7 +1088,7 @@ window.VApp = (function () {
         ${campoT('sol-nombre', 'Nombre del cliente', s.nombre, 'placeholder="Así lo saluda el mensaje" autocomplete="off"')}
         ${campoT('sol-tel', 'WhatsApp', s.tel, 'placeholder="8888 8888" inputmode="tel" autocomplete="off"', ' ')}
         ${campoT('sol-correo', 'Correo <span class="font-normal text-slate-500">(si también se lo querés mandar por correo)</span>', s.correo, 'placeholder="cliente@correo.com" inputmode="email" autocomplete="off"')}
-        ${linkBox(solicitudLink(A))}
+        ${linkBox(solicitudLink())}
         ${bannerTarea('solicitud')}
         ${botonWa('btn-tarea-wa')}
         <button id="btn-sol-mail" onclick="VApp.solicitudCorreo()" class="w-full text-white text-sm font-semibold rounded-xl px-4 py-3.5 mt-2.5 shadow-sm transition-all duration-200 hover:shadow-lg active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Enviar el correo</button>
@@ -1073,7 +1130,7 @@ window.VApp = (function () {
       nota.textContent = okTel ? '✓ Se abre el chat con ' + telMostrar(datos.tel) : (datos.tel ? 'Faltan dígitos: son 8.' : 'Sin el número no se puede abrir el chat.');
       nota.className = 'block text-[11.5px] mt-1 font-semibold ' + (okTel ? 'text-green-700' : 'text-amber-700');
     }
-    const habil = t !== 'solicitud' || solicitudHabilitada(VAgent.get());
+    const habil = t !== 'solicitud' || solicitudHabilitada();
     const bw = el('btn-tarea-wa');
     if (bw) { bw.disabled = !(okTel && habil); bw.textContent = okTel ? 'Abrir WhatsApp con el mensaje' : 'Escribí el WhatsApp del cliente'; }
     const bm = el('btn-sol-mail');
@@ -1116,7 +1173,7 @@ window.VApp = (function () {
   }
   function tareaCopiar() {
     const A = VAgent.get();
-    const link = state.tarea === 'solicitud' ? solicitudLink(A) : VAgent.publicLink(A);
+    const link = state.tarea === 'solicitud' ? solicitudLink() : VAgent.publicLink(A);
     const st = el('status');
     const done = () => { if (st) st.textContent = '✅ Enlace copiado.'; };
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(done).catch(() => {});
@@ -1135,10 +1192,10 @@ window.VApp = (function () {
   async function solicitudCorreo() {
     const st = el('status'); st.textContent = '';
     const s = state.sol, A = VAgent.get();
-    if (!solicitudHabilitada(A) || s.enviado) return;
+    if (!solicitudHabilitada() || s.enviado) return;
     if (!correoValido(s.correo)) { st.textContent = 'Revisá el correo del cliente.'; return; }
     const b = el('btn-sol-mail'); if (b) b.disabled = true;
-    const html = VEmail.buildSolicitudHtml(s.nombre.trim() || 'cliente', solicitudLink(A));
+    const html = VEmail.buildSolicitudHtml(s.nombre.trim() || 'cliente', solicitudLink());
     const to = s.correo.trim();
     const asunto = 'Solicitud para emitir su Seguro INS Viajero';
     try {
@@ -1173,7 +1230,13 @@ window.VApp = (function () {
     return a;
   }
   function agentToggle() { agentOpen = !agentOpen; render(); }
-  function agentSave() { VAgent.save(readAgentForm()); render(); el('status') && (el('status').textContent = '✅ Tu información de agente fue guardada en este navegador.'); }
+  // Guardar «Mi información» también la publica para la solicitud de emisión
+  // (si la cuenta está habilitada): así todo sale como el agente lo puso.
+  function agentSave() {
+    VAgent.save(readAgentForm()); render();
+    el('status') && (el('status').textContent = '✅ Tu información de agente fue guardada en este navegador.');
+    if (state.ficha.estado !== 'no_autorizado') publicarFicha();
+  }
   function agentReset() { VAgent.reset(); render(); }
   function agentCopyLink() {
     const inp = el('ag-link'); if (!inp) return;
@@ -1426,6 +1489,6 @@ window.VApp = (function () {
     irA, sinPoliza, nuevoEnvio, pedirLimpiar, pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink,
     elegirArchivos, elegirCarpeta, procesarEntrada, vipToggle, vipEditToggle, vipPeriodoChange, vipPeriodoOficial, vipRepintar,
     avisoNovedades, novedadesVisto, setTarea, tareaTplSave, tareaTplReset, tareaWa, tareaCopiar, tareaNueva,
-    solicitudCorreo, solicitudVerCorreo, state };
+    solicitudCorreo, solicitudVerCorreo, publicarFicha, state };
 })();
 document.addEventListener('DOMContentLoaded', () => VApp.boot());
