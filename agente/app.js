@@ -994,25 +994,45 @@ window.VApp = (function () {
       </div>`;
   }
 
+  // Cabecera de las dos pantallas de un paso con «Limpiar» siempre a mano
+  // (pedido de JC el 9 nov 2026): vacía los datos del cliente y deja el
+  // mensaje editado como estaba.
+  function cabeceraTarea(t, titulo) {
+    return `<div class="flex items-start justify-between gap-2 mb-0.5">
+      <h3 class="text-base font-bold text-slate-800">${titulo}</h3>
+      <button onclick="VApp.tareaNueva('${t}')" class="text-sm font-medium border rounded-lg px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-50 whitespace-nowrap flex-none">Limpiar</button>
+    </div>`;
+  }
+  // Lo que ya salió para este cliente (WhatsApp abierto y/o correo enviado) +
+  // «Mandar a otro cliente». Sin esto, después de abrir WhatsApp no había
+  // forma de saber que ya se mandó ni de empezar con el siguiente.
+  function bannerTarea(t) {
+    const d = t === 'solicitud' ? state.sol : state.guia;
+    const lineas = [];
+    if (d.waAbierto) lineas.push('WhatsApp abierto con <b>' + esc(d.waAbierto.tel) + '</b> · ' + esc(d.waAbierto.hora));
+    if (d.enviado) lineas.push('Correo enviado a <b>' + esc(d.enviado.to) + '</b> · ' + esc(d.enviado.hora));
+    if (!lineas.length) return '';
+    return `<div class="rounded-xl border border-green-300 bg-green-50 text-green-900 text-[13px] px-4 py-3 mb-3 v-pop">
+      ${lineas.join('<br>')}
+      <div class="mt-2"><button onclick="VApp.tareaNueva('${t}')" class="text-white text-xs font-semibold rounded-lg px-3 py-1.5" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Mandar a otro cliente</button></div></div>`;
+  }
+
   function pantallaSolicitud() {
     const s = state.sol, A = VAgent.get();
     const ok = solicitudHabilitada(A);
     const tpl = s.tpl != null ? s.tpl : VWa.getTemplate('solicitud');
     const aviso = ok ? '' : `<div class="rounded-xl border border-amber-300 bg-amber-50 text-amber-900 text-[13px] px-4 py-3 mb-4">
       La solicitud todavía no está activada para tu código de agente (<b>${esc(A.id || '—')}</b>). Pedile a Juan Carlos que la active: así las solicitudes de tus clientes te llegan a vos.</div>`;
-    const exito = s.enviado ? `<div class="rounded-xl border border-green-300 bg-green-50 text-green-900 text-[13px] px-4 py-3 mb-3 v-pop">
-      Correo enviado a <b>${esc(s.enviado.to)}</b> · ${esc(s.enviado.hora)}
-      <button onclick="VApp.tareaNueva('solicitud')" class="underline font-semibold ml-1">Mandar a otro cliente</button></div>` : '';
     return `<div class="tarea-panel"><div class="tarea-cols">
       <div>
-        <h3 class="text-base font-bold text-slate-800 mb-0.5">Mandale la solicitud de emisión</h3>
+        ${cabeceraTarea('solicitud', 'Mandale la solicitud de emisión')}
         <p class="text-xs text-slate-500 mb-4">El cliente llena el viaje una vez y agrega a cada persona que viaja. La solicitud te llega al correo, lista para emitir.</p>
         ${aviso}
         ${campoT('sol-nombre', 'Nombre del cliente', s.nombre, 'placeholder="Así lo saluda el mensaje" autocomplete="off"')}
         ${campoT('sol-tel', 'WhatsApp', s.tel, 'placeholder="8888 8888" inputmode="tel" autocomplete="off"', ' ')}
         ${campoT('sol-correo', 'Correo <span class="font-normal text-slate-500">(si también se lo querés mandar por correo)</span>', s.correo, 'placeholder="cliente@correo.com" inputmode="email" autocomplete="off"')}
         ${linkBox(solicitudLink(A))}
-        ${exito}
+        ${bannerTarea('solicitud')}
         ${botonWa('btn-tarea-wa')}
         <button id="btn-sol-mail" onclick="VApp.solicitudCorreo()" class="w-full text-white text-sm font-semibold rounded-xl px-4 py-3.5 mt-2.5 shadow-sm transition-all duration-200 hover:shadow-lg active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Enviar el correo</button>
         <div class="text-center"><button onclick="VApp.solicitudVerCorreo()" class="text-xs text-sdi-azul underline underline-offset-2 mt-2.5">Ver primero cómo le llega el correo →</button></div>
@@ -1027,12 +1047,13 @@ window.VApp = (function () {
     const tpl = g.tpl != null ? g.tpl : VWa.getTemplate('directa');
     return `<div class="tarea-panel"><div class="tarea-cols">
       <div>
-        <h3 class="text-base font-bold text-slate-800 mb-0.5">Mandale la guía de asistencia</h3>
+        ${cabeceraTarea('guia', 'Mandale la guía de asistencia')}
         <p class="text-xs text-slate-500 mb-4">Para el cliente que compró el seguro en línea, sin pasar por vos. No hace falta cargar ninguna póliza.</p>
         ${campoT('guia-nombre', 'Nombre del cliente', g.nombre, 'placeholder="Así lo saluda el mensaje" autocomplete="off"')}
         ${campoT('guia-tel', 'WhatsApp', g.tel, 'placeholder="8888 8888" inputmode="tel" autocomplete="off"', ' ')}
         ${campoT('guia-poliza', 'Número de póliza <span class="font-normal text-slate-500">(opcional)</span>', g.poliza, 'placeholder="0201VIA000000000" autocomplete="off"', '<span class="text-slate-500">Si lo dejás vacío, esa línea no sale en el mensaje.</span>')}
         ${linkBox(VAgent.publicLink(A))}
+        ${bannerTarea('guia')}
         ${botonWa('btn-tarea-wa')}
       </div>
       <div>${vistaWa('wa-prev')}${editorPlantilla('directa', tpl)}</div>
@@ -1068,7 +1089,7 @@ window.VApp = (function () {
     const pre = t === 'solicitud' ? 'sol' : 'guia';
     ['nombre', 'tel', 'correo', 'poliza'].forEach(k => {
       const inp = el(pre + '-' + k); if (!inp) return;
-      inp.addEventListener('input', e => { datos[k] = e.target.value; if (k === 'correo') state.sol.enviado = null; pintarTarea(); });
+      inp.addEventListener('input', e => { datos[k] = e.target.value; if (k === 'correo') state.sol.enviado = null; if (k === 'tel') datos.waAbierto = null; pintarTarea(); });
     });
     const tx = el('tpl-' + (t === 'solicitud' ? 'solicitud' : 'directa'));
     if (tx) tx.addEventListener('input', e => { datos.tpl = e.target.value; pintarTarea(); });
@@ -1090,6 +1111,8 @@ window.VApp = (function () {
     const t = state.tarea, datos = t === 'solicitud' ? state.sol : state.guia;
     if (!telValido(datos.tel)) { const i = el((t === 'solicitud' ? 'sol' : 'guia') + '-tel'); if (i) i.focus(); return; }
     window.open(VWa.buildLinkTexto(datos.tel, textoTarea(t)), '_blank');
+    datos.waAbierto = { tel: telMostrar(datos.tel), hora: new Date().toLocaleTimeString('es-CR', { hour: 'numeric', minute: '2-digit' }) };
+    render();
   }
   function tareaCopiar() {
     const A = VAgent.get();
