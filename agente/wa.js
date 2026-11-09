@@ -3,7 +3,14 @@ window.VWa = (function () {
   const KEY = 'viajero_wa_';
   const WA_DEF = {
     emitida: 'Listo {Nombre}, con mucho gusto le confirmo que ya enviamos a su correo toda la documentación de su *Seguro INS Viajero con Asistencia*. ✈️ *¡Su póliza está lista!* ✅\n\n{Asegurados}\n\nDesde nuestra oficina le preparamos una guía digital con los contactos de emergencia y la asistencia directa por WhatsApp (Wi-Fi Call) para cualquier imprevisto en el exterior. Guárdela en favoritos o agréguela a la pantalla de inicio de su celular:\n\n📲 {Link}\n\nRecuerde que ante cualquier emergencia debe avisar *de inmediato* a la Unidad de Asistencia del INS antes de actuar por su cuenta. Le agradezco confirmarme el recibido. ¡Que tenga un excelente viaje! 🧳',
-    directa: '¡Hola {Nombre}! 👋 Soy *{Agente}, su Agente del INS*. Felicidades por adquirir su *Seguro INS Viajero con Asistencia*. ✅\n\n{Asegurados}\n\nQuiero compartirle un recurso *exclusivo* que entregamos a los clientes de nuestra oficina: una guía digital con los números de emergencia gratuitos por país y el paso a paso de *qué hacer y a quién llamar* si necesita usar el seguro durante su viaje:\n\n📲 {Link}\n\nLe recomiendo guardarla en favoritos o agregarla a la pantalla de inicio para tenerla siempre a mano. Cualquier consulta sobre su viaje, quedo a su disposición. ¡Buen viaje! ✈️'
+    // «Guía de asistencia» (9 nov 2026): para el cliente que compró en línea. JC
+    // pidió poner adelante el compromiso de la oficina y que la app es un
+    // beneficio EXCLUSIVO de sus clientes. {Poliza} es opcional: sin número la
+    // línea entera se cae (conPoliza).
+    directa: '¡Hola {Nombre}! 👋 Gracias por elegir el *Seguro INS Viajero con Asistencia*. ✅\n\n📄 *Póliza N° {Poliza}*\n\nEn la oficina de {Agente}, agente del INS, estamos comprometidos con la tranquilidad de nuestros asegurados. Por eso diseñamos una app de asistencia, un *beneficio exclusivo para los clientes de nuestra oficina*, para que tenga a mano toda la información que necesita si debe usar su seguro durante el viaje:\n\n✅ Qué hacer y a quién llamar en cada caso\n✅ Los teléfonos de emergencia por país\n✅ La asistencia por WhatsApp (Wi-Fi Call)\n✅ El paso a paso de cada trámite\n\n📲 {Link}\n\nGuárdela en favoritos o agréguela a la pantalla de inicio de su celular: funciona aun sin internet.\n\nRecuerde: ante cualquier emergencia, avise *primero* a la Unidad de Asistencia del INS, antes de pagar o actuar por su cuenta.\n\nQuedo a su disposición. ¡Buen viaje! ✈️',
+    // «Solicitud de emisión» (9 nov 2026): reemplaza al Google Form. {Link} es el
+    // de la solicitud con el código del agente, no el de la guía.
+    solicitud: 'Hola {Nombre}, con gusto le ayudo con su *Seguro INS Viajero con Asistencia*. ✈️\n\nPara emitirlo, complete esta solicitud. Toma pocos minutos, y si viajan varias personas las puede agregar en el mismo formulario:\n\n📝 {Link}\n\nLe recomiendo enviarla *al menos 24 horas antes* de su viaje. En cuanto la reciba le confirmo por aquí y le indico cómo hacer el pago.\n\n{Agente}\nAgente INS · Lic. SUGESE {Licencia}'
   };
   function getTemplate(tipo) { return localStorage.getItem(KEY + tipo) || WA_DEF[tipo] || ''; }
   function saveTemplate(tipo, texto) { localStorage.setItem(KEY + tipo, texto); }
@@ -42,6 +49,30 @@ window.VWa = (function () {
       .join('\n').replace(/\n{3,}/g, '\n\n').replace(/\s+$/, '');
   }
 
+  // El texto final del mensaje con todos los comodines resueltos. Lo usan las
+  // pantallas «Solicitud de emisión» y «Guía de asistencia» (vista previa y
+  // link). linkOverride = el enlace de {Link} cuando no es la guía.
+  function fillText(texto, nombre, agente, poliza, asegurados, linkOverride) {
+    const A = window.VAgent ? VAgent.get() : (VCfg.AGENT_DEFAULT || {});
+    const link = linkOverride || (window.VAgent ? VAgent.publicLink() : (VCfg.APP_LINK || ''));
+    const base = String(VCfg.APP_LINK || '').replace(/[?#].*$/, '');
+    const PH = String.fromCharCode(0); // placeholder imposible de escribir
+    let t = conPoliza(conAsegurados(texto || '', asegurados), poliza)
+      .replace(/{Nombre}/g, nombre || '')
+      .replace(/{Agente}/g, agente || '')
+      .replace(/{Licencia}/g, A.licencia || '')
+      .replace(/{WhatsApp}/g, A.tel || A.whatsapp || '');
+    t = t.split('{Link}').join(PH);
+    if (base && !linkOverride) t = t.split(base).join(PH);
+    return t.split(PH).join(link);
+  }
+  // Mismo armado de buildLink, para un texto ya resuelto.
+  function buildLinkTexto(tel, texto) {
+    let phone = (tel || '').replace(/[^\d]/g, '');
+    if (phone.length === 8) phone = '506' + phone;
+    return 'https://web.whatsapp.com/send/?phone=' + phone + '&text=' + encodeURIComponent(texto);
+  }
+
   function buildLink(tel, texto, nombre, agente, poliza, asegurados) {
     // Link de la app personalizado con la identidad del agente activo.
     const link = (window.VAgent ? VAgent.publicLink() : (VCfg.APP_LINK || ''));
@@ -65,5 +96,5 @@ window.VWa = (function () {
     if (phone.length === 8) phone = '506' + phone;
     return 'https://web.whatsapp.com/send/?phone=' + phone + '&text=' + encodeURIComponent(t);
   }
-  return { getTemplate, saveTemplate, resetTemplate, buildLink, conPoliza, conAsegurados, bloqueAsegurados, WA_DEF };
+  return { getTemplate, saveTemplate, resetTemplate, buildLink, fillText, buildLinkTexto, conPoliza, conAsegurados, bloqueAsegurados, WA_DEF };
 })();

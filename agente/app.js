@@ -8,6 +8,13 @@ window.VApp = (function () {
   // todo vivía en el mismo scroll y los tres botones de canal se confundían
   // con los dos de envío.
   const state = { paso: 1, viajeros: [], destinatarios: [], saludo: '', poliza: '', asegurados: [], tel: '', canal: 'correo', sent: false, envio: null, cargando: null, descartes: [], aviso: '' };
+  // tarea = qué le manda el agente al cliente (9 nov 2026): 'polizas' (los tres
+  // pasos de siempre), 'solicitud' (enlace al formulario de emisión) o 'guia'
+  // (la app de asistencia para quien compró en línea). Las dos últimas tienen
+  // su propio estado: cambiar de tarjeta no borra lo que se estaba haciendo.
+  state.tarea = 'polizas';
+  state.sol = { nombre: '', tel: '', correo: '', enviado: null, tpl: null };
+  state.guia = { nombre: '', tel: '', poliza: '', tpl: null };
   let nextId = 1;
   let agentOpen = false;
   let asegManual = false; // el agente editó a mano las pólizas/nombres del mensaje
@@ -685,10 +692,7 @@ window.VApp = (function () {
       ${bloqueDescartes()}
       ${state.viajeros.map(cardCarga).join('')}
       ${ghostAgregar()}
-      ${botonSiguiente('Continuar a revisar los datos →', sub)}
-      <div class="text-center mt-5 pt-4 border-t">
-        <button onclick="VApp.sinPoliza()" class="text-xs text-slate-500 underline underline-offset-2 hover:text-sdi-azul">El cliente compró por su cuenta y solo le mando el link de la guía →</button>
-      </div>`;
+      ${botonSiguiente('Continuar a revisar los datos →', sub)}`;
   }
   function cardCarga(v, idx) {
     const titulo = (v.cliente || '').trim() || `Asegurado ${idx + 1}`;
@@ -737,9 +741,8 @@ window.VApp = (function () {
     { id: 'correo', ico: '📧', tit: 'Correo con los documentos', reco: true,
       desc: 'Le llegan la póliza, la tarjeta, el comprobante, las Condiciones Generales y el Manual, más el botón a su guía de emergencias.' },
     { id: 'emitida', ico: '💬', tit: 'WhatsApp · póliza que emití yo',
-      desc: 'Mensaje de aviso con el número de póliza y el link de la guía. Los documentos van por correo, no por acá.' },
-    { id: 'directa', ico: '💬', tit: 'WhatsApp · compró por su cuenta',
-      desc: 'Mensaje para el cliente al que no le emití yo la póliza: solo el link de la guía.' }
+      desc: 'Mensaje de aviso con el número de póliza y el link de la guía. Los documentos van por correo, no por acá.' }
+    // «compró por su cuenta» se fue a su propia tarjeta de arriba: «Guía de asistencia».
   ];
   function canalPick(c) {
     const on = state.canal === c.id;
@@ -892,24 +895,253 @@ window.VApp = (function () {
   }
   // Atajo del paso 1 para el cliente que compró por su cuenta: no hay PDF que
   // cargar ni datos que revisar, así que salta directo al mensaje.
-  function sinPoliza() { state.canal = 'directa'; irA(3); }
+  // Se quedó por compatibilidad: ahora el cliente sin póliza tiene su tarjeta.
+  function sinPoliza() { setTarea('guia'); }
   function render() {
     const p = state.paso;
-    el('console').innerHTML = `
-      ${avisoPermiso()}
-      ${avisoNovedades()}
-      ${agentePanel()}
+    const t = state.tarea;
+    const cuerpo = t === 'solicitud' ? pantallaSolicitud() : t === 'guia' ? pantallaGuia() : `
       <div class="flex items-center justify-between gap-2 mb-4">
         <h2 class="text-lg font-bold">Envío de pólizas</h2>
         ${hayAlgoQueLimpiar() ? '<button onclick="VApp.pedirLimpiar()" class="text-sm font-medium border rounded-lg px-3 py-1.5 bg-white text-slate-600 hover:bg-slate-50 whitespace-nowrap flex-none">Limpiar</button>' : ''}
       </div>
       ${rail()}
       <div id="vip-general">${tarjetaVipGeneral()}</div>
-      ${p === 1 ? pantalla1() : p === 2 ? pantalla2() : pantalla3()}
+      ${p === 1 ? pantalla1() : p === 2 ? pantalla2() : pantalla3()}`;
+    el('console').innerHTML = `
+      ${avisoPermiso()}
+      ${avisoNovedades()}
+      ${agentePanel()}
+      ${selectorTarea()}
+      ${cuerpo}
       <p id="status" class="text-sm mt-3"></p>`;
+    if (t !== 'polizas') { wireTarea(); return; }
     wire();
     pintarCarga(); // sobrevive a un redibujado disparado en plena carga
     if (p === 3) renderCanal();
+  }
+
+  // ===== Qué le mandás al cliente (9 nov 2026) =====
+  const TAREAS = [
+    { id: 'polizas', tit: 'Pólizas emitidas', desc: 'Lo de siempre: cargás los PDF o ZIP del INS y le mandás los documentos.',
+      ico: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>' },
+    { id: 'solicitud', tit: 'Solicitud de emisión', desc: 'Para quien te pide el seguro sin pasar por la página: llena sus datos y los de su grupo.',
+      ico: '<path d="M9 4h6a1 1 0 0 1 1 1v1H8V5a1 1 0 0 1 1-1z"/><path d="M16 5h2a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h2"/><path d="m9 14 2 2 4-4"/>' },
+    { id: 'guia', tit: 'Guía de asistencia', desc: 'Para quien compró en línea por su cuenta: le mandás la app de qué hacer y a quién llamar.',
+      ico: '<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18.5h2"/><path d="M12 7.5v5M9.5 10h5"/>' }
+  ];
+  function selectorTarea() {
+    const card = t => {
+      const on = state.tarea === t.id;
+      return `<button onclick="VApp.setTarea('${t.id}')" aria-pressed="${on}" class="tarea-card ${on ? 'is-on' : ''}">
+        <span class="tarea-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${t.ico}</svg></span>
+        <span class="min-w-0"><b>${t.tit}</b><small>${t.desc}</small></span></button>`;
+    };
+    return `<p class="text-xs text-slate-500 mb-2">¿Qué le vas a mandar al cliente?</p>
+      <div class="tareas">${TAREAS.map(card).join('')}</div>`;
+  }
+  function setTarea(t) { state.tarea = t; render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+  // Teléfono: 8 dígitos = Costa Rica (se le pone el 506); 10 a 15 = ya trae código.
+  function telValido(v) { const d = String(v || '').replace(/\D/g, ''); return d.length === 8 || (d.length >= 10 && d.length <= 15); }
+  function telMostrar(v) { let d = String(v || '').replace(/\D/g, ''); if (d.length === 8) d = '506' + d; return '+' + d; }
+  function correoValido(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim()); }
+  function solicitudLink(A) { return (VCfg.SOLICITUD_URL || '') + '?a=' + encodeURIComponent(String(A.id || '').toLowerCase()); }
+  function solicitudHabilitada(A) { return (VCfg.SOLICITUD_AGENTES || []).indexOf(String(A.id || '').toLowerCase()) >= 0; }
+  // *negrita* de WhatsApp y los enlaces, para la vista previa.
+  function waHtml(t) {
+    return esc(t).replace(/\*([^*\n]+)\*/g, '<b>$1</b>').replace(/(https?:\/\/[^\s<]+)/g, '<span class="wa-link">$1</span>');
+  }
+  function textoTarea(tipo) {
+    const A = VAgent.get();
+    if (tipo === 'solicitud') {
+      const s = state.sol;
+      const tpl = s.tpl != null ? s.tpl : VWa.getTemplate('solicitud');
+      return VWa.fillText(tpl, s.nombre.trim(), A.nombre, '', [], solicitudLink(A));
+    }
+    const g = state.guia;
+    const tpl = g.tpl != null ? g.tpl : VWa.getTemplate('directa');
+    return VWa.fillText(tpl, g.nombre.trim(), A.nombre, g.poliza.trim(), [], VAgent.publicLink(A));
+  }
+  function campoT(id, label, val, extra, nota) {
+    return `<label class="block mb-3"><span class="block text-[12.5px] font-semibold text-slate-800 mb-1">${label}</span>
+      <input id="${id}" value="${esc(val)}" ${extra || ''} class="w-full border rounded-lg px-3 py-2 text-[15px]"/>
+      ${nota ? `<span id="${id}-nota" class="block text-[11.5px] mt-1">${nota}</span>` : ''}</label>`;
+  }
+  function editorPlantilla(tipo, tpl) {
+    return `<details class="tpl-box">
+      <summary>Editar el mensaje</summary>
+      <textarea id="tpl-${tipo}" rows="10" class="w-full text-sm border rounded-lg px-2.5 py-2 mt-2 font-mono">${esc(tpl)}</textarea>
+      <p class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">Comodines: <code>{Nombre}</code> el cliente · <code>{Agente}</code> <code>{Licencia}</code> <code>{WhatsApp}</code> tus datos de «Mi información» · <code>{Link}</code> el enlace con tu código${tipo === 'directa' ? ' · <code>{Poliza}</code> el número de póliza (si lo dejás vacío, esa línea no sale)' : ''}.</p>
+      <div class="flex flex-wrap gap-2 mt-2">
+        <button onclick="VApp.tareaTplSave('${tipo}')" class="text-xs border rounded-lg px-3 py-1.5 bg-white">Guardar como predeterminado</button>
+        <button onclick="VApp.tareaTplReset('${tipo}')" class="text-xs border rounded-lg px-3 py-1.5 bg-white">Restaurar</button>
+        <span id="tpl-${tipo}-ok" class="text-[11.5px] font-semibold text-green-700 self-center"></span>
+      </div></details>`;
+  }
+  function vistaWa(id) {
+    return `<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-2">Así le llega por WhatsApp</p>
+      <div class="wa-bg"><div class="wa-bubble" id="${id}"></div></div>`;
+  }
+  function botonWa(id) {
+    return `<button id="${id}" onclick="VApp.tareaWa()" class="w-full text-white text-sm font-semibold rounded-xl px-4 py-3.5 shadow-sm transition-all duration-200 hover:shadow-lg active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed" style="background:linear-gradient(135deg,#16a34a 0%,#15803d 100%)">Abrir WhatsApp con el mensaje</button>`;
+  }
+  function linkBox(link) {
+    return `<p class="text-[10px] uppercase tracking-widest text-slate-500 mb-1.5">El enlace que recibe</p>
+      <div class="flex items-center gap-2 border border-dashed rounded-xl px-3 py-2.5 bg-slate-50 mb-4">
+        <code class="flex-1 min-w-0 truncate text-[12.5px] text-sdi-azul">${esc(link.replace(/^https?:\/\//, ''))}</code>
+        <button onclick="VApp.tareaCopiar()" class="text-xs border rounded-full px-3 py-1.5 bg-white whitespace-nowrap">Copiar</button>
+      </div>`;
+  }
+
+  function pantallaSolicitud() {
+    const s = state.sol, A = VAgent.get();
+    const ok = solicitudHabilitada(A);
+    const tpl = s.tpl != null ? s.tpl : VWa.getTemplate('solicitud');
+    const aviso = ok ? '' : `<div class="rounded-xl border border-amber-300 bg-amber-50 text-amber-900 text-[13px] px-4 py-3 mb-4">
+      La solicitud todavía no está activada para tu código de agente (<b>${esc(A.id || '—')}</b>). Pedile a Juan Carlos que la active: así las solicitudes de tus clientes te llegan a vos.</div>`;
+    const exito = s.enviado ? `<div class="rounded-xl border border-green-300 bg-green-50 text-green-900 text-[13px] px-4 py-3 mb-3 v-pop">
+      Correo enviado a <b>${esc(s.enviado.to)}</b> · ${esc(s.enviado.hora)}
+      <button onclick="VApp.tareaNueva('solicitud')" class="underline font-semibold ml-1">Mandar a otro cliente</button></div>` : '';
+    return `<div class="tarea-panel"><div class="tarea-cols">
+      <div>
+        <h3 class="text-base font-bold text-slate-800 mb-0.5">Mandale la solicitud de emisión</h3>
+        <p class="text-xs text-slate-500 mb-4">El cliente llena el viaje una vez y agrega a cada persona que viaja. La solicitud te llega al correo, lista para emitir.</p>
+        ${aviso}
+        ${campoT('sol-nombre', 'Nombre del cliente', s.nombre, 'placeholder="Así lo saluda el mensaje" autocomplete="off"')}
+        ${campoT('sol-tel', 'WhatsApp', s.tel, 'placeholder="8888 8888" inputmode="tel" autocomplete="off"', ' ')}
+        ${campoT('sol-correo', 'Correo <span class="font-normal text-slate-500">(si también se lo querés mandar por correo)</span>', s.correo, 'placeholder="cliente@correo.com" inputmode="email" autocomplete="off"')}
+        ${linkBox(solicitudLink(A))}
+        ${exito}
+        ${botonWa('btn-tarea-wa')}
+        <button id="btn-sol-mail" onclick="VApp.solicitudCorreo()" class="w-full text-white text-sm font-semibold rounded-xl px-4 py-3.5 mt-2.5 shadow-sm transition-all duration-200 hover:shadow-lg active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed" style="background:linear-gradient(135deg,#1c6fb8 0%,#13477e 100%)">Enviar el correo</button>
+        <div class="text-center"><button onclick="VApp.solicitudVerCorreo()" class="text-xs text-sdi-azul underline underline-offset-2 mt-2.5">Ver primero cómo le llega el correo →</button></div>
+        <p class="text-[11px] text-slate-400 mt-1.5 text-center">Podés usar uno solo o los dos. El correo sale de tu Gmail, con tu firma.</p>
+      </div>
+      <div>${vistaWa('wa-prev')}${editorPlantilla('solicitud', tpl)}</div>
+    </div></div>`;
+  }
+
+  function pantallaGuia() {
+    const g = state.guia, A = VAgent.get();
+    const tpl = g.tpl != null ? g.tpl : VWa.getTemplate('directa');
+    return `<div class="tarea-panel"><div class="tarea-cols">
+      <div>
+        <h3 class="text-base font-bold text-slate-800 mb-0.5">Mandale la guía de asistencia</h3>
+        <p class="text-xs text-slate-500 mb-4">Para el cliente que compró el seguro en línea, sin pasar por vos. No hace falta cargar ninguna póliza.</p>
+        ${campoT('guia-nombre', 'Nombre del cliente', g.nombre, 'placeholder="Así lo saluda el mensaje" autocomplete="off"')}
+        ${campoT('guia-tel', 'WhatsApp', g.tel, 'placeholder="8888 8888" inputmode="tel" autocomplete="off"', ' ')}
+        ${campoT('guia-poliza', 'Número de póliza <span class="font-normal text-slate-500">(opcional)</span>', g.poliza, 'placeholder="0201VIA000000000" autocomplete="off"', '<span class="text-slate-500">Si lo dejás vacío, esa línea no sale en el mensaje.</span>')}
+        ${linkBox(VAgent.publicLink(A))}
+        ${botonWa('btn-tarea-wa')}
+      </div>
+      <div>${vistaWa('wa-prev')}${editorPlantilla('directa', tpl)}</div>
+    </div></div>`;
+  }
+
+  // Repinta la vista previa, el aviso del teléfono y los botones SIN render():
+  // el agente está escribiendo y no puede perder el foco.
+  function pintarTarea() {
+    const t = state.tarea;
+    const datos = t === 'solicitud' ? state.sol : state.guia;
+    const prev = el('wa-prev');
+    if (prev) prev.innerHTML = waHtml(textoTarea(t));
+    const nota = el((t === 'solicitud' ? 'sol' : 'guia') + '-tel-nota');
+    const okTel = telValido(datos.tel);
+    if (nota) {
+      nota.textContent = okTel ? '✓ Se abre el chat con ' + telMostrar(datos.tel) : (datos.tel ? 'Faltan dígitos: son 8.' : 'Sin el número no se puede abrir el chat.');
+      nota.className = 'block text-[11.5px] mt-1 font-semibold ' + (okTel ? 'text-green-700' : 'text-amber-700');
+    }
+    const habil = t !== 'solicitud' || solicitudHabilitada(VAgent.get());
+    const bw = el('btn-tarea-wa');
+    if (bw) { bw.disabled = !(okTel && habil); bw.textContent = okTel ? 'Abrir WhatsApp con el mensaje' : 'Escribí el WhatsApp del cliente'; }
+    const bm = el('btn-sol-mail');
+    if (bm) {
+      const okMail = correoValido(state.sol.correo);
+      bm.disabled = !(okMail && habil) || !!state.sol.enviado;
+      bm.textContent = state.sol.enviado ? 'Correo enviado' : okMail ? 'Enviar el correo a ' + state.sol.correo.trim() : 'Escribí el correo para enviarlo';
+    }
+  }
+  function wireTarea() {
+    const t = state.tarea;
+    const datos = t === 'solicitud' ? state.sol : state.guia;
+    const pre = t === 'solicitud' ? 'sol' : 'guia';
+    ['nombre', 'tel', 'correo', 'poliza'].forEach(k => {
+      const inp = el(pre + '-' + k); if (!inp) return;
+      inp.addEventListener('input', e => { datos[k] = e.target.value; if (k === 'correo') state.sol.enviado = null; pintarTarea(); });
+    });
+    const tx = el('tpl-' + (t === 'solicitud' ? 'solicitud' : 'directa'));
+    if (tx) tx.addEventListener('input', e => { datos.tpl = e.target.value; pintarTarea(); });
+    pintarTarea();
+  }
+  function tareaTplSave(tipo) {
+    const tx = el('tpl-' + tipo); if (!tx) return;
+    VWa.saveTemplate(tipo, tx.value);
+    const ok = el('tpl-' + tipo + '-ok'); if (ok) ok.textContent = '✓ Guardado: así sale de ahora en adelante';
+  }
+  function tareaTplReset(tipo) {
+    const txt = VWa.resetTemplate(tipo);
+    (tipo === 'solicitud' ? state.sol : state.guia).tpl = null;
+    const tx = el('tpl-' + tipo); if (tx) tx.value = txt;
+    const ok = el('tpl-' + tipo + '-ok'); if (ok) ok.textContent = 'Volvió al texto original';
+    pintarTarea();
+  }
+  function tareaWa() {
+    const t = state.tarea, datos = t === 'solicitud' ? state.sol : state.guia;
+    if (!telValido(datos.tel)) { const i = el((t === 'solicitud' ? 'sol' : 'guia') + '-tel'); if (i) i.focus(); return; }
+    window.open(VWa.buildLinkTexto(datos.tel, textoTarea(t)), '_blank');
+  }
+  function tareaCopiar() {
+    const A = VAgent.get();
+    const link = state.tarea === 'solicitud' ? solicitudLink(A) : VAgent.publicLink(A);
+    const st = el('status');
+    const done = () => { if (st) st.textContent = '✅ Enlace copiado.'; };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(done).catch(() => {});
+  }
+  function tareaNueva(t) {
+    if (t === 'solicitud') state.sol = { nombre: '', tel: '', correo: '', enviado: null, tpl: state.sol.tpl };
+    else state.guia = { nombre: '', tel: '', poliza: '', tpl: state.guia.tpl };
+    render();
+    const i = el((t === 'solicitud' ? 'sol' : 'guia') + '-nombre'); if (i) i.focus();
+  }
+  function solicitudVerCorreo() {
+    const w = window.open('', '_blank');
+    if (!w) { const st = el('status'); if (st) st.textContent = 'El navegador bloqueó la ventana de la vista previa. Permitila para este sitio e intentá de nuevo.'; return; }
+    w.document.write(VEmail.buildSolicitudHtml(state.sol.nombre.trim() || 'cliente', solicitudLink(VAgent.get())));
+  }
+  async function solicitudCorreo() {
+    const st = el('status'); st.textContent = '';
+    const s = state.sol, A = VAgent.get();
+    if (!solicitudHabilitada(A) || s.enviado) return;
+    if (!correoValido(s.correo)) { st.textContent = 'Revisá el correo del cliente.'; return; }
+    const b = el('btn-sol-mail'); if (b) b.disabled = true;
+    const html = VEmail.buildSolicitudHtml(s.nombre.trim() || 'cliente', solicitudLink(A));
+    const to = s.correo.trim();
+    const asunto = 'Solicitud para emitir su Seguro INS Viajero';
+    try {
+      if (!VAuth.canSend()) {
+        st.textContent = 'Falta el permiso de envío, pidiéndolo a Google…';
+        await VAuth.grantSend();
+        if (!VAuth.canSend()) { st.textContent = '❌ ' + msgError('403 insufficient'); pintarTarea(); return; }
+      }
+      st.textContent = 'Enviando correo…';
+      let token = await VAuth.ensureToken();
+      try {
+        await VEmail.sendHtml(to, asunto, html, token);
+      } catch (e) {
+        if (esErrorDePermiso(e.message)) {
+          token = (await VAuth.grantSend()).token;
+          if (!VAuth.canSend()) throw e;
+          await VEmail.sendHtml(to, asunto, html, token);
+        } else if (/\b401\b|UNAUTHENTICATED|invalid|expired/i.test(e.message)) {
+          st.textContent = 'Sesión vencida, reconectando…';
+          token = (await VAuth.signIn()).token;
+          await VEmail.sendHtml(to, asunto, html, token);
+        } else { throw e; }
+      }
+      s.enviado = { to, hora: new Date().toLocaleTimeString('es-CR', { hour: 'numeric', minute: '2-digit' }) };
+      render();
+    } catch (e) { el('status').textContent = '❌ ' + msgError(e); pintarTarea(); }
   }
 
   function readAgentForm() {
@@ -1170,6 +1402,7 @@ window.VApp = (function () {
   return { boot, login, addViajero, removeViajero, quitarArchivo, setCanal, waSave, waReset, preview, enviar,
     irA, sinPoliza, nuevoEnvio, pedirLimpiar, pedirPermiso, agentToggle, agentSave, agentReset, agentCopyLink, agentPreviewLink,
     elegirArchivos, elegirCarpeta, procesarEntrada, vipToggle, vipEditToggle, vipPeriodoChange, vipPeriodoOficial, vipRepintar,
-    avisoNovedades, novedadesVisto, state };
+    avisoNovedades, novedadesVisto, setTarea, tareaTplSave, tareaTplReset, tareaWa, tareaCopiar, tareaNueva,
+    solicitudCorreo, solicitudVerCorreo, state };
 })();
 document.addEventListener('DOMContentLoaded', () => VApp.boot());

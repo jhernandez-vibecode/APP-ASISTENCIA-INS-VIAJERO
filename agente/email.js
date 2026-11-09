@@ -472,9 +472,75 @@ window.VEmail = (function () {
     return res.json();
   }
 
+  /**
+   * Correo de la «Solicitud de emisión» (9 nov 2026): corto, con la misma
+   * cabecera, firma y pie del correo de pólizas. Un solo botón al formulario.
+   * Sin emojis ni imágenes nuevas: solo los dos logos hosteados de siempre.
+   */
+  function buildSolicitudHtml(saludo, link) {
+    const C = VCfg;
+    const A = (window.VAgent ? VAgent.get() : C.AGENT_DEFAULT);
+    const lineaLicencia = ['Licencia Sugese ' + (A.licencia || ''), A.codigo ? 'C&oacute;digo ' + A.codigo : '']
+      .filter(s => s && s !== 'Licencia Sugese ').join(' &middot; ');
+    const item = function (t) {
+      return '<tr><td width="18" valign="top" style="padding:0 0 8px;color:' + SDI_VERDE + ';font-size:14px;line-height:1.5;">&#10003;</td>' +
+        '<td valign="top" style="padding:0 0 8px;font-size:13px;color:#334155;line-height:1.55;">' + t + '</td></tr>';
+    };
+    return '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">' +
+'<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
+'<title>Solicitud de su Seguro INS Viajero</title>' +
+'<!--[if !mso]><!-->' +
+'<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">' +
+'<!--<![endif]--></head>' +
+'<body style="margin:0;padding:0;background:#f5f5f5;font-family:' + FTXT + ';">' +
+'<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f5f5f5;padding:24px 0;"><tr><td align="center">' +
+'<table width="600" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;border-radius:12px;overflow:hidden;max-width:600px;box-shadow:0 4px 20px rgba(12,35,64,.08);">' +
+  '<tr><td bgcolor="' + SDI_NAVY + '" style="background:' + SDI_NAVY + ';color:#ffffff;padding:26px 32px;text-align:center;">' +
+    '<img src="' + esc(C.LOGO_INS_URL) + '" alt="INS" height="44" style="display:block;margin:0 auto 10px;border:0;outline:none;text-decoration:none;height:44px;">' +
+    '<h1 style="margin:0;font-family:' + FF + ';font-size:21px;font-weight:700;letter-spacing:-.01em;">Solicitud de su Seguro Viajero</h1>' +
+    '<p style="margin:6px 0 0;font-size:12px;opacity:.78;">Seguro INS Viajero con Asistencia</p>' +
+  '</td></tr>' +
+  filete() +
+  '<tr><td style="padding:26px 32px 0;">' +
+    '<p style="margin:0 0 12px;font-family:' + FF + ';font-size:18px;font-weight:700;color:' + SDI_NAVY + ';">Hola ' + esc(saludo) + ',</p>' +
+    '<p style="margin:0;font-size:14px;color:#334155;line-height:1.65;">Con gusto le emito su seguro de viaje. Complete la solicitud con los datos de cada persona que viaja: el destino y las fechas se escriben una sola vez para todo el grupo.</p>' +
+  '</td></tr>' +
+  '<tr><td style="padding:22px 32px 0;text-align:center;">' +
+    '<a href="' + esc(link) + '" style="display:inline-block;background:' + SDI_VERDE + ';color:#ffffff;text-decoration:none;border-radius:10px;padding:14px 30px;font-family:' + FF + ';font-weight:700;font-size:15px;">Completar la solicitud &rarr;</a>' +
+  '</td></tr>' +
+  bloque('Antes de empezar',
+    '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:6px;">' +
+      item('Tenga a mano la c&eacute;dula o el pasaporte de cada viajero y los datos de su beneficiario.') +
+      item('Env&iacute;ela <b>al menos 24 horas antes</b> de viajar. Los fines de semana se tramita el siguiente d&iacute;a h&aacute;bil.') +
+      item('En cuanto la reciba, le confirmo y le indico c&oacute;mo hacer el pago.') +
+    '</table>', 24) +
+  '<tr><td style="padding:12px 32px 28px;">' +
+    '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid ' + SDI_LINEA + ';"><tr><td style="padding:18px 0 0;">' +
+      '<p style="margin:0;font-size:13px;color:#475569;line-height:1.5;">Quedo a su entera disposici&oacute;n. Atentamente,</p>' +
+      '<p style="margin:10px 0 0;font-family:' + FF + ';font-weight:700;color:' + SDI_NAVY + ';font-size:14px;">' + esc(A.nombre) + '</p>' +
+      '<p style="margin:2px 0 0;font-size:11px;color:' + SDI_GRIS + ';line-height:1.6;">' + esc(A.rol) + '<br>' + lineaLicencia +
+        (A.tel ? '<br>Tel: ' + esc(A.tel) : '') + '</p>' +
+    '</td></tr></table>' +
+  '</td></tr>' +
+  pieSDI(A, C.LOGO_SDI_URL) +
+'</table></td></tr></table></body></html>';
+  }
+
+  // Correo HTML sin adjuntos (la solicitud). Mismo envío por Gmail API.
+  async function sendHtml(to, asunto, html, token) {
+    const subject = '=?UTF-8?B?' + btoa(unescape(encodeURIComponent(asunto))) + '?=';
+    const mime = `To: ${to}\r\nSubject: ${subject}\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset="UTF-8"\r\nContent-Transfer-Encoding: 7bit\r\n\r\n${html}`;
+    const res = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+      method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ raw: b64url(mime) })
+    });
+    if (!res.ok) throw new Error('Gmail API ' + res.status + ': ' + (await res.text()));
+    return res.json();
+  }
+
   async function fileToB64(file) { return abToB64(await file.arrayBuffer()); }
   async function pathToB64(path) { const r = await fetch(path); if (!r.ok) throw new Error('No se pudo cargar ' + path); return abToB64(await r.arrayBuffer()); }
 
-  return { buildHtml, buildAndSend, fileToB64, pathToB64, salaVipEnFecha, salaVipCalifican, salaVipMinTxt,
+  return { buildHtml, buildAndSend, buildSolicitudHtml, sendHtml, fileToB64, pathToB64, salaVipEnFecha, salaVipCalifican, salaVipMinTxt,
     salaVipOn, salaVipSetOn, salaVipPeriodo, salaVipSetPeriodo };
 })();

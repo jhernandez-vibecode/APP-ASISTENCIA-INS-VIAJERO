@@ -63,13 +63,20 @@ window.VCfg = {
   // la MISMA novedad en el registro de cambios del pie de agente/index.html.
   // Solo la consola la muestra: la página del cliente no lleva novedades
   // (decisión de JC del 24 ago 2026).
+  // Solicitud de emisión (9 nov 2026): la página vive en el sitio del cotizador
+  // y su Code.gs solo acepta los códigos de esta lista (la misma de
+  // AGENTES_SOLICITUD en el Code.gs y de AGENTES en solicitud/index.html). Un
+  // agente que no esté acá ve la pantalla con los botones apagados y el aviso.
+  SOLICITUD_URL: 'https://seguros-viajero.appsegurosdigitales.com/solicitud/',
+  SOLICITUD_AGENTES: ['jc'],
+
   NOVEDADES: {
-    version: '2026-11-02',
-    fecha: '2 nov 2026',
+    version: '2026-11-09',
+    fecha: '9 nov 2026',
     items: [
-      '<b>El INS renovó el beneficio Sala VIP del Aeropuerto Juan Santamaría</b>, de noviembre 2026 a noviembre 2027: el correo de pólizas lo vuelve a anunciar solo.',
-      '<b>El monto mínimo subió a US$127,88 por persona</b> (antes US$80). A quien no llega no se le menciona nada, igual que antes.',
-      'Si habías cambiado el período a mano, tocá «Volver al período oficial» en la tarjeta de Sala VIP.'
+      '<b>Arriba de la consola ahora elegís qué le mandás al cliente</b>: «Pólizas emitidas» (lo de siempre, igual que antes), «Solicitud de emisión» o «Guía de asistencia».',
+      '<b>Solicitud de emisión (nueva)</b>: para quien te pide el seguro sin pasar por la página. Le mandás por WhatsApp o por correo el enlace al formulario: llena el viaje una vez y agrega a cada persona con su beneficiario. La solicitud te llega al correo, lista para emitir.',
+      '<b>Guía de asistencia</b>: para quien compró en línea por su cuenta (antes era el enlace chiquito del paso 1). El mensaje es nuevo: si habías guardado tu propia versión, tocá «Restaurar» para tomarlo.'
     ]
   },
 

@@ -283,3 +283,32 @@ footer .text-slate-500{color:var(--lc-ink-2)}
   #console .grid.grid-cols-2{grid-template-columns:1fr}
   footer{padding:14px 16px 32px}
 }
+
+/* ---------- «¿Qué le vas a mandar al cliente?» (9 nov 2026) ----------
+   Tres tarjetas arriba de la consola: Pólizas emitidas · Solicitud de emisión ·
+   Guía de asistencia. Control visible (borde ≥3:1) y la activa en azul SDI. */
+#console .tareas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:22px}
+@media(max-width:720px){#console .tareas{grid-template-columns:minmax(0,1fr)}}
+#console .tarea-card{display:flex;gap:12px;align-items:flex-start;text-align:left;background:#fff;border:1px solid var(--lc-line-btn);border-radius:16px;padding:14px 15px;cursor:pointer;transition:background .15s var(--lc-ease),border-color .15s var(--lc-ease)}
+#console .tarea-card:hover{background:#F8FAFC}
+#console .tarea-card.is-on{border:2px solid var(--lc-blue);padding:13px 14px;background:var(--lc-blue-soft)}
+#console .tarea-card b{display:block;font-size:14.5px;font-weight:600;color:var(--lc-ink);letter-spacing:-.01em}
+#console .tarea-card small{display:block;font-size:12px;color:var(--lc-ink-2);line-height:1.45;margin-top:2px}
+#console .tarea-ic{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--lc-band);color:var(--lc-blue)}
+#console .tarea-card.is-on .tarea-ic{background:var(--lc-blue);color:#fff}
+#console .tarea-card:focus-visible{outline:2px solid var(--lc-blue);outline-offset:2px}
+#console .tarea-panel{background:#fff;border:1px solid var(--lc-line);border-radius:20px;padding:22px}
+@media(max-width:520px){#console .tarea-panel{padding:16px}}
+#console .tarea-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:22px}
+@media(max-width:860px){#console .tarea-cols{grid-template-columns:minmax(0,1fr)}}
+#console .tarea-panel input{border-color:var(--lc-line-btn);min-height:44px}
+#console .tarea-panel input:focus{outline:0;border-color:var(--lc-blue);box-shadow:0 0 0 3px rgba(3,105,161,.16)}
+/* vista previa de WhatsApp */
+#console .wa-bg{background:#EFE7DE;border-radius:16px;padding:16px 14px;background-image:radial-gradient(rgba(0,0,0,.035) 1px,transparent 1px);background-size:14px 14px}
+#console .wa-bubble{background:#D9FDD3;border-radius:12px 12px 4px 12px;padding:9px 11px 10px;max-width:440px;margin-left:auto;
+  font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.45;color:#111B21;white-space:pre-wrap;overflow-wrap:anywhere;box-shadow:0 1px .5px rgba(0,0,0,.13)}
+#console .wa-bubble b{font-weight:700}
+#console .wa-link{color:#027EB5}
+#console .tpl-box{margin-top:12px;border:1px solid var(--lc-line);border-radius:14px;padding:10px 12px;background:#fff}
+#console .tpl-box summary{font-size:12.5px;font-weight:600;cursor:pointer;color:var(--lc-blue)}
+#console .tpl-box code{font-family:var(--font-mono);font-size:11px;background:var(--lc-band);color:var(--lc-blue);padding:1px 5px;border-radius:4px}
