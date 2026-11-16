@@ -933,7 +933,7 @@ window.VApp = (function () {
   function selectorTarea() {
     const card = t => {
       const on = state.tarea === t.id;
-      return `<button onclick="VApp.setTarea('${t.id}')" aria-pressed="${on}" class="tarea-card ${on ? 'is-on' : ''}">
+      return `<button onclick="VApp.setTarea('${t.id}')" aria-pressed="${on}" class="tarea-card t-${t.id} ${on ? 'is-on' : ''}">
         <span class="tarea-ic"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${t.ico}</svg></span>
         <span class="min-w-0"><b>${t.tit}</b><small>${t.desc}</small></span></button>`;
     };

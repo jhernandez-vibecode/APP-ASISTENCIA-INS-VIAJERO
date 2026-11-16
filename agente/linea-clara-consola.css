@@ -296,6 +296,15 @@ footer .text-slate-500{color:var(--lc-ink-2)}
 #console .tarea-card small{display:block;font-size:12px;color:var(--lc-ink-2);line-height:1.45;margin-top:2px}
 #console .tarea-ic{flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--lc-band);color:var(--lc-blue)}
 #console .tarea-card.is-on .tarea-ic{background:var(--lc-blue);color:#fff}
+/* Colores tenues por tarjeta (16 nov 2026): tonos del filete SDI. Va después de .is-on para que el tono de cada una mande. */
+#console .tarea-card.t-polizas{--tc:#0369A1;--tc-bg:#EAF4FA;--tc-bd:#BBD8EA;--tc-ic:#D6E9F5}
+#console .tarea-card.t-solicitud{--tc:#0D9488;--tc-bg:#EDF8F6;--tc-bd:#B7E3DD;--tc-ic:#D3EFEA}
+#console .tarea-card.t-guia{--tc:#C2410C;--tc-bg:#FEF3EC;--tc-bd:#F8D2BC;--tc-ic:#FCE2D2}
+#console .tarea-card[class*="t-"]{background:var(--tc-bg);border-color:var(--tc-bd)}
+#console .tarea-card[class*="t-"]:hover{border-color:var(--tc)}
+#console .tarea-card[class*="t-"] .tarea-ic{background:var(--tc-ic);color:var(--tc)}
+#console .tarea-card[class*="t-"].is-on{border-color:var(--tc)}
+#console .tarea-card[class*="t-"].is-on .tarea-ic{background:var(--tc);color:#fff}
 #console .tarea-card:focus-visible{outline:2px solid var(--lc-blue);outline-offset:2px}
 #console .tarea-panel{background:#fff;border:1px solid var(--lc-line);border-radius:20px;padding:22px}
 @media(max-width:520px){#console .tarea-panel{padding:16px}}
